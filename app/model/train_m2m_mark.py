@@ -1,0 +1,17 @@
+from app.common.extension import db
+from app.model.base import BaseModel
+
+
+class TrainM2mMark(BaseModel):
+    train_job_id = db.Column(db.Integer(), db.ForeignKey('train_job.train_job_id'), nullable=False)
+    mark_job_id = db.Column(db.Integer(), db.ForeignKey('mark_job.mark_job_id'), nullable=False)
+
+# from sqlalchemy import Table, Integer, ForeignKey
+
+# train_m2m_mark = Table(
+#     'train_m2m_mark', db.metadata,
+#     db.column('train_job_id', Integer(), ForeignKey('train_job.train_job_id')),
+#     db.column('mark_job_id', Integer(), ForeignKey('mark_job.mark_job_id'))
+# )
+
+
