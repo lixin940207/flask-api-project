@@ -1,8 +1,8 @@
 from app.common.extension import db
-from app.model.base import BaseModel
+from app.entity.base import BaseEntity
 
 
-class CustomAlgorithm(BaseModel):
+class CustomAlgorithm(BaseEntity):
     custom_algorithm_id = db.Column(db.Integer(), primary_key=True)
     custom_algorithm_alias = db.Column(db.String(100), nullable=False)
     custom_algorithm_name = db.Column(db.String(100), nullable=False)

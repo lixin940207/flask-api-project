@@ -1,8 +1,8 @@
 from app.common.extension import db
-from app.model.base import BaseModel
+from app.entity.base import BaseEntity
 
 
-class MarkTask(BaseModel):
+class MarkTask(BaseEntity):
     mark_task_id = db.Column(db.Integer(), primary_key=True)
     mark_job_id = db.Column(db.Integer(), db.ForeignKey('mark_job.mark_job_id'), nullable=False)
     doc_id = db.Column(db.Integer(), db.ForeignKey('doc.doc_id'), nullable=False)

@@ -1,8 +1,8 @@
 from app.common.extension import db
-from app.model.base import BaseModel
+from app.entity.base import BaseEntity
 
 
-class DocRelation(BaseModel):
+class DocRelation(BaseEntity):
     doc_relation_id = db.Column(db.Integer(), primary_key=True)
     doc_relation_name = db.Column(db.String(256), nullable=False)
     doc_relation_color = db.Column(db.String(256), default="")

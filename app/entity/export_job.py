@@ -1,8 +1,8 @@
 from app.common.extension import db
-from app.model.base import BaseModel
+from app.entity.base import BaseEntity
 
 
-class ExportJob(BaseModel):
+class ExportJob(BaseEntity):
     export_job_id = db.Column(db.Integer(), primary_key=True)
     doc_type_id = db.Column(db.Integer(), db.ForeignKey('doc_type.doc_type_id'), nullable=False)
     export_file_path = db.Column(db.String(255), default="")

@@ -1,8 +1,8 @@
 from app.common.extension import db
-from app.model.base import BaseModel
+from app.entity.base import BaseEntity
 
 
-class TrainM2mMark(BaseModel):
+class TrainM2mMark(BaseEntity):
     train_job_id = db.Column(db.Integer(), db.ForeignKey('train_job.train_job_id'), nullable=False)
     mark_job_id = db.Column(db.Integer(), db.ForeignKey('mark_job.mark_job_id'), nullable=False)
 

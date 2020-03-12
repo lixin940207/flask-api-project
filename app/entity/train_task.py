@@ -1,8 +1,8 @@
 from app.common.extension import db
-from app.model.base import BaseModel
+from app.entity.base import BaseEntity
 
 
-class TrainTask(BaseModel):
+class TrainTask(BaseEntity):
     train_model_id = db.Column(db.Integer(), primary_key=True)
     train_model_name = db.Column(db.String(256), nullable=False)
     train_model_desc = db.Column(db.Text(), default="")

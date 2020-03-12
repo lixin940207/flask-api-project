@@ -1,8 +1,8 @@
 from app.common.extension import db
-from app.model.base import BaseModel
+from app.entity.base import BaseEntity
 
 
-class DocType(BaseModel):
+class DocType(BaseEntity):
     doc_type_id = db.Column(db.Integer(), primary_key=True)
     doc_type_name = db.Column(db.String(256), nullable=False)
     doc_type_desc = db.Column(db.Text(), default="")

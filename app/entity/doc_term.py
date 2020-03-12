@@ -1,8 +1,8 @@
 from app.common.extension import db
-from app.model.base import BaseModel
+from app.entity.base import BaseEntity
 
 
-class DocTerm(BaseModel):
+class DocTerm(BaseEntity):
     doc_term_id = db.Column(db.Integer(), primary_key=True)
     doc_term_name = db.Column(db.String(256), nullable=False)
     doc_term_alias = db.Column(db.String(20), default="")

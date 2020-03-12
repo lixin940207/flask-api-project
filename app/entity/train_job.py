@@ -1,8 +1,8 @@
 from app.common.extension import db
-from app.model.base import BaseModel
+from app.entity.base import BaseEntity
 
 
-class TrainJob(BaseModel):
+class TrainJob(BaseEntity):
     train_job_id = db.Column(db.Integer(), primary_key=True)
     train_job_name = db.Column(db.String(256), nullable=False)
     train_job_status = db.Column(db.Integer(), db.ForeignKey("status.status_id"), nullable=False)

@@ -1,8 +1,8 @@
 from app.common.extension import db
-from app.model.base import BaseModel
+from app.entity.base import BaseEntity
 
 
-class UserTask(BaseModel):
+class UserTask(BaseEntity):
     user_task_id = db.Column(db.Integer(), primary_key=True)
     mark_task_id = db.Column(db.Integer(), db.ForeignKey('mark_task.mark_task_id'), nullable=False)
     annotator_id = db.Column(db.Integer(), nullable=False)

@@ -1,8 +1,8 @@
 from app.common.extension import db
-from app.model.base import BaseModel, FileTypeEnum
+from app.entity.base import BaseEntity, FileTypeEnum
 
 
-class PredictJob(BaseModel):
+class PredictJob(BaseEntity):
     predict_job_id = db.Column(db.Integer(), primary_key=True)
     doc_type_id = db.Column(db.Integer(), db.ForeignKey("doc_type.doc_type_id"), nullable=False)
     predict_job_name = db.Column(db.String(256), default="")

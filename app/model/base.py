@@ -11,11 +11,11 @@ class BaseModel:
         raise NotImplementedError("Method not implemented.")
 
     @abc.abstractmethod
-    def get_by_id(self):
+    def get_by_id(self, _id):
         raise NotImplementedError("Method not implemented.")
 
     @abc.abstractmethod
-    def get_by_filter(self, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
         raise NotImplementedError("Method not implemented.")
 
     @abc.abstractmethod
