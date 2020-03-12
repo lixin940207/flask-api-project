@@ -3,7 +3,7 @@ from app.entity.base import BaseEntity
 
 
 class TrainTask(BaseEntity):
-    train_model_id = db.Column(db.Integer(), primary_key=True)
+    train_task_id = db.Column(db.Integer(), primary_key=True)
     train_model_name = db.Column(db.String(256), nullable=False)
     train_model_desc = db.Column(db.Text(), default="")
     train_config = db.Column(db.JSON(), default={})

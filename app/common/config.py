@@ -90,6 +90,7 @@ class NlpServiceConfigMixin:
 
     EXPORT_LABEL_ONLINE = os.getenv('EXPORT_LABEL_ONLINE', 'http://offline_nlp:8000/gen_training_data')
 
+
 class DevelopmentConfig(
     BasicConfig,
     OCRServiceConfigMixin,

@@ -40,3 +40,7 @@ class BaseModel:
     @abc.abstractmethod
     def update(self, entity):
         raise NotImplementedError("Method not implemented.")
+
+    @abc.abstractmethod
+    def bulk_update(self, entity_list):
+        raise NotImplementedError("Method not implemented.")

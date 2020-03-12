@@ -3,6 +3,7 @@ from app.entity.base import BaseEntity
 
 
 class TrainM2mMark(BaseEntity):
+    id = db.Column(db.Integer(), primary_key=True)
     train_job_id = db.Column(db.Integer(), db.ForeignKey('train_job.train_job_id'), nullable=False)
     mark_job_id = db.Column(db.Integer(), db.ForeignKey('mark_job.mark_job_id'), nullable=False)
 
