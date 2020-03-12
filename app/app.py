@@ -7,6 +7,7 @@ from app.common.handler import register_handler
 from app.resource import register_blueprint
 from app.common.middleware import register_middleware
 from app.resource.v2.common_api import register_common_api
+from app.entity import *
 
 
 def create_app(env: str = 'development', override_config: typing.Dict = None) -> Flask:

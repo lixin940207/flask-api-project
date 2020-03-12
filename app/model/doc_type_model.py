@@ -1,12 +1,14 @@
 # coding=utf-8
 # @Author: James Gu
 # @Date: 2020/3/12
+from abc import ABC
+
 from app.model.base import BaseModel
 from app.entity.doc_type import DocType
 from app.common.extension import session
 
 
-class DocTypeModel(BaseModel):
+class DocTypeModel(BaseModel, ABC):
 
     def get_all(self):
         return session.query(DocType).filter(not DocType.is_deleted).all()
@@ -49,9 +51,9 @@ class DocTypeModel(BaseModel):
         session.query(DocType).filter(DocType.doc_type_id.in_(_id_list)).update({DocType.is_deleted: True})
         session.flush()
 
-    def bulk_delete_by_filter(self, **kwargs):
-        pass
-
     def update(self, entity):
+        # session.bulk_update_mappings
         pass
 
+    def bulk_update(self, entity_list):
+        session.bulk_update_mappings(DocType, entity_list)
