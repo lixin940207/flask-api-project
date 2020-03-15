@@ -21,12 +21,17 @@ def create_app(env: str = 'development', override_config: typing.Dict = None) ->
     add_file_handler(app.logger)
 
     register_extension(app)
+    app.logger.info(" [x] Extensions Registered.")
     register_handler(app)
+    app.logger.info(" [x] Handlers Registered.")
     register_middleware(app)
+    app.logger.info(" [x] Middleware Registered.")
     register_blueprint(app)
+    app.logger.info(" [x] Blueprint Registered.")
     register_common_api(app)
 
     with app.app_context():
         create_seeds()
 
+    app.logger.info(" [x] ----- Flask app started -----")
     return app

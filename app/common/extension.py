@@ -6,7 +6,7 @@ from flask_cors import CORS
 from app.common.log import logger
 # from flask_limiter import Limiter
 # from flask_limiter.util import get_remote_address
-from flask_apscheduler import APScheduler
+# from flask_apscheduler import APScheduler
 
 # apscheduler = APScheduler()
 db = SQLAlchemy()
