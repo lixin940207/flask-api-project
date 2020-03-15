@@ -9,7 +9,6 @@ from app.common.extension import session
 
 
 class DocTypeModel(BaseModel, ABC):
-
     def get_all(self):
         return session.query(DocType).filter(not DocType.is_deleted).all()
 
