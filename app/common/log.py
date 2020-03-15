@@ -9,7 +9,7 @@ from flask import g, has_request_context, request
 from app.common.common import Common
 from app.config.config import BASE_PATH
 
-logger = logging.getLogger('app')
+logger = logging.getLogger('flask.app')
 
 
 def get_request_attrs(*attrs):

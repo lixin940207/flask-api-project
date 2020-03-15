@@ -1,8 +1,8 @@
 import json
 import base64
 from flask import Flask, Response, request, g
-from .log import bind_request_id_to_g, logger
-from .log import get_request_id
+from app.common.log import bind_request_id_to_g, logger
+from app.common.log import get_request_id
 
 
 def register_middleware(app: Flask) -> None:
