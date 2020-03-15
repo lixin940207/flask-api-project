@@ -7,7 +7,7 @@ import traceback
 from logging.handlers import TimedRotatingFileHandler
 from flask import g, has_request_context, request
 from app.common.common import Common
-from .config import BASE_PATH
+from app.config.config import BASE_PATH
 
 logger = logging.getLogger('app')
 

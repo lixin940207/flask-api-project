@@ -9,9 +9,8 @@ from app.common.extension import session
 
 
 class DocTypeModel(BaseModel, ABC):
-
     def get_all(self):
-        return session.query(DocType).filter(not DocType.is_deleted).all()
+        return session.query(DocType).filter(DocType.is_deleted==False).all()
 
     def get_by_id(self, _id):
         return session.query(DocType).filter(DocType.doc_type_id == _id, not DocType.is_deleted).one()
@@ -20,7 +19,7 @@ class DocTypeModel(BaseModel, ABC):
         # Define allowed filter keys
         accept_keys = ["doc_type_name", "nlp_task_id"]
         # Compose query
-        q = session.query(DocType).filter(not DocType.is_deleted)
+        q = session.query(DocType).filter(DocType.is_deleted==False)
         # Filter conditions
         for key, val in kwargs.items():
             if key in accept_keys:
@@ -53,6 +52,7 @@ class DocTypeModel(BaseModel, ABC):
 
     def update(self, entity):
         # session.bulk_update_mappings
+
         pass
 
     def bulk_update(self, entity_list):
