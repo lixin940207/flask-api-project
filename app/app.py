@@ -1,13 +1,13 @@
 import typing
 from flask import Flask, logging
-from app.common.config import Configs
+from app.config.config import Configs
 from app.common.log import add_console_handler, add_file_handler
 from app.common.extension import register_extension
 from app.common.handler import register_handler
 from app.resource import register_blueprint
 from app.common.middleware import register_middleware
 from app.resource.v2.common_api import register_common_api
-from app.entity import *
+from app.common.seeds import create_seeds
 
 
 def create_app(env: str = 'development', override_config: typing.Dict = None) -> Flask:
@@ -25,5 +25,8 @@ def create_app(env: str = 'development', override_config: typing.Dict = None) ->
     register_middleware(app)
     register_blueprint(app)
     register_common_api(app)
+
+    with app.app_context():
+        create_seeds()
 
     return app
