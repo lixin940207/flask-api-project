@@ -7,6 +7,7 @@ from app.model.base import BaseModel
 from app.entity.train_job import TrainJob
 from app.entity.doc_type import DocType
 from app.common.extension import session
+from sqlalchemy import func
 
 
 class TrainJobModel(BaseModel, ABC):
@@ -42,6 +43,11 @@ class TrainJobModel(BaseModel, ABC):
         session.flush()
         return entity
 
+    def bulk_create(self, entity_list: [TrainJob]) -> [TrainJob]:
+        session.bulk_save_objects(entity_list, return_defaults=True)
+        session.flush()
+        return entity_list
+
     def delete(self, _id):
         session.query(TrainJob).filter(TrainJob.train_job_id == _id).update({TrainJob.is_deleted: True})
         session.flush()
@@ -49,3 +55,11 @@ class TrainJobModel(BaseModel, ABC):
     def update(self, entity):
         # session.bulk_update_mapping
         pass
+
+    @staticmethod
+    def count_train_job_by_nlp_task(user_id):
+        count = session.query(DocType.nlp_task_id, func.count(TrainJob.train_job_id)) \
+            .join(DocType, TrainJob.doc_type_id == DocType.doc_type_id) \
+            .filter(TrainJob.is_deleted==False, DocType.is_deleted==False, DocType.created_by==user_id) \
+            .group_by(DocType.nlp_task_id).all()
+        return count

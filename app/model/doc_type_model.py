@@ -11,7 +11,7 @@ from sqlalchemy import func
 
 class DocTypeModel(BaseModel, ABC):
     def get_all(self):
-        return session.query(DocType).filter(DocType.is_deleted==False).all()
+        return session.query(DocType).filter(DocType.is_deleted == False).all()
 
     def get_by_id(self, _id):
         return session.query(DocType).filter(DocType.doc_type_id == _id, not DocType.is_deleted).one()
@@ -20,7 +20,7 @@ class DocTypeModel(BaseModel, ABC):
         # Define allowed filter keys
         accept_keys = ["doc_type_name", "nlp_task_id"]
         # Compose query
-        q = session.query(DocType).filter(DocType.is_deleted==False)
+        q = session.query(DocType).filter(DocType.is_deleted == False)
         # Filter conditions
         for key, val in kwargs.items():
             if key in accept_keys:
@@ -60,7 +60,8 @@ class DocTypeModel(BaseModel, ABC):
         session.bulk_update_mappings(DocType, entity_list)
 
     @staticmethod
-    def count_doc_type_by_nlp_task():
-        count = session.query(DocType.nlp_task_id, func.count(DocType.doc_type_id)).filter(DocType.is_deleted==False)\
+    def count_doc_type_by_nlp_task(user_id):
+        count = session.query(DocType.nlp_task_id, func.count(DocType.doc_type_id)).filter(DocType.is_deleted == False,
+                                                                                           DocType.created_by == user_id) \
             .group_by(DocType.nlp_task_id).all()
         return count
