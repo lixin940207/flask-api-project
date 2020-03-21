@@ -34,5 +34,6 @@ class DashboardService:
         """
         标注员审核员只能看assign给自己的任务，只统计mark_job
         """
-
+        all_mark_job_count_by_nlp_task, labeled_mark_job_count_by_nlp_task, reviewed_mark_job_count_by_nlp_task = \
+            MarkJobModel().count_mark_job_by_nlp_task_reviewer(user_id)
         return result_skeleton

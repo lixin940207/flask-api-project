@@ -3,7 +3,7 @@ from abc import ABC
 from sqlalchemy import not_
 
 from app.model.base import BaseModel
-from app.entity.user_task import UserTask
+from app.entity import UserTask, MarkTask, MarkJob, DocType
 from app.common.extension import session
 
 

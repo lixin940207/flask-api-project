@@ -225,3 +225,25 @@ class Seeds:
             ]
             TrainJobModel().bulk_create(train_jobs)
             session.commit()
+
+    @staticmethod
+    def create_mark_task():
+        from app.entity import MarkTask
+        from app.model import MarkTaskModel
+        if len(MarkTaskModel().get_all() == 0):
+            mark_tasks = [
+                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_status=int(StatusEnum.labeled)),
+                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_status=int(StatusEnum.labeled)),
+                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_status=int(StatusEnum.labeled)),
+                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_status=int(StatusEnum.labeled)),
+                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_status=int(StatusEnum.labeled)),
+            ]
+            MarkTaskModel.bulk_create(mark_tasks)
+            session.commit()
+
+    @staticmethod
+    def creat_user_task():
+        from app.entity import UserTask
+        from app.model import UserTaskModel
+        if len(UserTaskModel().get_all() == 0):
+
