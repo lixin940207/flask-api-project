@@ -6,6 +6,7 @@ from abc import ABC
 from app.model.base import BaseModel
 from app.entity.doc_type import DocType
 from app.common.extension import session
+from sqlalchemy import func
 
 
 class DocTypeModel(BaseModel, ABC):
@@ -57,3 +58,9 @@ class DocTypeModel(BaseModel, ABC):
 
     def bulk_update(self, entity_list):
         session.bulk_update_mappings(DocType, entity_list)
+
+    @staticmethod
+    def count_doc_type_by_nlp_task():
+        count = session.query(DocType.nlp_task_id, func.count(DocType.doc_type_id)).filter(DocType.is_deleted==False)\
+            .group_by(DocType.nlp_task_id).all()
+        return count

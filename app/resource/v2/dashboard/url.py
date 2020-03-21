@@ -5,3 +5,4 @@ from app.resource.v2.dashboard import api
 from app.resource.v2.dashboard import view
 
 api.add_resource(view.DemoResource, "/demo")
+api.add_resource(view.DashboardResource, "/")
