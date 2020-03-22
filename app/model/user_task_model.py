@@ -12,6 +12,10 @@ class UserTaskModel(BaseModel, ABC):
         raise NotImplemented("no get_all")
         # return session.query(UserTask).filter(not_(UserTask.is_deleted)).all()
 
+    @staticmethod
+    def is_empty_table():
+        return session.query(UserTask).filter(not_(UserTask.is_deleted)).count() == 0
+
     def get_by_id(self, _id):
         return session.query(UserTask).filter(UserTask.user_task_id == _id, not_(UserTask.is_deleted)).one()
 

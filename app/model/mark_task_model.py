@@ -9,8 +9,11 @@ from app.common.extension import session
 
 class MarkTaskModel(BaseModel, ABC):
     def get_all(self):
-        raise NotImplemented("no get_all")
-        # return session.query(MarkTask).filter(not_(MarkTask.is_deleted)).all()
+        return session.query(MarkTask).filter(not_(MarkTask.is_deleted)).all()
+
+    @staticmethod
+    def is_empty_table():
+        return session.query(MarkTask).filter(not_(MarkTask.is_deleted)).count() == 0
 
     def get_by_id(self, _id):
         return session.query(MarkTask).filter(MarkTask.mark_task_id == _id, not_(MarkTask.is_deleted)).one()
@@ -32,12 +35,12 @@ class MarkTaskModel(BaseModel, ABC):
         q = q.offset(offset).limit(limit)
         return q.all()
 
-    def create(self, entity):
+    def create(self, entity: MarkTask) -> MarkTask:
         session.add(entity)
         session.flush()
         return entity
 
-    def bulk_create(self, entity_list):
+    def bulk_create(self, entity_list: [MarkTask]) -> [MarkTask]:
         session.bulk_save_objects(entity_list, return_defaults=True)
         session.flush()
         return entity_list

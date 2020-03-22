@@ -60,8 +60,13 @@ class DocTypeModel(BaseModel, ABC):
         session.bulk_update_mappings(DocType, entity_list)
 
     @staticmethod
-    def count_doc_type_by_nlp_task(user_id):
+    def count_doc_type_by_nlp_task_manager(user_id):
         count = session.query(DocType.nlp_task_id, func.count(DocType.doc_type_id)).filter(DocType.is_deleted == False,
                                                                                            DocType.created_by == user_id) \
             .group_by(DocType.nlp_task_id).all()
         return count
+
+    @staticmethod
+    def count_doc_type_by_nlp_task_reviewer(user_id):
+        count = session.query(DocType.nlp_task_id, func.count(DocType.doc_type_id))\
+            .join()

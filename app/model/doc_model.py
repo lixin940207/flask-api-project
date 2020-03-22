@@ -11,6 +11,10 @@ class DocModel(BaseModel, ABC):
     def get_all(self):
         raise NotImplemented("no get_all")
 
+    @staticmethod
+    def is_empty_table():
+        return session.query(Doc).filter(not_(Doc.is_deleted)).count() == 0
+
     def get_by_id(self, _id):
         return session.query(Doc).filter(Doc.doc_id == _id, not_(Doc.is_deleted)).one()
 

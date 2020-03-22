@@ -7,7 +7,7 @@ class DashboardService:
     @staticmethod
     def get_dashboard_stats_manager(result_skeleton, user_id):
         # Step 1. 获取项目数量(doc_type)
-        doc_type_count_by_nlp_tasks = DocTypeModel().count_doc_type_by_nlp_task(user_id)
+        doc_type_count_by_nlp_tasks = DocTypeModel().count_doc_type_by_nlp_task_manager(user_id)
         # Step 2. 获取模型数量(train_job)
         train_job_count_by_nlp_tasks = TrainJobModel().count_train_job_by_nlp_task(user_id)
         # Step 3. 获取各项目所有标注数、已标注任务数量、已审核+已标注任务数量(mark_job)
@@ -34,6 +34,5 @@ class DashboardService:
         """
         标注员审核员只能看assign给自己的任务，只统计mark_job
         """
-        all_mark_job_count_by_nlp_task, labeled_mark_job_count_by_nlp_task, reviewed_mark_job_count_by_nlp_task = \
-            MarkJobModel().count_mark_job_by_nlp_task_reviewer(user_id)
+        all_mark_job_count_by_nlp_task = MarkJobModel().count_mark_job_by_nlp_task_reviewer(user_id)
         return result_skeleton

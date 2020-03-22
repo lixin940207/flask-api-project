@@ -80,28 +80,36 @@ class MarkJobModel(BaseModel, ABC):
 
     @staticmethod
     def count_mark_job_by_nlp_task_reviewer(user_id):
-        all_count = session.query(DocType.nlp_task_id, func.count(MarkJob.mark_job_id)) \
+        all_count = session.query(func.count(MarkJob.mark_job_status), DocType.nlp_task_id, DocType.doc_type_id, MarkJob.mark_job_status) \
             .join(MarkTask, MarkTask.mark_job_id == MarkJob.mark_job_id) \
             .join(UserTask, UserTask.mark_task_id == MarkTask.mark_task_id) \
             .join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
             .filter(not_(UserTask.is_deleted), not_(MarkTask.is_deleted), not_(MarkJob.is_deleted),
                     not_(DocType.is_deleted), UserTask.annotator_id == user_id) \
-            .group_by(DocType.nlp_task_id).all()
-        labeled_count = session.query(DocType.nlp_task_id, func.count(MarkJob.mark_job_id)) \
-            .join(MarkTask, MarkTask.mark_job_id == MarkJob.mark_job_id) \
-            .join(UserTask, UserTask.mark_task_id == MarkTask.mark_task_id) \
-            .join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
-            .filter(not_(UserTask.is_deleted), not_(MarkTask.is_deleted), not_(MarkJob.is_deleted),
-                    not_(DocType.is_deleted), UserTask.annotator_id == user_id,
-                    MarkJob.mark_job_status.in_([int(StatusEnum.labeled), int(StatusEnum.reviewing),
-                                                 int(StatusEnum.approved)])) \
-            .group_by(DocType.nlp_task_id).all()
-        reviewed_count = session.query(DocType.nlp_task_id, func.count(MarkJob.mark_job_id)) \
-            .join(MarkTask, MarkTask.mark_job_id == MarkJob.mark_job_id) \
-            .join(UserTask, UserTask.mark_task_id == MarkTask.mark_task_id) \
-            .join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
-            .filter(not_(UserTask.is_deleted), not_(MarkTask.is_deleted), not_(MarkJob.is_deleted),
-                    not_(DocType.is_deleted), UserTask.annotator_id == user_id,
-                    MarkJob.mark_job_status.in_([int(StatusEnum.approved)])) \
-            .group_by(DocType.nlp_task_id).all()
-        return all_count, labeled_count, reviewed_count
+            .group_by(MarkJob.mark_job_status, MarkJob.doc_type_id, DocType.nlp_task_id).all()
+
+        # all_count = session.query(DocType.nlp_task_id, func.count(MarkJob.mark_job_id)) \
+        #     .join(MarkTask, MarkTask.mark_job_id == MarkJob.mark_job_id) \
+        #     .join(UserTask, UserTask.mark_task_id == MarkTask.mark_task_id) \
+        #     .join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
+        #     .filter(not_(UserTask.is_deleted), not_(MarkTask.is_deleted), not_(MarkJob.is_deleted),
+        #             not_(DocType.is_deleted), UserTask.annotator_id == user_id) \
+        #     .group_by(DocType.nlp_task_id).all()
+        # labeled_count = session.query(DocType.nlp_task_id, func.count(MarkJob.mark_job_id)) \
+        #     .join(MarkTask, MarkTask.mark_job_id == MarkJob.mark_job_id) \
+        #     .join(UserTask, UserTask.mark_task_id == MarkTask.mark_task_id) \
+        #     .join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
+        #     .filter(not_(UserTask.is_deleted), not_(MarkTask.is_deleted), not_(MarkJob.is_deleted),
+        #             not_(DocType.is_deleted), UserTask.annotator_id == user_id,
+        #             MarkJob.mark_job_status.in_([int(StatusEnum.labeled), int(StatusEnum.reviewing),
+        #                                          int(StatusEnum.approved)])) \
+        #     .group_by(DocType.nlp_task_id).all()
+        # reviewed_count = session.query(DocType.nlp_task_id, func.count(MarkJob.mark_job_id)) \
+        #     .join(MarkTask, MarkTask.mark_job_id == MarkJob.mark_job_id) \
+        #     .join(UserTask, UserTask.mark_task_id == MarkTask.mark_task_id) \
+        #     .join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
+        #     .filter(not_(UserTask.is_deleted), not_(MarkTask.is_deleted), not_(MarkJob.is_deleted),
+        #             not_(DocType.is_deleted), UserTask.annotator_id == user_id,
+        #             MarkJob.mark_job_status.in_([int(StatusEnum.approved)])) \
+        #     .group_by(DocType.nlp_task_id).all()
+        return all_count

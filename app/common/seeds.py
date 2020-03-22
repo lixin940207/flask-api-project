@@ -31,6 +31,9 @@ class Seeds:
         self.create_doc_type()
         self.create_mark_job()
         self.create_train_job()
+        self.create_doc()
+        self.create_mark_task()
+        self.creat_user_task()
 
     @staticmethod
     def create_nlp_task():
@@ -95,64 +98,64 @@ class Seeds:
         from app.model import MarkJobModel
         if len(MarkJobModel().get_all()) == 0:
             mark_jobs = [
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务1", doc_type_id=1, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.labeled)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务2", doc_type_id=1, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.labeled)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务3", doc_type_id=1, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.labeling)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务4", doc_type_id=2, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.reviewing)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务5", doc_type_id=3, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.reviewing)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务6", doc_type_id=4, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.labeling)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务7", doc_type_id=4, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务8", doc_type_id=5, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.labeling)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务9", doc_type_id=5, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务10", doc_type_id=6, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务11", doc_type_id=7, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务12", doc_type_id=8, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务13", doc_type_id=9, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务14", doc_type_id=9, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务15", doc_type_id=10, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.labeled)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务16", doc_type_id=10, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.labeling)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务17", doc_type_id=10, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务18", doc_type_id=11, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务19", doc_type_id=11, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务20", doc_type_id=5, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务21", doc_type_id=6, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务22", doc_type_id=6, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.reviewing)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务23", doc_type_id=5, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.reviewing)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务24", doc_type_id=2, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.labeling)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务25", doc_type_id=2, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务26", doc_type_id=2, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.reviewing)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务27", doc_type_id=5, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务28", doc_type_id=8, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
-                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务29", doc_type_id=7, mark_job_type="e_doc",
-                        mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务1", doc_type_id=1, mark_job_id=1,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.labeled)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务2", doc_type_id=1, mark_job_id=2,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.labeled)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务3", doc_type_id=1, mark_job_id=3,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.labeling)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务4", doc_type_id=2, mark_job_id=4,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.reviewing)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务5", doc_type_id=3, mark_job_id=5,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.reviewing)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务6", doc_type_id=4, mark_job_id=6,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.labeling)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务7", doc_type_id=4, mark_job_id=7,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务8", doc_type_id=5, mark_job_id=8,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.labeling)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务9", doc_type_id=5, mark_job_id=9,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务10", doc_type_id=6, mark_job_id=10,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务11", doc_type_id=7, mark_job_id=11,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务12", doc_type_id=8, mark_job_id=12,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务13", doc_type_id=9, mark_job_id=13,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务14", doc_type_id=9, mark_job_id=14,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务15", doc_type_id=10, mark_job_id=15,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.labeled)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务16", doc_type_id=10, mark_job_id=16,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.labeling)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务17", doc_type_id=10, mark_job_id=17,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务18", doc_type_id=11, mark_job_id=18,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务19", doc_type_id=11, mark_job_id=19,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务20", doc_type_id=5, mark_job_id=20,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务21", doc_type_id=6, mark_job_id=21,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务22", doc_type_id=6, mark_job_id=22,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.reviewing)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务23", doc_type_id=5, mark_job_id=23,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.reviewing)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务24", doc_type_id=2, mark_job_id=24,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.labeling)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务25", doc_type_id=2, mark_job_id=25,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务26", doc_type_id=2, mark_job_id=26,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.reviewing)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务27", doc_type_id=5, mark_job_id=27,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务28", doc_type_id=8, mark_job_id=28,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
+                MarkJob(app_id=1, created_by=1, mark_job_name="标注任务29", doc_type_id=7, mark_job_id=29,
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
             ]
             MarkJobModel().bulk_create(mark_jobs)
             session.commit()
@@ -227,23 +230,52 @@ class Seeds:
             session.commit()
 
     @staticmethod
+    def create_doc():
+        from app.entity import Doc
+        from app.model import DocModel
+        from uuid import uuid4
+        if DocModel().is_empty_table():
+            docs = [
+                Doc(app_id=1, created_by=1, doc_id=1, doc_raw_name="doc1.pdf", doc_unique_name=str(uuid4())),
+                Doc(app_id=1, created_by=1, doc_id=2, doc_raw_name="doc1.pdf", doc_unique_name=str(uuid4())),
+                Doc(app_id=1, created_by=1, doc_id=3, doc_raw_name="doc1.pdf", doc_unique_name=str(uuid4())),
+                Doc(app_id=1, created_by=1, doc_id=4, doc_raw_name="doc1.pdf", doc_unique_name=str(uuid4())),
+                Doc(app_id=1, created_by=1, doc_id=5, doc_raw_name="doc1.pdf", doc_unique_name=str(uuid4())),
+            ]
+            DocModel().bulk_create(docs)
+            session.commit()
+
+    @staticmethod
     def create_mark_task():
         from app.entity import MarkTask
         from app.model import MarkTaskModel
-        if len(MarkTaskModel().get_all() == 0):
+        if MarkTaskModel().is_empty_table():
             mark_tasks = [
-                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_status=int(StatusEnum.labeled)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_status=int(StatusEnum.labeled)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_status=int(StatusEnum.labeled)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_status=int(StatusEnum.labeled)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_status=int(StatusEnum.labeled)),
+                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=1, doc_id=1, mark_task_status=int(StatusEnum.labeled)),
+                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=2, doc_id=2, mark_task_status=int(StatusEnum.labeled)),
+                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=3, doc_id=3, mark_task_status=int(StatusEnum.labeled)),
+                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=4, doc_id=4, mark_task_status=int(StatusEnum.labeled)),
+                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=5, doc_id=5, mark_task_status=int(StatusEnum.labeled)),
             ]
-            MarkTaskModel.bulk_create(mark_tasks)
+            MarkTaskModel().bulk_create(mark_tasks)
             session.commit()
 
     @staticmethod
     def creat_user_task():
         from app.entity import UserTask
         from app.model import UserTaskModel
-        if len(UserTaskModel().get_all() == 0):
+        if UserTaskModel().is_empty_table():
+            user_tasks = [
+                UserTask(app_id=1, created_by=1, mark_task_id=1, annotator_id=3, user_task_status=int(StatusEnum.labeled)),
+                UserTask(app_id=1, created_by=1, mark_task_id=2, annotator_id=3,
+                         user_task_status=int(StatusEnum.labeled)),
+                UserTask(app_id=1, created_by=1, mark_task_id=3, annotator_id=3,
+                         user_task_status=int(StatusEnum.labeled)),
+                UserTask(app_id=1, created_by=1, mark_task_id=4, annotator_id=3,
+                         user_task_status=int(StatusEnum.labeled)),
+                UserTask(app_id=1, created_by=1, mark_task_id=5, annotator_id=3,
+                         user_task_status=int(StatusEnum.labeled)),
 
+            ]
+            UserTaskModel().bulk_create(user_tasks)
+            session.commit()
