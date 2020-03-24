@@ -61,12 +61,7 @@ class DocTypeModel(BaseModel, ABC):
 
     @staticmethod
     def count_doc_type_by_nlp_task_manager(user_id):
-        count = session.query(DocType.nlp_task_id, func.count(DocType.doc_type_id)).filter(DocType.is_deleted == False,
+        count = session.query(DocType.nlp_task_id, func.count(DocType.doc_type_id)).filter(~DocType.is_deleted,
                                                                                            DocType.created_by == user_id) \
             .group_by(DocType.nlp_task_id).all()
         return count
-
-    @staticmethod
-    def count_doc_type_by_nlp_task_reviewer(user_id):
-        count = session.query(DocType.nlp_task_id, func.count(DocType.doc_type_id))\
-            .join()

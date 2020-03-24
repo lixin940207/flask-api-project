@@ -12,7 +12,7 @@ class DashboardService:
         train_job_count_by_nlp_tasks = TrainJobModel().count_train_job_by_nlp_task(user_id)
         # Step 3. 获取各项目所有标注数、已标注任务数量、已审核+已标注任务数量(mark_job)
         all_mark_job_count_by_nlp_task, labeled_mark_job_count_by_nlp_task, reviewed_mark_job_count_by_nlp_task = \
-            MarkJobModel().count_mark_job_by_nlp_task(user_id)
+            MarkJobModel().count_mark_job_by_nlp_task_manager(user_id)
         # Step 4. Compose result
         for r in result_skeleton:
             doc_type_count = [c for c in doc_type_count_by_nlp_tasks if c[0] == r["nlp_task_id"]] or [(0, 0)]

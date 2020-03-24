@@ -31,6 +31,28 @@ class MarkJobModel(BaseModel, ABC):
         q = q.offset(offset).limit(limit)
         return q.all()
 
+    def get_by_nlp_task_id(
+            self, nlp_task_id, search, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+        # Define allowed filter keys
+        accept_keys = ["assign_mode", "mark_job_status", "mark_job_type", "doc_type_id"]
+        # Compose query
+        q = session.query(MarkJob).join(
+            DocType, DocType.doc_type_id == DocType.doc_type_id
+        ).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~MarkJob.is_deleted)
+        # Filter conditions
+        for key, val in kwargs.items():
+            if key in accept_keys:
+                q = q.filter(getattr(MarkJob, key) == val)
+        if search:
+            q = q.filter(MarkJob.mark_job_name.like(f'%{search}%'))
+        # Order by key
+        q = q.order_by(order_by)
+        # Descending order
+        if order_by_desc:
+            q = q.desc()
+        q = q.offset(offset).limit(limit)
+        return q.all()
+
     def create(self, entity):
         session.add(entity)
         session.flush()
@@ -58,6 +80,22 @@ class MarkJobModel(BaseModel, ABC):
     def bulk_update(self, entity_list):
         raise NotImplemented("no bulk_update")
         pass
+
+    @staticmethod
+    def count_mark_job_by_nlp_task_id(nlp_task_id, search, **kwargs):
+        # Define allowed filter keys
+        accept_keys = ["assign_mode", "mark_job_status", "mark_job_type", "doc_type_id"]
+        # Compose query
+        q = session.query(func.count(MarkJob.mark_job_id)).join(
+            DocType, DocType.doc_type_id == DocType.doc_type_id
+        ).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~MarkJob.is_deleted)
+        # Filter conditions
+        for key, val in kwargs.items():
+            if key in accept_keys:
+                q = q.filter(getattr(MarkJob, key) == val)
+        if search:
+            q = q.filter(MarkJob.mark_job_name.like(f'%{search}%'))
+        return q.one()[0]
 
     @staticmethod
     def count_mark_job_by_nlp_task_manager(user_id):

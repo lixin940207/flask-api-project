@@ -1,7 +1,8 @@
 from abc import ABC
 
-from sqlalchemy import not_
+from sqlalchemy import not_, func
 
+from app.entity import DocType, MarkJob
 from app.model.base import BaseModel
 from app.entity.mark_task import MarkTask
 from app.common.extension import session
@@ -61,3 +62,12 @@ class MarkTaskModel(BaseModel, ABC):
 
     def bulk_update(self, entity_list):
         session.bulk_update_mappings(MarkTask, entity_list)
+
+    @staticmethod
+    def count_mark_task_status(mark_job_ids, user_id):
+        all_count = session.query(
+            func.count(MarkTask.mark_task_status), MarkJob.mark_job_status) \
+            .join(MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id) \
+            .filter(MarkJob.mark_job_id.in_(mark_job_ids), ~MarkTask.is_deleted,
+                    ~MarkJob.is_deleted, ~DocType.is_deleted) \
+            .group_by(MarkJob.mark_job_status, MarkJob.mark_job_id).all()
