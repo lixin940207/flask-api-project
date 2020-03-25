@@ -32,6 +32,7 @@ def create_status():
             Status(app_id=1, created_by=1, status_name="queueing"),
             Status(app_id=1, created_by=1, status_name="processing"),
             Status(app_id=1, created_by=1, status_name="unlabel"),
+            Status(app_id=1, created_by=1, status_name="labeling"),
             Status(app_id=1, created_by=1, status_name="labeled"),
             Status(app_id=1, created_by=1, status_name="reviewing"),    # auditing
             Status(app_id=1, created_by=1, status_name="approved"),     # audited
