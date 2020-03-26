@@ -9,7 +9,7 @@ from app.entity.train_term_task import TrainTermTask
 from app.common.extension import session
 
 
-class TrainTaskModel(BaseModel, ABC):
+class TrainTermTaskModel(BaseModel, ABC):
     def get_all(self):
         return session.query(TrainTermTask).filter(not_(TrainTermTask.is_deleted)).all()
 
@@ -34,7 +34,8 @@ class TrainTaskModel(BaseModel, ABC):
         q = q.offset(offset).limit(limit)
         return q.all()
 
-    def create(self, entity: TrainTermTask) -> TrainTermTask:
+    def create(self, **kwargs) -> TrainTermTask:
+        entity = TrainTermTask(**kwargs)
         session.add(entity)
         session.flush()
         return entity

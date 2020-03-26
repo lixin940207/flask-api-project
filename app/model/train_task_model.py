@@ -33,7 +33,8 @@ class TrainTaskModel(BaseModel, ABC):
         q = q.offset(offset).limit(limit)
         return q.all()
 
-    def create(self, entity: TrainTask) -> TrainTask:
+    def create(self, **kwargs) -> TrainTask:
+        entity = TrainTask(**kwargs)
         session.add(entity)
         session.flush()
         return entity

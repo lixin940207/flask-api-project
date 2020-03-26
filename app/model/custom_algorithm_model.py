@@ -15,17 +15,17 @@ from app.common.extension import session
 
 class CustomAlgorithmModel(BaseModel, ABC):
     def get_all(self):
-        return session.query(CustomAlgorithm).filter(CustomAlgorithm.is_deleted == False).all()
+        return session.query(CustomAlgorithm).filter(~CustomAlgorithm.is_deleted).all()
 
     def get_by_id(self, _id):
         return session.query(CustomAlgorithm).filter(CustomAlgorithm.custom_algorithm_id == _id,
-                                                     not CustomAlgorithm.is_deleted).one()
+                                                     ~CustomAlgorithm.is_deleted).one()
 
     def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
         # Define allowed filter keys
         accept_keys = ["custom_algorithm_name", "nlp_task_id"]
         # Compose query
-        q = session.query(CustomAlgorithm).filter(CustomAlgorithm.is_deleted == False)
+        q = session.query(CustomAlgorithm).filter(~CustomAlgorithm.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():
             if key in accept_keys:
@@ -38,7 +38,8 @@ class CustomAlgorithmModel(BaseModel, ABC):
         q = q.offset(offset).limit(limit)
         return q.all()
 
-    def create(self, entity: CustomAlgorithm) -> CustomAlgorithm:
+    def create(self, **kwargs) -> CustomAlgorithm:
+        entity = CustomAlgorithm(**kwargs)
         session.add(entity)
         session.flush()
         return entity

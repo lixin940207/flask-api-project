@@ -11,16 +11,16 @@ from sqlalchemy import func
 
 class DocTypeModel(BaseModel, ABC):
     def get_all(self):
-        return session.query(DocType).filter(DocType.is_deleted == False).all()
+        return session.query(DocType).filter(~DocType.is_deleted).all()
 
     def get_by_id(self, _id):
-        return session.query(DocType).filter(DocType.doc_type_id == _id, not DocType.is_deleted).one()
+        return session.query(DocType).filter(DocType.doc_type_id == _id, ~DocType.is_deleted).one()
 
     def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
         # Define allowed filter keys
         accept_keys = ["doc_type_name", "nlp_task_id"]
         # Compose query
-        q = session.query(DocType).filter(DocType.is_deleted == False)
+        q = session.query(DocType).filter(~DocType.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():
             if key in accept_keys:
@@ -53,7 +53,6 @@ class DocTypeModel(BaseModel, ABC):
 
     def update(self, entity):
         # session.bulk_update_mappings
-
         pass
 
     def bulk_update(self, entity_list):
