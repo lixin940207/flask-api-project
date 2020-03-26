@@ -15,3 +15,4 @@ class TrainJobSchema(Schema):  # type: ignore
     doc_type = fields.Nested(DocTypeSchema)
     train_list = fields.List(fields.Nested(TrainTaskSchema))
     created_time = fields.String()
+    model_version = fields.String()

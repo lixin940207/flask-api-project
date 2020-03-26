@@ -40,6 +40,12 @@ class TrainTermTaskModel(BaseModel, ABC):
         session.flush()
         return entity
 
+    def bulk_create(self, entity_list) -> [TrainTermTask]:
+        entity_list = [TrainTermTask(**entity) for entity in entity_list]
+        session.bulk_save_objects(entity_list, return_defaults=True)
+        session.flush()
+        return entity_list
+
     def delete(self, _id):
         session.query(TrainTermTask).filter(TrainTermTask.doc_type_id == _id).update({TrainTermTask.is_deleted: True})
         session.flush()
