@@ -15,7 +15,7 @@ class NlpTaskModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(NlpTask).filter(NlpTask.nlp_task_id == _id, not NlpTask.is_deleted).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         pass
 
     def create(self, entity):

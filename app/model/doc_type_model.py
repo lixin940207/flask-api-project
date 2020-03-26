@@ -16,7 +16,7 @@ class DocTypeModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(DocType).filter(DocType.doc_type_id == _id, ~DocType.is_deleted).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["doc_type_name", "nlp_task_id"]
         # Compose query

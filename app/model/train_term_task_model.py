@@ -17,7 +17,7 @@ class TrainTermTaskModel(BaseModel, ABC):
         return session.query(TrainTermTask).filter(TrainTermTask.train_term_task_id == _id,
                                                    not_(TrainTermTask.is_deleted)).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["train_task_id", "doc_term_id"]
         # Compose query

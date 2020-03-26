@@ -18,7 +18,7 @@ class DocModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(Doc).filter(Doc.doc_id == _id, not_(Doc.is_deleted)).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         raise NotImplemented("no get_by_filter")
 
     def create(self, entity):

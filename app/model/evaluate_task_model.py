@@ -17,7 +17,7 @@ class EvaluateTaskModel(BaseModel, ABC):
         return session.query(EvaluateTask).filter(EvaluateTask.evaluate_task_id == _id,
                                                   not_(EvaluateTask.is_deleted)).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["train_task_id"]
         # Compose query

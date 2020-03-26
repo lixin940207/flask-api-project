@@ -20,7 +20,7 @@ class MarkTaskModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(MarkTask).filter(MarkTask.mark_task_id == _id, not_(MarkTask.is_deleted)).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["mark_job_id", "doc_id", "reviewer_id", "mark_task_status"]
         # Compose query

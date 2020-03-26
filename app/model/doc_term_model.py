@@ -20,7 +20,7 @@ class DocTermModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(DocTerm).filter(DocTerm.doc_term_id == _id, ~DocTerm.is_deleted).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["doc_term_name", "doc_type_id"]
         # Compose query

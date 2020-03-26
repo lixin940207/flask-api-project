@@ -34,6 +34,7 @@ class ModelService:
         # assign doc_type to each train job for dumping
         for train_job in train_jobs:
             train_job.doc_type = DocTypeModel().get_by_id(train_job.doc_type_id)
+            train_job.train_list = TrainTaskModel().get_by_filter(train_job_id=train_job.train_job_id)
         # get the serialized result
         result = TrainJobSchema().dump(train_jobs, many=True)
         return count, result

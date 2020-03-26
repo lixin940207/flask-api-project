@@ -14,7 +14,7 @@ class MarkJobModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(MarkJob).filter(MarkJob.mark_job_id == _id, not_(MarkJob.is_deleted)).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["assign_mode", "mark_job_status", "mark_job_type", "doc_type_id"]
         # Compose query
