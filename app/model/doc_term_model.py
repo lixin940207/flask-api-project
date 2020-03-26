@@ -11,6 +11,7 @@ from abc import ABC
 from app.model.base import BaseModel
 from app.entity.doc_term import DocTerm
 from app.common.extension import session
+from app.schema.doc_term_schema import DocTermSchema
 
 
 class DocTermModel(BaseModel, ABC):
@@ -62,3 +63,10 @@ class DocTermModel(BaseModel, ABC):
     def bulk_update(self, entity_list):
         session.bulk_update_mappings(DocTerm, entity_list)
         session.flush()
+
+    def get_by_exclude_terms(self, exclude_terms_ids, limit=10, offset=0):
+        q = session.query(DocTerm).filter(DocTerm.doc_term_id.notin_(exclude_terms_ids), ~DocTerm.is_deleted)
+        count = q.count()
+        items = q.offset(offset).limit(limit).all()
+        result = DocTermSchema(many=True).dump(items)
+        return result, count
