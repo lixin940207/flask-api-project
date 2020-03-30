@@ -3,6 +3,7 @@
 # @Date: 2020/3/12
 from abc import ABC
 
+from app.entity import MarkJob
 from app.model.base import BaseModel
 from app.entity.doc_type import DocType
 from app.common.extension import session
@@ -16,7 +17,7 @@ class DocTypeModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(DocType).filter(DocType.doc_type_id == _id, ~DocType.is_deleted).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["doc_type_name", "nlp_task_id"]
         # Compose query
@@ -33,7 +34,8 @@ class DocTypeModel(BaseModel, ABC):
         q = q.offset(offset).limit(limit)
         return q.all()
 
-    def create(self, entity: DocType) -> DocType:
+    def create(self, **kwargs) -> DocType:
+        entity = DocType(**kwargs)
         session.add(entity)
         session.flush()
         return entity
@@ -64,3 +66,13 @@ class DocTypeModel(BaseModel, ABC):
                                                                                            DocType.created_by == user_id) \
             .group_by(DocType.nlp_task_id).all()
         return count
+
+    @staticmethod
+    def get_by_mark_job_ids(mark_job_ids, nlp_task_id, limit=10, offset=0):
+        q = session.query(DocType).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
+        if mark_job_ids:
+            q = q.outerjoin(MarkJob, MarkJob.doc_type_id == DocType.doc_type_id) \
+                .filter(MarkJob.mark_job_id.in_(mark_job_ids))
+        count = q.count()
+        items = q.offset(offset).limit(limit).all()
+        return items, count

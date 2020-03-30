@@ -7,6 +7,6 @@
 @IDE: PyCharm 
 """
 from app.resource.v2.other import api
-from app.resource.v2.other.doc_type import view
+from app.resource.v2.other.doc_term import view
 
-api.add_resource(view.DocTypeListResource, '/doc_type', '/classify_doc_type', '/entity_doc_type', '/wordseg_doc_type')
+api.add_resource(view.GetDocTermListResource, "/list_doc_terms")

@@ -4,6 +4,9 @@
 import os
 import json
 import datetime
+from flask_restful import request
+
+# from app.common.seeds import NlpTaskEnum
 
 
 class Common:
@@ -29,3 +32,18 @@ class Common:
     @staticmethod
     def format_datetime(_datetime: datetime.datetime, format_string: str = '%Y%m%d%H%M%S'):
         return _datetime.strftime(format_string)
+
+    @staticmethod
+    def get_nlp_task_id(args):
+        nlp_task_url = request.url.split('/')[-1]
+        if 'classify' in nlp_task_url:
+            nlp_task_id = 2     # int(getattr(NlpTaskEnum, 'classify'))
+        elif 'entity' in nlp_task_url:
+            nlp_task_id = 4     # int(getattr(NlpTaskEnum, 'relation'))
+        elif 'wordseg' in nlp_task_url:
+            nlp_task_id = 3     # int(getattr(NlpTaskEnum, 'wordseg'))
+        else:
+            nlp_task_id = 1     # int(getattr(NlpTaskEnum, 'extract'))
+        args.update({
+            'nlp_task_id': nlp_task_id
+        })
