@@ -6,7 +6,7 @@ import json
 import datetime
 from flask_restful import request
 
-# from app.common.seeds import NlpTaskEnum
+from app.common.seeds import NlpTaskEnum
 
 
 class Common:
@@ -37,13 +37,13 @@ class Common:
     def get_nlp_task_id(args):
         nlp_task_url = request.url.split('/')[-1]
         if 'classify' in nlp_task_url:
-            nlp_task_id = 2     # int(getattr(NlpTaskEnum, 'classify'))
+            nlp_task_id = int(getattr(NlpTaskEnum, 'classify'))
         elif 'entity' in nlp_task_url:
-            nlp_task_id = 4     # int(getattr(NlpTaskEnum, 'relation'))
+            nlp_task_id = int(getattr(NlpTaskEnum, 'relation'))
         elif 'wordseg' in nlp_task_url:
-            nlp_task_id = 3     # int(getattr(NlpTaskEnum, 'wordseg'))
+            nlp_task_id = int(getattr(NlpTaskEnum, 'wordseg'))
         else:
-            nlp_task_id = 1     # int(getattr(NlpTaskEnum, 'extract'))
+            nlp_task_id = int(getattr(NlpTaskEnum, 'extract'))
         args.update({
             'nlp_task_id': nlp_task_id
         })

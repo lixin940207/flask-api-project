@@ -1,4 +1,4 @@
-from app.common.log import logger
+# from app.common.log import logger
 from app.common.extension import session
 from enum import Enum
 
@@ -48,7 +48,7 @@ class Seeds:
             ]
             NlpTaskModel().bulk_create(init_nlp_tasks)
             session.commit()
-            logger.info(" [x] Seeds nlp_task has been created. ")
+            # logger.info(" [x] Seeds nlp_task has been created. ")
 
     @staticmethod
     def create_status():
@@ -69,7 +69,7 @@ class Seeds:
             ]
             StatusModel().bulk_create(init_status)
             session.commit()
-            logger.info(" [x] Seeds status has been created. ")
+            # logger.info(" [x] Seeds status has been created. ")
 
     @staticmethod
     def create_doc_type():
