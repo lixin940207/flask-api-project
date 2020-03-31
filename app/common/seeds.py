@@ -1,27 +1,6 @@
-# from app.common.log import logger
+from app.common.log import logger
 from app.common.extension import session
-from enum import Enum
-
-
-class NlpTaskEnum(int, Enum):
-    extract = 1,
-    classify = 2,
-    wordseg = 3,
-    relation = 4
-
-
-class StatusEnum(int, Enum):
-    init = 1,
-    queueing = 2,
-    processing = 3,
-    unlabel = 4,
-    labeling = 5,
-    labeled = 6,
-    reviewing = 7,
-    approved = 8,
-    training = 9,
-    fail = 10,
-    success = 11
+from app.common.common import NlpTaskEnum, StatusEnum
 
 
 class Seeds:
@@ -49,7 +28,7 @@ class Seeds:
             ]
             NlpTaskModel().bulk_create(init_nlp_tasks)
             session.commit()
-            # logger.info(" [x] Seeds nlp_task has been created. ")
+            logger.info(" [x] Seeds nlp_task has been created. ")
 
     @staticmethod
     def create_status():
@@ -70,7 +49,7 @@ class Seeds:
             ]
             StatusModel().bulk_create(init_status)
             session.commit()
-            # logger.info(" [x] Seeds status has been created. ")
+            logger.info(" [x] Seeds status has been created. ")
 
     @staticmethod
     def create_doc_type():

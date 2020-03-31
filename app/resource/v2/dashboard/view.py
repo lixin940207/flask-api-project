@@ -8,7 +8,7 @@ from app.common.extension import session
 from app.entity.doc_type import DocType
 from app.common.filters import QueryByRoleMixin
 from app.service.dashboard_service import DashboardService
-from app.common.seeds import NlpTaskEnum
+from app.common.common import NlpTaskEnum
 from flask import jsonify
 
 

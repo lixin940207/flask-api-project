@@ -5,8 +5,28 @@ import os
 import json
 import datetime
 from flask_restful import request
+from enum import Enum
 
-from app.common.seeds import NlpTaskEnum
+
+class NlpTaskEnum(int, Enum):
+    extract = 1,
+    classify = 2,
+    wordseg = 3,
+    relation = 4
+
+
+class StatusEnum(int, Enum):
+    init = 1,
+    queueing = 2,
+    processing = 3,
+    unlabel = 4,
+    labeling = 5,
+    labeled = 6,
+    reviewing = 7,
+    approved = 8,
+    training = 9,
+    fail = 10,
+    success = 11
 
 
 class Common:
@@ -37,13 +57,13 @@ class Common:
     def get_nlp_task_id_by_route(args):
         nlp_task_url = request.url.split('/')[-1]
         if 'classify' in nlp_task_url:
-            nlp_task_id = int(getattr(NlpTaskEnum, 'classify'))
+            nlp_task_id = int(NlpTaskEnum.classify)
         elif 'entity' in nlp_task_url:
-            nlp_task_id = int(getattr(NlpTaskEnum, 'relation'))
+            nlp_task_id = int(NlpTaskEnum.relation)
         elif 'wordseg' in nlp_task_url:
-            nlp_task_id = int(getattr(NlpTaskEnum, 'wordseg'))
+            nlp_task_id = int(NlpTaskEnum.wordseg)
         else:
-            nlp_task_id = int(getattr(NlpTaskEnum, 'extract'))
+            nlp_task_id = int(NlpTaskEnum.extract)
         args.update({
             'nlp_task_id': nlp_task_id
         })

@@ -8,7 +8,7 @@ from app.common.log import logger
 from app.config.config import get_config_from_app as _get
 from app.common.extension import session
 from app.common.fileset import upload_fileset
-from app.common.seeds import NlpTaskEnum, StatusEnum
+from app.common.common import NlpTaskEnum, StatusEnum
 from app.model.mark_task_model import MarkTaskModel
 from app.model.doc_type_model import DocTypeModel
 from app.model.custom_algorithm_model import CustomAlgorithmModel

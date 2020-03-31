@@ -2,7 +2,7 @@ from abc import ABC
 
 from sqlalchemy import not_, func
 
-from app.common.seeds import StatusEnum
+from app.common.common import StatusEnum
 from app.entity import DocType, MarkJob, Doc
 from app.model.base import BaseModel
 from app.entity.mark_task import MarkTask

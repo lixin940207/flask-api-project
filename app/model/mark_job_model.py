@@ -4,7 +4,7 @@ from sqlalchemy import not_, func
 from app.model.base import BaseModel
 from app.entity import MarkJob, DocType, UserTask, MarkTask
 from app.common.extension import session
-from app.common.seeds import StatusEnum
+from app.common.common import StatusEnum
 
 
 class MarkJobModel(BaseModel, ABC):
