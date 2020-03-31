@@ -34,7 +34,7 @@ class Common:
         return _datetime.strftime(format_string)
 
     @staticmethod
-    def get_nlp_task_id(args):
+    def get_nlp_task_id_by_route(args):
         nlp_task_url = request.url.split('/')[-1]
         if 'classify' in nlp_task_url:
             nlp_task_id = int(getattr(NlpTaskEnum, 'classify'))
