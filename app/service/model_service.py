@@ -3,12 +3,14 @@
 # create: 2020/3/24-3:39 下午
 import json
 from flask import g
+
+from app.common.filters import CurrentUser
 from app.common.redis import r
 from app.common.log import logger
 from app.config.config import get_config_from_app as _get
 from app.common.extension import session
 from app.common.fileset import upload_fileset
-from app.common.seeds import NlpTaskEnum, StatusEnum
+from app.common.common import NlpTaskEnum, StatusEnum
 from app.model.mark_task_model import MarkTaskModel
 from app.model.doc_type_model import DocTypeModel
 from app.model.custom_algorithm_model import CustomAlgorithmModel
@@ -24,33 +26,38 @@ from app.common.utils.time import get_now_with_format
 
 class ModelService:
     @staticmethod
-    def get_train_job_list_by_nlp_task(nlp_task, search, offset, limit, user_group_id=None):
+    def get_train_job_list_by_nlp_task(nlp_task, search, offset, limit, current_user: CurrentUser):
         # get nlp_task id
         nlp_task_id = int(getattr(NlpTaskEnum, nlp_task))
         # get train jobs by nlp_task id and other filters
-        if user_group_id:
-            train_jobs = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
-                                                            limit=limit)
-        else:
-            train_jobs = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
-                                                            limit=limit, group_id=user_group_id)
+        train_tasks = TrainTaskModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
+                                                            limit=limit, current_user=current_user)
         # count train jobs by nlp_task_id and other filters
-        count = TrainJobModel().count_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search)
+        count = TrainJobModel().count_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, current_user=current_user)
         # assign doc_type to each train job for dumping
-        for train_job in train_jobs:
-            train_job.doc_type = DocTypeModel().get_by_id(train_job.doc_type_id)
-            train_job.train_list = TrainTaskModel().get_by_filter(train_job_id=train_job.train_job_id)
+        result = []
+        job_id_list = []
+        for task in train_tasks:
+            if task[0].train_job_id not in job_id_list:
+                job_id_list.append(task[0].train_job_id)
+                train_job = task[1]
+                train_job.doc_type = task[2]
+                train_job.train_list = [task[0]]
+                result.append(train_job)
+            else:
+                result[job_id_list.index(task[0].train_job_id)].train_list.append(task[0])
+
+        # for train_job in train_jobs:
+        #     train_job.doc_type = DocTypeModel().get_by_id(train_job.doc_type_id)
+        #     train_job.train_list = TrainTaskModel().get_by_filter(train_job_id=train_job.train_job_id)
         # get the serialized result
-        result = TrainJobSchema().dump(train_jobs, many=True)
+        result = TrainJobSchema().dump(result, many=True)
         return count, result
 
     @staticmethod
-    def get_train_job_list_by_doc_type_id(doc_type_id, search, offset, limit, user_group_id=None):
+    def get_train_job_list_by_doc_type_id(doc_type_id, search, offset, limit, current_user: CurrentUser):
         # verify doc type
-        if user_group_id: # validate if the doc_type_id belongs to this user's group
-            doc_type = DocTypeModel().get_by_filter(doc_type_id=doc_type_id, group_id=user_group_id)
-        else: # for super manager
-            doc_type = DocTypeModel().get_by_id(doc_type_id)
+        doc_type = DocTypeModel().get_by_filter(current_user=current_user, doc_type_id=doc_type_id)
         # if not exists doc_type, return None
         if not doc_type:
             return 0, {}

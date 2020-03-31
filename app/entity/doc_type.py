@@ -8,3 +8,4 @@ class DocType(BaseEntity):
     doc_type_desc = db.Column(db.Text(), default="")
     is_favorite = db.Column(db.Boolean(), default=False)
     nlp_task_id = db.Column(db.Integer(), db.ForeignKey("nlp_task.nlp_task_id"), nullable=False)
+    group_id = db.Column(db.Integer(), nullable=False, default=0)

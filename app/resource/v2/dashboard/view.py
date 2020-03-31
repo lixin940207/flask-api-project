@@ -6,9 +6,9 @@ from flask_restful import Resource
 from app.model.doc_type_model import DocTypeModel
 from app.common.extension import session
 from app.entity.doc_type import DocType
-from app.common.filters import QueryByRoleMixin
+from app.common.filters import CurrentUserMixin
 from app.service.dashboard_service import DashboardService
-from app.common.seeds import NlpTaskEnum
+from app.common.common import NlpTaskEnum, RoleEnum
 from flask import jsonify
 
 
@@ -29,7 +29,7 @@ class DashboardResource(Resource):
             {"type": "实体关系", "nlp_task_id": int(NlpTaskEnum.relation)},
             {"type": "分词项目", "nlp_task_id": int(NlpTaskEnum.wordseg)},
         ]
-        if self.get_current_role() in ['管理员', '超级管理员']:
+        if self.get_current_role() in [str(RoleEnum.manager), str(RoleEnum.admin), str(RoleEnum.guest)]:
             """
             管理员和超级管理员可以看到模型、标注信息
             """

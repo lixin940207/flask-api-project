@@ -1,27 +1,6 @@
 from app.common.log import logger
 from app.common.extension import session
-from enum import Enum
-
-
-class NlpTaskEnum(int, Enum):
-    extract = 1,
-    classify = 2,
-    wordseg = 3,
-    relation = 4
-
-
-class StatusEnum(int, Enum):
-    init = 1,
-    queueing = 2,
-    processing = 3,
-    unlabel = 4,
-    labeling = 5,
-    labeled = 6,
-    reviewing = 7,
-    approved = 8,
-    training = 9,
-    fail = 10,
-    success = 11
+from app.common.common import NlpTaskEnum, StatusEnum
 
 
 class Seeds:
@@ -35,6 +14,8 @@ class Seeds:
         self.create_doc()
         self.create_mark_task()
         self.creat_user_task()
+        self.create_train_task()
+        session.commit()
 
     @staticmethod
     def create_nlp_task():
@@ -280,3 +261,23 @@ class Seeds:
             ]
             UserTaskModel().bulk_create(user_tasks)
             session.commit()
+
+    @staticmethod
+    def create_train_task():
+        from app.model import TrainTaskModel
+        if TrainTaskModel().is_empty_table():
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=1, train_model_name="test",
+                                    train_status=int(StatusEnum.training), train_job_id=1)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=2, train_model_name="test",
+                                    train_status=int(StatusEnum.training), train_job_id=1)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=3, train_model_name="test",
+                                    train_status=int(StatusEnum.training), train_job_id=2)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=4, train_model_name="test",
+                                    train_status=int(StatusEnum.training), train_job_id=3)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=5, train_model_name="test",
+                                    train_status=int(StatusEnum.training), train_job_id=3)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=6, train_model_name="test",
+                                    train_status=int(StatusEnum.training), train_job_id=4)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=7, train_model_name="test",
+                                    train_status=int(StatusEnum.training), train_job_id=5)
+        session.commit()

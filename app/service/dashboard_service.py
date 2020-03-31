@@ -1,6 +1,4 @@
-import pydash
 from app.model import DocTypeModel, TrainJobModel, MarkJobModel
-from app.common.seeds import NlpTaskEnum, StatusEnum
 
 
 class DashboardService:

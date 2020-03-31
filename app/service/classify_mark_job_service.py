@@ -1,7 +1,7 @@
 # coding=utf-8
 # @Author: Jiasheng Gu
 # @Date: 2020/3/23
-from app.common.seeds import NlpTaskEnum
+
 from app.model import MarkJobModel, MarkTaskModel
 from app.resource.v2.mark.classify_mark_job.schema import ClassifyMarkJobSchema
 
