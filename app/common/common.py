@@ -29,6 +29,14 @@ class StatusEnum(int, Enum):
     success = 11
 
 
+class RoleEnum(str, Enum):
+    admin = "超级管理员",
+    manager = "管理员",
+    reviewer = "审核员",
+    annotator = "标注员",
+    guest = "游客"
+
+
 class Common:
     @staticmethod
     def make_dirs(path: str):

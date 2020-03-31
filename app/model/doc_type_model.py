@@ -3,11 +3,15 @@
 # @Date: 2020/3/12
 from abc import ABC
 
+import typing
+
 from app.entity import MarkJob
 from app.model.base import BaseModel
 from app.entity.doc_type import DocType
 from app.common.extension import session
+from app.common.common import RoleEnum
 from sqlalchemy import func
+from app.common.filters import CurrentUser
 
 
 class DocTypeModel(BaseModel, ABC):
@@ -57,19 +61,23 @@ class DocTypeModel(BaseModel, ABC):
         # session.bulk_update_mappings
         pass
 
-    def bulk_update(self, entity_list):
+    def bulk_update(self, entity_list) -> None:
         session.bulk_update_mappings(DocType, entity_list)
 
     @staticmethod
-    def count_doc_type_by_nlp_task_manager(user_id):
+    def count_doc_type_by_nlp_task_manager(user_id) -> int:
         count = session.query(DocType.nlp_task_id, func.count(DocType.doc_type_id)).filter(~DocType.is_deleted,
                                                                                            DocType.created_by == user_id) \
             .group_by(DocType.nlp_task_id).all()
         return count
 
     @staticmethod
-    def get_by_mark_job_ids(mark_job_ids, nlp_task_id, limit=10, offset=0):
+    def get_by_mark_job_ids(mark_job_ids, nlp_task_id, current_user: CurrentUser, limit=10, offset=0) -> (typing.List, int):
         q = session.query(DocType).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
+        if current_user.user_role in [str(RoleEnum.manager), str(RoleEnum.guest)]:
+            q = q.filter(DocType.group_id.in_(current_user.user_groups))
+        elif current_user.user_role in [str(RoleEnum.reviewer), str(RoleEnum.annotator)]:
+            q = q.fitler(func.json_contains(MarkJob.annotator_ids, current_user.user_id))
         if mark_job_ids:
             q = q.outerjoin(MarkJob, MarkJob.doc_type_id == DocType.doc_type_id) \
                 .filter(MarkJob.mark_job_id.in_(mark_job_ids))

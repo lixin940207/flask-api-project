@@ -20,7 +20,7 @@ class DocTypeListResource(Resource, QueryByRoleMixin):
         :return:
         """
         Common.get_nlp_task_id_by_route(args)
-        result, count = DocTypeService().get_doc_type(self.get_current_user_id(), self.get_current_role(), args)
+        result, count = DocTypeService().get_doc_type(self.get_current_user(), args)
         return {
                    "message": "请求成功",
                    "result": result,
@@ -47,7 +47,7 @@ class DocTypeListResource(Resource, QueryByRoleMixin):
         #     'nlp_task_id': self.nlp_task_id
         # })
         Common.get_nlp_task_id_by_route(args)
-        result = DocTypeService().create_doc_type(self.get_current_user_id(), self.get_current_role(), args)
+        result = DocTypeService().create_doc_type(self.get_current_user(), args)
         return {
                    "message": "创建成功",
                    "result": result,

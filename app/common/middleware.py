@@ -21,6 +21,10 @@ def register_middleware(app: Flask) -> None:
         g.user_id = request.args.get('user_id') or user_info.get('id', 0)
         g.user_name = request.args.get('username') or user_info.get('username', '')
         g.user_roles = request.args.getlist('user_roles') or [r.get('name') for r in user_info.get('roles', [])]
+        try:
+            g.user_groups = request.args.getlist('groups') or [r.get('id') for r in user_info.get('groups', [1])]
+        except:
+            g.user_groups = [-1]
         logger.info({
             "app_id": g.app_id,
             "user_id": g.user_id,
