@@ -4,13 +4,15 @@
 from flask import g
 from typing import Tuple, Dict, Any
 from flask_restful import Resource
+
+from app.common.common import RoleEnum
 from app.common.patch import parse, fields
-from app.common.filters import QueryByRoleMixin
+from app.common.filters import CurrentUserMixin
 from app.service.doc_type_service import DocTypeService
 from app.service.model_service import ModelService
 
 
-class ModelListResource(Resource, QueryByRoleMixin):
+class ModelListResource(Resource, CurrentUserMixin):
     @parse({
         "query": fields.String(missing=''),
         "offset": fields.Integer(missing=0),
@@ -22,25 +24,10 @@ class ModelListResource(Resource, QueryByRoleMixin):
         """
         获取模型记录，分页
         """
-        user_role = self.get_current_role()
         if args.get("doc_type_id"):  # 获取某个doc_type项目的模型列表
-            if user_role == "超级管理员":
-                count, result = ModelService().get_train_job_list_by_doc_type_id(
-                    doc_type_id=args['doc_type_id'], search=args['query'], offset=args['offset'], limit=args['limit'])
-            elif user_role == "管理员":
-                count, result = ModelService().get_train_job_list_by_doc_type_id(
-                    doc_type_id=args['doc_type_id'], search=args['query'], offset=args['offset'], limit=args['limit'], user_group_id=g.user_group_id)
-            else:
-                count, result = 0, {}
+            count, result = ModelService().get_train_job_list_by_doc_type_id(doc_type_id=args['doc_type_id'], search=args['query'], offset=args['offset'], limit=args['limit'], current_user=self.get_current_user())
         else:  # 获取全部的模型列表
-            if user_role == "超级管理员":
-                count, result = ModelService().get_train_job_list_by_nlp_task(
-                    nlp_task='extract', search=args['query'], offset=args['offset'], limit=args['limit'])
-            elif user_role == "管理员":
-                count, result = ModelService().get_train_job_list_by_nlp_task(
-                    nlp_task='extract', search=args['query'], offset=args['offset'], limit=args['limit'], user_group_id=g.user_group_id)
-            else:
-                count, result = 0, {}
+            count, result = ModelService().get_train_job_list_by_nlp_task(nlp_task='extract', search=args['query'], offset=args['offset'], limit=args['limit'], current_user=self.get_current_user())
         return {
                    "message": "请求成功",
                    "result": result,
@@ -74,7 +61,7 @@ class ModelListResource(Resource, QueryByRoleMixin):
                }, 201
 
 
-class ClassifyModelListResource(Resource, QueryByRoleMixin):
+class ClassifyModelListResource(Resource, CurrentUserMixin):
     @parse({
         "query": fields.String(missing=''),
         "offset": fields.Integer(missing=0),
@@ -117,7 +104,7 @@ class ClassifyModelListResource(Resource, QueryByRoleMixin):
                }, 201
 
 
-class RelationModelListResource(Resource, QueryByRoleMixin):
+class RelationModelListResource(Resource, CurrentUserMixin):
     @parse({
         "query": fields.String(missing=''),
         "offset": fields.Integer(missing=0),
@@ -162,7 +149,7 @@ class RelationModelListResource(Resource, QueryByRoleMixin):
                }, 201
 
 
-class WordsegModelListResource(Resource, QueryByRoleMixin):
+class WordsegModelListResource(Resource, CurrentUserMixin):
     @parse({
         "query": fields.String(missing=''),
         "offset": fields.Integer(missing=0),
@@ -228,10 +215,10 @@ class ModelItemResource(Resource):
                }, 204
 
 
-class DocTypeInfoListResource(Resource, QueryByRoleMixin):
+class DocTypeInfoListResource(Resource, CurrentUserMixin):
     def get(self):
-        user_role = self.get_current_role()
-        result = DocTypeService().get_doc_type_info_by_nlp_task_by_user(nlp_task="extract", user_role=user_role, user_id=g.user_id)
+        result = DocTypeService().get_doc_type_info_by_nlp_task_by_user(nlp_task="extract",
+                                                                        current_user=self.get_current_user())
         return {
                    "message": "请求成功",
                    "result": result,

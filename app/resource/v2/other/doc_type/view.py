@@ -1,12 +1,12 @@
 import typing
 from flask_restful import Resource
 from app.common.patch import parse, fields
-from app.common.filters import QueryByRoleMixin
+from app.common.filters import CurrentUserMixin
 from app.common.common import Common
 from app.service.doc_type_service import DocTypeService
 
 
-class DocTypeListResource(Resource, QueryByRoleMixin):
+class DocTypeListResource(Resource, CurrentUserMixin):
 
     @parse({
         "offset": fields.Integer(missing=0),
@@ -30,6 +30,7 @@ class DocTypeListResource(Resource, QueryByRoleMixin):
     @parse({
         "doc_type_name": fields.String(required=True),
         "doc_type_desc": fields.String(),
+        "group_id": fields.Integer(default=-1),
         "doc_term_list": fields.List(fields.Nested({
             "doc_term_name": fields.String(required=True),
             "doc_term_alias": fields.String(default=""),

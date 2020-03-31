@@ -26,11 +26,11 @@ class DocTypeModel(BaseModel, ABC):
     def get_by_id_by_user_group(self, _id, group_id):
         return session.query(DocType).filter(DocType.doc_type_id == _id, DocType.group_id == group_id, ~DocType.is_deleted).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
+    def get_by_filter(self, current_user: CurrentUser, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["doc_type_name", "nlp_task_id", "doc_type_id", "group_id"]
         # Compose query
-        q = session.query(DocType).filter(~DocType.is_deleted)
+        q = session.query(DocType).filter(DocType.group_id.in_(current_user.user_groups), ~DocType.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():
             if key in accept_keys:
@@ -90,19 +90,18 @@ class DocTypeModel(BaseModel, ABC):
         items = q.offset(offset).limit(limit).all()
         return items, count
 
-
     @staticmethod
-    def get_by_nlp_task_id_by_user(nlp_task_id, user_role, user_id):
+    def get_by_nlp_task_id_by_user(nlp_task_id, current_user: CurrentUser):
         q = session.query(DocType).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
-        if user_role == "管理员":
-            q = q.filter(DocType.created_by == user_id)
-        elif user_role == "审核员":
+        if current_user.user_role == "管理员":
+            q = q.filter(DocType.group_id.in_(current_user.user_groups))
+        elif current_user.user_role == "审核员":
             q = q.join(MarkJob, DocType.doc_type_id == MarkJob.doc_type_id)\
                 .filter(~MarkJob.is_deleted,
-                        sa_func.json_contains(MarkJob.reviewer_ids, str(user_id)))
-        elif user_role == "标注员":
+                        sa_func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id)))
+        elif current_user.user_role == "标注员":
             q = q.join(MarkJob, DocType.doc_type_id == MarkJob.doc_type_id)\
                 .filter(~MarkJob.is_deleted,
-                        sa_func.json_contains(MarkJob.annotator_ids, str(user_id)))
+                        sa_func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)))
         q = q.order_by(DocType.created_time.desc())
         return q.all()

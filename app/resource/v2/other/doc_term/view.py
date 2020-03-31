@@ -1,11 +1,11 @@
 import typing
 from flask_restful import Resource
 from app.common.patch import parse, fields
-from app.common.filters import QueryByRoleMixin
+from app.common.filters import CurrentUserMixin
 from app.service.doc_term_service import DocTermService
 
 
-class GetDocTermListResource(Resource, QueryByRoleMixin):
+class GetDocTermListResource(Resource, CurrentUserMixin):
     @parse({
         "offset": fields.Integer(missing=0),
         "limit": fields.Integer(missing=10),
