@@ -78,12 +78,6 @@ class FileSet(object):
             path_split = os.path.splitext(unique_name)
             unique_name = "{}_ocr{}".format(path_split[0], path_split[1])
         unique_path = self.get_abspath(unique_name)
-        # while os.path.exists(unique_path):
-        #     unique_name = generate_unique_name(ext)
-        #     if is_ocr:
-        #         path_split = os.path.splitext(unique_name)
-        #         unique_name = "{}_ocr{}".format(path_split[0], path_split[1])
-        #     unique_path = self.get_abspath(unique_name)
 
         with open(unique_path, 'wb') as f:
             if isinstance(filebin, str):
@@ -95,7 +89,7 @@ class FileSet(object):
         return unique_name, self.get_relative_path(unique_name)
 
     def export_to_csv(self, results: list, header: list) -> str:
-        unique_name = '{}.csv'.format(get_now_with_format())
+        unique_name = generate_unique_name('csv')
         unique_path = self.get_abspath(unique_name)
         with open(unique_path, 'w+', newline='', encoding='utf-8') as f:
             f_csv = csv.writer(f)

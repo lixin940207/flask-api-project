@@ -17,7 +17,7 @@ class TrainTermTaskModel(BaseModel, ABC):
         return session.query(TrainTermTask).filter(TrainTermTask.train_term_task_id == _id,
                                                    not_(TrainTermTask.is_deleted)).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["train_task_id", "doc_term_id"]
         # Compose query
@@ -39,6 +39,12 @@ class TrainTermTaskModel(BaseModel, ABC):
         session.add(entity)
         session.flush()
         return entity
+
+    def bulk_create(self, entity_list) -> [TrainTermTask]:
+        entity_list = [TrainTermTask(**entity) for entity in entity_list]
+        session.bulk_save_objects(entity_list, return_defaults=True)
+        session.flush()
+        return entity_list
 
     def delete(self, _id):
         session.query(TrainTermTask).filter(TrainTermTask.doc_type_id == _id).update({TrainTermTask.is_deleted: True})

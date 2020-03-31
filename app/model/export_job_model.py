@@ -15,7 +15,7 @@ class ExportJobModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(ExportJob).filter(ExportJob.export_job_id == _id, not_(ExportJob.is_deleted)).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["export_job_status", "doc_type_id"]
         # Compose query

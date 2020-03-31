@@ -2,7 +2,8 @@ from abc import ABC
 
 from sqlalchemy import not_, func
 
-from app.entity import DocType, MarkJob
+from app.common.seeds import StatusEnum
+from app.entity import DocType, MarkJob, Doc
 from app.model.base import BaseModel
 from app.entity.mark_task import MarkTask
 from app.common.extension import session
@@ -19,7 +20,7 @@ class MarkTaskModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(MarkTask).filter(MarkTask.mark_task_id == _id, not_(MarkTask.is_deleted)).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["mark_job_id", "doc_id", "reviewer_id", "mark_task_status"]
         # Compose query
@@ -34,6 +35,18 @@ class MarkTaskModel(BaseModel, ABC):
         if order_by_desc:
             q = q.desc()
         q = q.offset(offset).limit(limit)
+        return q.all()
+
+    def get_mark_task_and_doc_by_mark_job_ids(self, mark_job_ids):
+        q = session.query(MarkTask, Doc) \
+            .join(Doc, Doc.doc_id == MarkTask.doc_id) \
+            .join(MarkJob, MarkTask.mark_job_id == MarkJob.mark_job_id) \
+            .filter(
+            MarkJob.mark_job_id.in_(mark_job_ids),
+            MarkJob.mark_job_status == int(StatusEnum.approved),
+            ~MarkJob.is_deleted,
+            ~Doc.is_deleted,
+            ~MarkTask.is_deleted)
         return q.all()
 
     def create(self, entity: MarkTask) -> MarkTask:

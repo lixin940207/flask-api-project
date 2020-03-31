@@ -11,25 +11,25 @@ from app.common.extension import session
 
 class TrainTaskModel(BaseModel, ABC):
     def get_all(self):
-        return session.query(TrainTask).filter(not_(TrainTask.is_deleted)).all()
+        return session.query(TrainTask).filter(~TrainTask.is_deleted).all()
 
     def get_by_id(self, _id):
-        return session.query(TrainTask).filter(TrainTask.train_task_id == _id, not_(TrainTask.is_deleted)).one()
+        return session.query(TrainTask).filter(TrainTask.train_task_id == _id, ~TrainTask.is_deleted).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["train_job_id"]
         # Compose query
-        q = session.query(TrainTask).filter(not_(TrainTask.is_deleted))
+        q = session.query(TrainTask).filter(~TrainTask.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():
             if key in accept_keys:
                 q = q.filter(getattr(TrainTask, key) == val)
         # Order by key
-        q = q.order_by(order_by)
-        # Descending order
         if order_by_desc:
-            q = q.desc()
+            q = q.order_by(getattr(TrainTask, order_by).desc())
+        else:
+            q = q.order_by(getattr(TrainTask, order_by))
         q = q.offset(offset).limit(limit)
         return q.all()
 

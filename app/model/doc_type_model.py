@@ -27,10 +27,10 @@ class DocTypeModel(BaseModel, ABC):
             if key in accept_keys:
                 q = q.filter(getattr(DocType, key) == val)
         # Order by key
-        q = q.order_by(order_by)
-        # Descending order
         if order_by_desc:
-            q = q.desc()
+            q = q.order_by(getattr(DocType, order_by).desc())
+        else:
+            q = q.order_by(getattr(DocType, order_by))
         q = q.offset(offset).limit(limit)
         return q.all()
 

@@ -36,13 +36,13 @@ class TrainJobModel(BaseModel, ABC):
         q = q.offset(offset).limit(limit)
         return q.all()
 
-    def get_by_nlp_task_id(self, nlp_task_id, search, order_by="created_time", order_by_desc=True, limit=0, offset=10,
+    def get_by_nlp_task_id(self, nlp_task_id, search, order_by="created_time", order_by_desc=True, limit=10, offset=0,
                            **kwargs):
         # Define allowed filter keys
         accept_keys = ["train_job_status", "doc_type_id"]
         # Compose query
         q = session.query(TrainJob).join(
-            DocType, DocType.doc_type_id == DocType.doc_type_id
+            DocType, DocType.doc_type_id == TrainJob.doc_type_id
         ).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~TrainJob.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():
@@ -50,7 +50,7 @@ class TrainJobModel(BaseModel, ABC):
                 q = q.filter(getattr(TrainJob, key) == val)
         if search:
             q = q.filter(TrainJob.train_job_name.like(f'%{search}%'))
-        # Order by key, Descending or ascending order
+        # Order by key
         if order_by_desc:
             q = q.order_by(getattr(TrainJob, order_by).desc())
         else:

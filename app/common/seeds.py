@@ -19,8 +19,9 @@ class StatusEnum(int, Enum):
     labeled = 6,
     reviewing = 7,
     approved = 8,
-    fail = 9
-    success = 10
+    training = 9,
+    fail = 10,
+    success = 11
 
 
 class Seeds:
