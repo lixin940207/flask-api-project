@@ -9,5 +9,4 @@ class TrainTask(BaseEntity):
     train_config = db.Column(db.JSON(), default={})
     train_status = db.Column(db.Integer(), db.ForeignKey("status.status_id"), nullable=False)
     model_version = db.Column(db.String(256), default="")
-    mark_job_ids = db.Column(db.JSON(), default=[])
     train_job_id = db.Column(db.Integer(), db.ForeignKey("train_job.train_job_id"), nullable=False)
