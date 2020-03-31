@@ -1,6 +1,6 @@
 from abc import ABC
-
 from sqlalchemy import not_, func
+from app.common.seeds import StatusEnum
 
 from app.common.common import StatusEnum
 from app.entity import DocType, MarkJob, Doc
@@ -84,3 +84,27 @@ class MarkTaskModel(BaseModel, ABC):
             .filter(MarkJob.mark_job_id.in_(mark_job_ids), ~MarkTask.is_deleted,
                     ~MarkJob.is_deleted, ~DocType.is_deleted) \
             .group_by(MarkJob.mark_job_status, MarkJob.mark_job_id).all()
+
+    @staticmethod
+    def count_status_by_user(nlp_task_id, user_role, user_id):
+        # compose query
+        q = session.query(DocType) \
+            .join(MarkJob, DocType.doc_type_id == MarkJob.doc_type_id)\
+            .join(MarkTask, MarkJob.mark_job_id == MarkTask.mark_job_id)\
+            .filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~MarkJob.is_deleted, ~MarkTask.is_deleted)
+        # filter by user
+        if user_role == "管理员":
+            q = q.filter(DocType.created_by == user_id)
+        elif user_role == "审核员":
+            q = q.filter(func.json_contains(MarkJob.reviewer_ids, str(user_id)))
+        elif user_role == "标注员":
+            q = q.filter(func.json_contains(MarkJob.annotator_ids, str(user_id)))
+        # get grouped (doc_type_id, mark_job_id, count) list
+        all_status = q.group_by(MarkJob.doc_type_id, MarkJob.mark_job_id) \
+            .with_entities(DocType.doc_type_id, MarkJob.mark_job_id, func.count(MarkTask.mark_task_id)).all()
+        # filter >= labeled status
+        q = q.filter(MarkTask.mark_task_status >= int(StatusEnum.labeled))
+        # get grouped (doc_type_id, mark_job_id, >= labeled count) list
+        all_finish_marking_status = q.group_by(MarkJob.doc_type_id, MarkJob.mark_job_id) \
+            .with_entities(DocType.doc_type_id, MarkJob.mark_job_id, func.count(MarkTask.mark_task_id)).all()
+        return all_status, all_finish_marking_status

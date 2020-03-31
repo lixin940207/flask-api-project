@@ -1,18 +1,16 @@
 # coding=utf-8
 # email:  lixin@datagrand.com
 # create: 2020/3/24-3:29 下午
+from flask import g
 from typing import Tuple, Dict, Any
-from flask_restful import Resource, abort
+from flask_restful import Resource
 from app.common.patch import parse, fields
 from app.common.filters import QueryByRoleMixin
+from app.service.doc_type_service import DocTypeService
 from app.service.model_service import ModelService
 
 
 class ModelListResource(Resource, QueryByRoleMixin):
-    # def filter_by_admin(self, q, params):
-    #     return q.join(DocType, DocType.doc_type_id == Model.doc_type_id) \
-    #         .filter(DocType.status, DocType.creator_id == g.user_id)
-
     @parse({
         "query": fields.String(missing=''),
         "offset": fields.Integer(missing=0),
@@ -26,11 +24,23 @@ class ModelListResource(Resource, QueryByRoleMixin):
         """
         user_role = self.get_current_role()
         if args.get("doc_type_id"):  # 获取某个doc_type项目的模型列表
-            count, result = ModelService().get_train_job_list_by_doc_type_id(
-                doc_type_id=args['doc_type_id'], search=args['query'], offset=args['offset'], limit=args['limit'])
+            if user_role == "超级管理员":
+                count, result = ModelService().get_train_job_list_by_doc_type_id(
+                    doc_type_id=args['doc_type_id'], search=args['query'], offset=args['offset'], limit=args['limit'])
+            elif user_role == "管理员":
+                count, result = ModelService().get_train_job_list_by_doc_type_id(
+                    doc_type_id=args['doc_type_id'], search=args['query'], offset=args['offset'], limit=args['limit'], user_group_id=g.user_group_id)
+            else:
+                count, result = 0, {}
         else:  # 获取全部的模型列表
-            count, result = ModelService().get_train_job_list_by_nlp_task(
-                nlp_task='extract', search=args['query'], offset=args['offset'], limit=args['limit'])
+            if user_role == "超级管理员":
+                count, result = ModelService().get_train_job_list_by_nlp_task(
+                    nlp_task='extract', search=args['query'], offset=args['offset'], limit=args['limit'])
+            elif user_role == "管理员":
+                count, result = ModelService().get_train_job_list_by_nlp_task(
+                    nlp_task='extract', search=args['query'], offset=args['offset'], limit=args['limit'], user_group_id=g.user_group_id)
+            else:
+                count, result = 0, {}
         return {
                    "message": "请求成功",
                    "result": result,
@@ -48,6 +58,13 @@ class ModelListResource(Resource, QueryByRoleMixin):
         """
         创建模型
         """
+        # validate doc type exists
+        user_role = self.get_current_role()
+        if user_role == "超级管理员":
+            DocTypeService().get_by_id(doc_type_id=args["doc_type_id"])
+        elif user_role == "管理员":
+            DocTypeService().get_by_id_by_user_group(doc_type_id=args["doc_type_id"], group_id=g.user_group_id)
+        # create new
         result = ModelService().create_train_job_by_doc_type_id(
             doc_type_id=args["doc_type_id"], train_job_name=args["model_name"], train_job_desc=args["model_desc"],
             train_config=args["model_train_config"], mark_job_ids=args["mark_job_ids"])
@@ -58,10 +75,6 @@ class ModelListResource(Resource, QueryByRoleMixin):
 
 
 class ClassifyModelListResource(Resource, QueryByRoleMixin):
-    # def filter_by_admin(self, q, params):
-    #     return q.join(DocType, DocType.doc_type_id == Model.doc_type_id) \
-    #         .filter(DocType.status, DocType.creator_id == g.user_id)
-
     @parse({
         "query": fields.String(missing=''),
         "offset": fields.Integer(missing=0),
@@ -105,9 +118,6 @@ class ClassifyModelListResource(Resource, QueryByRoleMixin):
 
 
 class RelationModelListResource(Resource, QueryByRoleMixin):
-    # def filter_by_admin(self, q, params):
-    #     return q.join(DocType, DocType.doc_type_id == Model.doc_type_id) \
-    #         .filter(DocType.status, DocType.creator_id == g.user_id)
     @parse({
         "query": fields.String(missing=''),
         "offset": fields.Integer(missing=0),
@@ -153,10 +163,6 @@ class RelationModelListResource(Resource, QueryByRoleMixin):
 
 
 class WordsegModelListResource(Resource, QueryByRoleMixin):
-    # def filter_by_admin(self, q, params):
-    #     return q.join(DocType, DocType.doc_type_id == Model.doc_type_id) \
-    #         .filter(DocType.status, DocType.creator_id == g.user_id)
-
     @parse({
         "query": fields.String(missing=''),
         "offset": fields.Integer(missing=0),
@@ -199,3 +205,34 @@ class WordsegModelListResource(Resource, QueryByRoleMixin):
                    "message": "创建成功",
                    "result": result
                }, 201
+
+
+class ModelItemResource(Resource):
+    def get(self: Resource, model_id: int) -> Tuple[Dict[str, Any], int]:
+        """
+        获取单条模型记录
+        """
+        result = ModelService().get_train_job_by_id(model_id)
+        return {
+                   "message": "请求成功",
+                   "result": result,
+               }, 200
+
+    def delete(self: Resource, model_id: int) -> Tuple[Dict[str, Any], int]:
+        """
+        删除单条模型记录
+        """
+        ModelService().delete_train_job_by_id(model_id)
+        return {
+                   "message": "删除成功",
+               }, 204
+
+
+class DocTypeInfoListResource(Resource, QueryByRoleMixin):
+    def get(self):
+        user_role = self.get_current_role()
+        result = DocTypeService().get_doc_type_info_by_nlp_task_by_user(nlp_task="extract", user_role=user_role, user_id=g.user_id)
+        return {
+                   "message": "请求成功",
+                   "result": result,
+               }, 200

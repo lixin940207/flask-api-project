@@ -13,6 +13,7 @@ from app.model.mark_task_model import MarkTaskModel
 from app.model.doc_type_model import DocTypeModel
 from app.model.custom_algorithm_model import CustomAlgorithmModel
 from app.model.train_job_model import TrainJobModel
+from app.model.train_m2m_mark_model import TrainM2mMarkbModel
 from app.model.train_task_model import TrainTaskModel
 from app.model.train_term_task_model import TrainTermTaskModel
 from app.schema.custom_algorithm_schema import CustomAlgorithmSchema
@@ -23,12 +24,16 @@ from app.common.utils.time import get_now_with_format
 
 class ModelService:
     @staticmethod
-    def get_train_job_list_by_nlp_task(nlp_task, search, offset, limit):
+    def get_train_job_list_by_nlp_task(nlp_task, search, offset, limit, user_group_id=None):
         # get nlp_task id
         nlp_task_id = int(getattr(NlpTaskEnum, nlp_task))
         # get train jobs by nlp_task id and other filters
-        train_jobs = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
-                                                        limit=limit)
+        if user_group_id:
+            train_jobs = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
+                                                            limit=limit)
+        else:
+            train_jobs = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
+                                                            limit=limit, group_id=user_group_id)
         # count train jobs by nlp_task_id and other filters
         count = TrainJobModel().count_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search)
         # assign doc_type to each train job for dumping
@@ -40,9 +45,15 @@ class ModelService:
         return count, result
 
     @staticmethod
-    def get_train_job_list_by_doc_type_id(doc_type_id, search, offset, limit):
+    def get_train_job_list_by_doc_type_id(doc_type_id, search, offset, limit, user_group_id=None):
         # verify doc type
-        doc_type = DocTypeModel().get_by_id(doc_type_id)
+        if user_group_id: # validate if the doc_type_id belongs to this user's group
+            doc_type = DocTypeModel().get_by_filter(doc_type_id=doc_type_id, group_id=user_group_id)
+        else: # for super manager
+            doc_type = DocTypeModel().get_by_id(doc_type_id)
+        # if not exists doc_type, return None
+        if not doc_type:
+            return 0, {}
         # get train jobs by nlp_task id and other filters
         train_jobs = TrainJobModel().get_by_filter(search=search, offset=offset,
                                                    limit=limit, doc_type_id=doc_type_id)
@@ -72,6 +83,10 @@ class ModelService:
             doc_type_id=doc_type_id,
             train_job_status=int(StatusEnum.processing)
         )
+        # create TrainM2mMark table
+        train_m2m_mark_list = [{"train_job_id": train_job.train_job_id, "mark_job_id": _id} for _id in mark_job_ids]
+        TrainM2mMarkbModel().bulk_create(train_m2m_mark_list)
+
         # create TrainTask table
         train_task = TrainTaskModel().create(
             train_job_id=train_job.train_job_id,
@@ -79,14 +94,13 @@ class ModelService:
             train_model_desc=train_job_desc,
             train_config=train_config,
             train_status=int(StatusEnum.processing),
-            mark_job_ids=mark_job_ids,
             model_version=model_version
         )
 
         if custom_id:
             custom_item = CustomAlgorithmModel().get_by_id(custom_id)
             custom = CustomAlgorithmSchema(
-                only=("custom_algorithm_alias", "custom_algorithm_ip", "custom_algorithm_predict_port")).dump(
+                only=("custom_id_name", "custom_ip", "custom_port")).dump(
                 custom_item)
         else:
             custom = None
@@ -96,6 +110,7 @@ class ModelService:
         session.commit()
 
         # add some attribute for dumping
+        train_task.mark_job_ids = mark_job_ids
         train_job.train_list = [train_task]
         train_job.doc_type = doc_type
         train_job.model_version = model_version
@@ -122,6 +137,9 @@ class ModelService:
             doc_type_id=doc_type_id,
             train_job_status=int(StatusEnum.processing)
         )
+        # bulk create TrainM2mMark table
+        train_m2m_mark_list = [{"train_job_id": train_job.train_job_id, "mark_job_id": _id} for _id in mark_job_ids]
+        TrainM2mMarkbModel().bulk_create(train_m2m_mark_list)
         # create TrainTask table
         train_task = TrainTaskModel().create(
             train_job_id=train_job.train_job_id,
@@ -129,7 +147,6 @@ class ModelService:
             train_model_desc=train_job_desc,
             train_config=train_config,
             train_status=int(StatusEnum.processing),
-            mark_job_ids=mark_job_ids,
             model_version=model_version
         )
         if nlp_task in ["extract", "relation"]:
@@ -148,12 +165,23 @@ class ModelService:
         session.commit()
 
         # add some attribute for dumping
+        train_task.mark_job_ids = mark_job_ids
         train_job.train_list = [train_task]
         train_job.doc_type = doc_type
         train_job.model_version = model_version
         result = TrainJobSchema().dump(train_job)
         return result
 
+
+    @staticmethod
+    def get_train_job_by_id(_id):
+        train_job = TrainJobModel().get_by_id(_id)
+        result = TrainJobSchema().dump(train_job)
+        return result
+
+    @staticmethod
+    def delete_train_job_by_id(_id):
+        TrainJobModel().delete(_id)
 
 def generate_model_version_by_nlp_task(doc_type_id, mark_job_ids, nlp_task):
     mark_job_ids_str = ','.join([str(i) for i in mark_job_ids])
@@ -193,8 +221,6 @@ def push_train_task_to_redis(nlp_task, doc_type_id, train_task_id, model_version
 
 
 def generate_classify_data(mark_job_ids):
-    # name = generate_unique_name('csv')
-    # path = f"{upload_fileset.path}/{name}"
     results = []
     for mark_task, doc in MarkTaskModel().get_mark_task_and_doc_by_mark_job_ids(mark_job_ids):
         uuid = doc.doc_unique_name.split('.')[0]
