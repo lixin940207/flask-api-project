@@ -95,11 +95,11 @@ class MarkTaskModel(BaseModel, ABC):
             .join(MarkTask, MarkJob.mark_job_id == MarkTask.mark_job_id)\
             .filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~MarkJob.is_deleted, ~MarkTask.is_deleted)
         # filter by user
-        if current_user.user_role in [str(RoleEnum.manager), str(RoleEnum.guest)]:
+        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
-        elif current_user.user_role in [str(RoleEnum.reviewer)]:
+        elif current_user.user_role in [RoleEnum.reviewer.value]:
             q = q.filter(func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id)))
-        elif current_user.user_role in [str(RoleEnum.annotator)]:
+        elif current_user.user_role in [RoleEnum.annotator.value]:
             q = q.filter(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)))
         # get grouped (doc_type_id, mark_job_id, count) list
         all_status = q.group_by(MarkJob.doc_type_id, MarkJob.mark_job_id) \

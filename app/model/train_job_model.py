@@ -48,7 +48,7 @@ class TrainJobModel(BaseModel, ABC):
             .join(DocType, DocType.doc_type_id == TrainJob.doc_type_id)\
             .join()\
             .filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~TrainJob.is_deleted)
-        if current_user.user_role in [str(RoleEnum.manager), str(RoleEnum.guest)]:
+        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
 
         # Filter conditions
@@ -86,7 +86,7 @@ class TrainJobModel(BaseModel, ABC):
         q = session.query(func.count(TrainJob.train_job_id)) \
             .join(DocType, TrainJob.doc_type_id == DocType.doc_type_id) \
             .filter(~TrainJob.is_deleted, ~DocType.is_deleted, DocType.nlp_task_id == nlp_task_id)
-        if current_user.user_role in [str(RoleEnum.manager), str(RoleEnum.guest)]:
+        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
 
         for key, val in kwargs.items():
@@ -116,9 +116,11 @@ class TrainJobModel(BaseModel, ABC):
         pass
 
     @staticmethod
-    def count_train_job_by_nlp_task(user_id):
-        count = session.query(DocType.nlp_task_id, func.count(TrainJob.train_job_id)) \
+    def count_train_job_by_nlp_task(current_user: CurrentUser):
+        q = session.query(DocType.nlp_task_id, func.count(TrainJob.train_job_id)) \
             .join(DocType, TrainJob.doc_type_id == DocType.doc_type_id) \
-            .filter(~TrainJob.is_deleted, ~DocType.is_delete, DocType.created_by == user_id) \
-            .group_by(DocType.nlp_task_id).all()
+            .filter(~TrainJob.is_deleted, ~DocType.is_deleted)
+        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
+            q = q.filter(DocType.group_id.in_(current_user.user_groups))
+        count = q.group_by(DocType.nlp_task_id).all()
         return count

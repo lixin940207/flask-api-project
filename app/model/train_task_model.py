@@ -64,7 +64,7 @@ class TrainTaskModel(BaseModel, ABC):
             .join(TrainJob, TrainTask.train_job_id == TrainJob.train_job_id) \
             .join(DocType, DocType.doc_type_id == TrainJob.doc_type_id) \
             .filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~TrainJob.is_deleted)
-        if current_user.user_role in [str(RoleEnum.manager), str(RoleEnum.guest)]:
+        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
 
         # Filter conditions
