@@ -80,3 +80,4 @@ class Common:
         args.update({
             'nlp_task_id': nlp_task_id
         })
+        return nlp_task_id

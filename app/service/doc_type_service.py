@@ -24,11 +24,14 @@ class DocTypeService:
 
     @staticmethod
     def get_doc_type_info_by_nlp_task_by_user(nlp_task, current_user):
+        """
+        获取管理大厅首页的doc_type信息
+        """
         result = []
-        nlp_task_id = int(getattr(NlpTaskEnum, nlp_task))
+        nlp_task_id = int(nlp_task)
 
         # get doc_type list by user role and user id
-        doc_type_list = DocTypeModel().get_by_nlp_task_id_by_user(nlp_task_id=nlp_task_id, )
+        doc_type_list = DocTypeModel().get_by_nlp_task_id_by_user(nlp_task_id=nlp_task_id, current_user=current_user)
         doc_type_list = [{"doc_type": DocTypeSchema().dump(d)} for d in doc_type_list]
         # get all job count and approved job count
         all_status, all_finish_marking_status = MarkTaskModel().count_status_by_user(nlp_task_id=nlp_task_id, current_user=current_user)

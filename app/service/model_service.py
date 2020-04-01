@@ -26,18 +26,20 @@ from app.common.utils.time import get_now_with_format
 
 class ModelService:
     @staticmethod
-    def get_train_job_list_by_nlp_task(nlp_task, search, offset, limit, current_user: CurrentUser):
+    def get_train_job_list_by_nlp_task(nlp_task, doc_type_id, search, offset, limit, current_user: CurrentUser):
         # get nlp_task id
-        nlp_task_id = int(getattr(NlpTaskEnum, nlp_task))
-        # get train jobs by nlp_task id and other filters
-        train_tasks = TrainTaskModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
-                                                            limit=limit, current_user=current_user)
-        # count train jobs by nlp_task_id and other filters
-        count = TrainJobModel().count_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, current_user=current_user)
-        # assign doc_type to each train job for dumping
+        nlp_task_id = int(nlp_task)
+        # if exists doc_type_id, get train jobs of this doc_type_id
+        if doc_type_id:
+            count, task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
+                                                                limit=limit, current_user=current_user, doc_type_id=doc_type_id)
+        else:   # else get all
+            count, task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
+                                                                limit=limit, current_user=current_user)
+        # assign doc_type, train_list to each train job for dumping
         result = []
         job_id_list = []
-        for task in train_tasks:
+        for task in task_job_doctype:
             if task[0].train_job_id not in job_id_list:
                 job_id_list.append(task[0].train_job_id)
                 train_job = task[1]
@@ -47,30 +49,8 @@ class ModelService:
             else:
                 result[job_id_list.index(task[0].train_job_id)].train_list.append(task[0])
 
-        # for train_job in train_jobs:
-        #     train_job.doc_type = DocTypeModel().get_by_id(train_job.doc_type_id)
-        #     train_job.train_list = TrainTaskModel().get_by_filter(train_job_id=train_job.train_job_id)
         # get the serialized result
         result = TrainJobSchema().dump(result, many=True)
-        return count, result
-
-    @staticmethod
-    def get_train_job_list_by_doc_type_id(doc_type_id, search, offset, limit, current_user: CurrentUser):
-        # verify doc type
-        doc_type = DocTypeModel().get_by_filter(current_user=current_user, doc_type_id=doc_type_id)
-        # if not exists doc_type, return None
-        if not doc_type:
-            return 0, {}
-        # get train jobs by nlp_task id and other filters
-        train_jobs = TrainJobModel().get_by_filter(search=search, offset=offset,
-                                                   limit=limit, doc_type_id=doc_type_id)
-        # count train jobs by nlp_task_id and other filters
-        count = TrainJobModel().count_by_filter(search=search, doc_type_id=doc_type_id)
-        # assign doc_type to each train job for dumping
-        for train_job in train_jobs:
-            train_job.doc_type = doc_type
-        # get the serialized result
-        result = TrainJobSchema().dump(train_jobs, many=True)
         return count, result
 
     @staticmethod
@@ -189,6 +169,10 @@ class ModelService:
     @staticmethod
     def delete_train_job_by_id(_id):
         TrainJobModel().delete(_id)
+
+    @staticmethod
+    def get_latest_model_info_by_doc_type_id(doc_type_id, current_user):
+        return TrainTaskModel().get_all_model_related_by_doc_type_id(doc_type_id=doc_type_id, current_user=current_user, limit=1)
 
 def generate_model_version_by_nlp_task(doc_type_id, mark_job_ids, nlp_task):
     mark_job_ids_str = ','.join([str(i) for i in mark_job_ids])

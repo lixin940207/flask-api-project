@@ -6,6 +6,7 @@ from sqlalchemy import not_
 
 from app.common.common import RoleEnum
 from app.common.filters import CurrentUser
+from app.entity import TrainTask
 from app.model.base import BaseModel
 from app.entity.train_job import TrainJob
 from app.entity.doc_type import DocType
@@ -31,24 +32,30 @@ class TrainJobModel(BaseModel, ABC):
                 q = q.filter(getattr(TrainJob, key) == val)
         if search:
             q = q.filter(TrainJob.train_job_name.like(f'%{search}%'))
+        count = q.count()
         # Order by key, Descending or ascending order
         if order_by_desc:
             q = q.order_by(getattr(TrainJob, order_by).desc())
         else:
             q = q.order_by(getattr(TrainJob, order_by))
         q = q.offset(offset).limit(limit)
-        return q.all()
+        return count, q.all()
 
-    def get_by_nlp_task_id(self, nlp_task_id, search, current_user: CurrentUser, order_by="created_time", order_by_desc=True, limit=10, offset=0,
-                           **kwargs):
+    @staticmethod
+    def get_by_nlp_task_id(nlp_task_id, search, current_user: CurrentUser, order_by="created_time", order_by_desc=True,
+                           limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["train_job_status", "doc_type_id"]
         # Compose query
-        q = session.query(TrainJob)\
-            .join(DocType, DocType.doc_type_id == TrainJob.doc_type_id)\
-            .join()\
-            .filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~TrainJob.is_deleted)
-        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
+        q = session.query(TrainTask, TrainJob, DocType) \
+            .join(TrainJob, TrainTask.train_job_id == TrainJob.train_job_id) \
+            .join(DocType, DocType.doc_type_id == TrainJob.doc_type_id) \
+            .filter(DocType.nlp_task_id == nlp_task_id,
+                    ~DocType.is_deleted,
+                    ~TrainJob.is_deleted,
+                    ~TrainTask.is_deleted)
+        # auth
+        if current_user.user_role in [str(RoleEnum.manager), str(RoleEnum.guest)]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
 
         # Filter conditions
@@ -64,37 +71,6 @@ class TrainJobModel(BaseModel, ABC):
             q = q.order_by(getattr(TrainJob, order_by))
         q = q.offset(offset).limit(limit)
         return q.all()
-
-    @staticmethod
-    def count_by_filter(search, **kwargs):
-        # Define allowed filter keys
-        accept_keys = ["train_job_status", "doc_type_id"]
-        # Compose query
-        q = session.query(func.count(TrainJob.train_job_id)).filter(~TrainJob.is_deleted)
-        # Filter conditions
-        for key, val in kwargs.items():
-            if key in accept_keys:
-                q = q.filter(getattr(TrainJob, key) == val)
-        if search:
-            q = q.filter(TrainJob.train_job_name.like(f'%{search}%'))
-        return q.one()[0]
-
-    @staticmethod
-    def count_by_nlp_task_id(nlp_task_id, search, current_user: CurrentUser, **kwargs):
-        # Define allowed filter keys
-        accept_keys = ["train_job_status", "doc_type_id"]
-        q = session.query(func.count(TrainJob.train_job_id)) \
-            .join(DocType, TrainJob.doc_type_id == DocType.doc_type_id) \
-            .filter(~TrainJob.is_deleted, ~DocType.is_deleted, DocType.nlp_task_id == nlp_task_id)
-        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
-            q = q.filter(DocType.group_id.in_(current_user.user_groups))
-
-        for key, val in kwargs.items():
-            if key in accept_keys:
-                q = q.filter(getattr(TrainJob, key) == val)
-        if search:
-            q = q.filter(TrainJob.train_job_name.like(f'%{search}%'))
-        return q.one()[0]
 
     def create(self, **kwargs) -> TrainJob:
         entity = TrainJob(**kwargs)
