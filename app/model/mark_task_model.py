@@ -1,6 +1,7 @@
 from abc import ABC
 
 from sqlalchemy import not_, func
+from typing import List, Tuple
 
 from app.entity import DocType, MarkJob
 from app.model.base import BaseModel
@@ -64,10 +65,11 @@ class MarkTaskModel(BaseModel, ABC):
         session.bulk_update_mappings(MarkTask, entity_list)
 
     @staticmethod
-    def count_mark_task_status(mark_job_ids, user_id):
+    def count_mark_task_status(mark_job_ids) -> [Tuple[int]]:
         all_count = session.query(
-            func.count(MarkTask.mark_task_status), MarkJob.mark_job_status) \
+            func.count(MarkTask.mark_task_status), MarkTask.mark_task_status, MarkTask.mark_job_id) \
             .join(MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id) \
-            .filter(MarkJob.mark_job_id.in_(mark_job_ids), ~MarkTask.is_deleted,
-                    ~MarkJob.is_deleted, ~DocType.is_deleted) \
-            .group_by(MarkJob.mark_job_status, MarkJob.mark_job_id).all()
+            .filter(MarkJob.mark_job_id.in_(mark_job_ids),
+                    ~MarkTask.is_deleted, ~MarkJob.is_deleted) \
+            .group_by(MarkTask.mark_task_status, MarkTask.mark_job_id).all()
+        return all_count

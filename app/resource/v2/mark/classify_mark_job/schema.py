@@ -1,7 +1,5 @@
 from flask_marshmallow import Schema
-from app.resource.v1.common.models.classify_mark_job import ClassifyMarkJob
-from app.patch import fields
-from app.resource.v1.others.classify_doc_type.schema import ClassifyDocTypeSchema
+from app.common.patch import fields
 
 
 class GeneralTaskSchema(Schema):
@@ -16,7 +14,11 @@ class GeneralTaskSchema(Schema):
     })
 
 
-class ClassifyMarkJobSchema(ClassifyMarkJob.schema_class):  # type: ignore
+class ClassifyDocTypeSchema(Schema):
+    pass
+
+
+class ClassifyMarkJobSchema(Schema):  # type: ignore
     doc_type = fields.Nested(ClassifyDocTypeSchema, exclude=('doc_term_list',))
     task_list = fields.List(fields.Nested(GeneralTaskSchema))
     labeler_ids = fields.List(fields.Integer())
