@@ -13,3 +13,5 @@ class TrainTaskSchema(Schema):  # type: ignore
     model_id = fields.Integer(attribute="train_job_id")
     mark_job_ids = fields.List(fields.Integer())
     train_terms = fields.List(fields.Nested(TrainTermTaskSchema))
+    created_time = fields.DateTime()
+    last_updated_time = fields.DateTime(attribute="updated_time")

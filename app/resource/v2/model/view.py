@@ -4,7 +4,6 @@
 from flask import g
 from typing import Tuple, Dict, Any
 from flask_restful import Resource, abort
-
 from app.common.common import NlpTaskEnum, Common
 from app.common.patch import parse, fields
 from app.common.filters import CurrentUserMixin

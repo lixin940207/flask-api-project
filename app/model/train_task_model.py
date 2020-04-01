@@ -23,21 +23,35 @@ class TrainTaskModel(BaseModel, ABC):
     def is_empty_table():
         return session.query(TrainTask).filter(not_(TrainTask.is_deleted)).count() == 0
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
+    def get_by_filter(self, search="", order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
-        accept_keys = ["train_job_id"]
+        accept_keys = ["train_job_id", "model_version"]
         # Compose query
         q = session.query(TrainTask).filter(~TrainTask.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():
             if key in accept_keys:
                 q = q.filter(getattr(TrainTask, key) == val)
+        if search:
+            q = q.filter(TrainTask.train_model_name.like(f'%{search}%'))
+        count = q.count()
         # Order by key
         if order_by_desc:
             q = q.order_by(getattr(TrainTask, order_by).desc())
         else:
             q = q.order_by(getattr(TrainTask, order_by))
         q = q.offset(offset).limit(limit)
+        return count, q.all()
+
+    def get_by_doc_type_id(self, doc_type_id, **kwargs):
+        accept_keys = ["train_status"]
+        q = session.query(TrainTask)\
+            .join(TrainJob, TrainJob.train_job_id == TrainTask.train_job_id)\
+            .filter(TrainJob.doc_type_id == doc_type_id, ~TrainJob.is_deleted, ~TrainTask.is_deleted)
+        # Filter conditions
+        for key, val in kwargs.items():
+            if key in accept_keys:
+                q = q.filter(getattr(TrainTask, key) == val)
         return q.all()
 
     def create(self, **kwargs) -> TrainTask:
@@ -47,12 +61,14 @@ class TrainTaskModel(BaseModel, ABC):
         return entity
 
     def delete(self, _id):
-        session.query(TrainTask).filter(TrainTask.doc_type_id == _id).update({TrainTask.is_deleted: True})
+        session.query(TrainTask).filter(TrainTask.train_task_id == _id).update({TrainTask.is_deleted: True})
         session.flush()
 
-    def update(self, entity):
-        # session.bulk_update_mappings
-        pass
+    def update(self, _id, **kwargs):
+        entity = session.query(TrainTask).filter(TrainTask.train_task_id == _id)
+        entity.update(**kwargs)
+        session.flush()
+        return entity
 
     @staticmethod
     def get_all_model_related_by_doc_type_id(doc_type_id, current_user: CurrentUser, order_by="created_time", order_by_desc=True, offset=0, limit=10, **kwargs):
@@ -64,14 +80,14 @@ class TrainTaskModel(BaseModel, ABC):
             .join(TrainJob, TrainTask.train_job_id == TrainJob.train_job_id) \
             .join(DocType, DocType.doc_type_id == TrainJob.doc_type_id) \
             .filter(DocType.doc_type_id == doc_type_id,
-                    TrainTask.train_status == int(StatusEnum.online),
-                    EvaluateTask.evaluate_task_status == int(StatusEnum.success),
+                    TrainTask.train_status == StatusEnum.online,
+                    EvaluateTask.evaluate_task_status == StatusEnum.success,
                     ~DocType.is_deleted,
                     ~TrainJob.is_deleted,
                     ~TrainTask.is_deleted,
                     ~EvaluateTask.is_deleted)
         # auth
-        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
+        if current_user.user_role in [RoleEnum.manager, RoleEnum.guest]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
 
         # Filter conditions

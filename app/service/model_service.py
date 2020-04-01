@@ -28,13 +28,12 @@ class ModelService:
     @staticmethod
     def get_train_job_list_by_nlp_task(nlp_task, doc_type_id, search, offset, limit, current_user: CurrentUser):
         # get nlp_task id
-        nlp_task_id = int(nlp_task)
         # if exists doc_type_id, get train jobs of this doc_type_id
         if doc_type_id:
-            count, task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
+            count, task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task, search=search, offset=offset,
                                                                 limit=limit, current_user=current_user, doc_type_id=doc_type_id)
         else:   # else get all
-            count, task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
+            count, task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task, search=search, offset=offset,
                                                                 limit=limit, current_user=current_user)
         # assign doc_type, train_list to each train job for dumping
         result = []
@@ -68,7 +67,7 @@ class ModelService:
             train_job_name=train_job_name,
             train_job_desc=train_job_desc,
             doc_type_id=doc_type_id,
-            train_job_status=int(StatusEnum.processing)
+            train_job_status=StatusEnum.processing
         )
         # create TrainM2mMark table
         train_m2m_mark_list = [{"train_job_id": train_job.train_job_id, "mark_job_id": _id} for _id in mark_job_ids]
@@ -80,7 +79,7 @@ class ModelService:
             train_model_name=train_job_name,
             train_model_desc=train_job_desc,
             train_config=train_config,
-            train_status=int(StatusEnum.processing),
+            train_status=StatusEnum.processing,
             model_version=model_version
         )
 
@@ -122,7 +121,7 @@ class ModelService:
             train_job_name=train_job_name,
             train_job_desc=train_job_desc,
             doc_type_id=doc_type_id,
-            train_job_status=int(StatusEnum.processing)
+            train_job_status=StatusEnum.processing
         )
         # bulk create TrainM2mMark table
         train_m2m_mark_list = [{"train_job_id": train_job.train_job_id, "mark_job_id": _id} for _id in mark_job_ids]
@@ -133,7 +132,7 @@ class ModelService:
             train_model_name=train_job_name,
             train_model_desc=train_job_desc,
             train_config=train_config,
-            train_status=int(StatusEnum.processing),
+            train_status=StatusEnum.processing,
             model_version=model_version
         )
         if nlp_task in ["extract", "relation"]:
@@ -143,7 +142,7 @@ class ModelService:
                 train_term_task_list.append({
                     "train_task_id": train_task.train_task_id,
                     "doc_term_id": field_config["field_id"],
-                    "train_term_status": int(StatusEnum.processing)
+                    "train_term_status": StatusEnum.processing
                 })
             TrainTermTaskModel().bulk_create(train_term_task_list)
 
@@ -172,7 +171,7 @@ class ModelService:
 
     @staticmethod
     def get_latest_model_info_by_doc_type_id(doc_type_id, current_user):
-        return TrainTaskModel().get_all_model_related_by_doc_type_id(doc_type_id=doc_type_id, current_user=current_user, limit=1)
+        return TrainTaskModel().get_all_model_related_by_doc_type_id(doc_type_id=doc_type_id, current_user=current_user, limit=1)[0]
 
 def generate_model_version_by_nlp_task(doc_type_id, mark_job_ids, nlp_task):
     mark_job_ids_str = ','.join([str(i) for i in mark_job_ids])

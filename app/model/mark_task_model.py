@@ -45,7 +45,7 @@ class MarkTaskModel(BaseModel, ABC):
             .join(MarkJob, MarkTask.mark_job_id == MarkJob.mark_job_id) \
             .filter(
             MarkJob.mark_job_id.in_(mark_job_ids),
-            MarkJob.mark_job_status == int(StatusEnum.approved),
+            MarkJob.mark_job_status == StatusEnum.approved,
             ~MarkJob.is_deleted,
             ~Doc.is_deleted,
             ~MarkTask.is_deleted)
@@ -95,17 +95,17 @@ class MarkTaskModel(BaseModel, ABC):
             .join(MarkTask, MarkJob.mark_job_id == MarkTask.mark_job_id)\
             .filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~MarkJob.is_deleted, ~MarkTask.is_deleted)
         # filter by user
-        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
+        if current_user.user_role in [RoleEnum.manager, RoleEnum.guest]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
-        elif current_user.user_role in [RoleEnum.reviewer.value]:
-            q = q.filter(func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id)))
-        elif current_user.user_role in [RoleEnum.annotator.value]:
-            q = q.filter(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)))
+        elif current_user.user_role in [RoleEnum.reviewer]:
+            q = q.filter(func.json_contains(MarkJob.reviewer_ids, current_user.user_id))
+        elif current_user.user_role in [RoleEnum.annotator]:
+            q = q.filter(func.json_contains(MarkJob.annotator_ids, current_user.user_id))
         # get grouped (doc_type_id, mark_job_id, count) list
         all_status = q.group_by(MarkJob.doc_type_id, MarkJob.mark_job_id) \
             .with_entities(DocType.doc_type_id, MarkJob.mark_job_id, func.count(MarkTask.mark_task_id)).all()
         # filter >= labeled status
-        q = q.filter(MarkTask.mark_task_status >= int(StatusEnum.labeled))
+        q = q.filter(MarkTask.mark_task_status >= StatusEnum.labeled)
         # get grouped (doc_type_id, mark_job_id, >= labeled count) list
         all_finish_marking_status = q.group_by(MarkJob.doc_type_id, MarkJob.mark_job_id) \
             .with_entities(DocType.doc_type_id, MarkJob.mark_job_id, func.count(MarkTask.mark_task_id)).all()

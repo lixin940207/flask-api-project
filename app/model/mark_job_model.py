@@ -108,13 +108,12 @@ class MarkJobModel(BaseModel, ABC):
         labeled_count = session.query(DocType.nlp_task_id, func.count(MarkJob.mark_job_id)) \
             .join(DocType, MarkJob.doc_type_id == DocType.doc_type_id) \
             .filter(~MarkJob.is_deleted, ~DocType.is_deleted, DocType.created_by == user_id,
-                    MarkJob.mark_job_status.in_([int(StatusEnum.labeled), int(StatusEnum.reviewing),
-                                                 int(StatusEnum.approved)])) \
+                    MarkJob.mark_job_status.in_([StatusEnum.labeled, StatusEnum.reviewing, StatusEnum.approved])) \
             .group_by(DocType.nlp_task_id).all()
         reviewed_count = session.query(DocType.nlp_task_id, func.count(MarkJob.mark_job_id)) \
             .join(DocType, MarkJob.doc_type_id == DocType.doc_type_id) \
             .filter(~MarkJob.is_deleted, ~DocType.is_deleted, DocType.created_by == user_id,
-                    MarkJob.mark_job_status.in_([int(StatusEnum.approved)])) \
+                    MarkJob.mark_job_status.in_([StatusEnum.approved])) \
             .group_by(DocType.nlp_task_id).all()
         return all_count, labeled_count, reviewed_count
 
