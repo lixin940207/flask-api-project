@@ -2,7 +2,6 @@
 # email:  lixin@datagrand.com
 # create: 2020/3/18-5:01 下午
 from abc import ABC
-from sqlalchemy import not_
 from app.model.base import BaseModel
 from app.entity.train_term_task import TrainTermTask
 
@@ -11,28 +10,29 @@ from app.common.extension import session
 
 class TrainTermTaskModel(BaseModel, ABC):
     def get_all(self):
-        return session.query(TrainTermTask).filter(not_(TrainTermTask.is_deleted)).all()
+        return session.query(TrainTermTask).filter(~TrainTermTask.is_deleted).all()
 
     def get_by_id(self, _id):
         return session.query(TrainTermTask).filter(TrainTermTask.train_term_task_id == _id,
-                                                   not_(TrainTermTask.is_deleted)).one()
+                                                   ~TrainTermTask.is_deleted).one()
 
     def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
-        accept_keys = ["train_task_id", "doc_term_id"]
+        accept_keys = ["train_task_id", "doc_term_id", "train_term_status"]
         # Compose query
-        q = session.query(TrainTermTask).filter(not_(TrainTermTask.is_deleted))
+        q = session.query(TrainTermTask).filter(~TrainTermTask.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():
             if key in accept_keys:
                 q = q.filter(getattr(TrainTermTask, key) == val)
+        count = q.count()
         # Order by key
         q = q.order_by(order_by)
         # Descending order
         if order_by_desc:
             q = q.desc()
         q = q.offset(offset).limit(limit)
-        return q.all()
+        return count, q.all()
 
     def create(self, **kwargs) -> TrainTermTask:
         entity = TrainTermTask(**kwargs)
@@ -47,9 +47,11 @@ class TrainTermTaskModel(BaseModel, ABC):
         return entity_list
 
     def delete(self, _id):
-        session.query(TrainTermTask).filter(TrainTermTask.doc_type_id == _id).update({TrainTermTask.is_deleted: True})
+        session.query(TrainTermTask).filter(TrainTermTask.train_term_task_id == _id).update({TrainTermTask.is_deleted: True})
         session.flush()
 
-    def update(self, entity):
-        # session.bulk_update_mappings
-        pass
+    def update(self, _id, **kwargs):
+        entity = session.query(TrainTermTask).filter(TrainTermTask.train_term_task_id == _id)
+        entity.update(**kwargs)
+        session.flush()
+        return entity
