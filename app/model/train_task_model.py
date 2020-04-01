@@ -23,9 +23,9 @@ class TrainTaskModel(BaseModel, ABC):
     def is_empty_table():
         return session.query(TrainTask).filter(not_(TrainTask.is_deleted)).count() == 0
 
-    def get_by_filter(self, search, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
+    def get_by_filter(self, search="", order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
-        accept_keys = ["train_job_id"]
+        accept_keys = ["train_job_id", "model_version"]
         # Compose query
         q = session.query(TrainTask).filter(~TrainTask.is_deleted)
         # Filter conditions

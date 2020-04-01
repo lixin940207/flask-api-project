@@ -2,9 +2,9 @@
 # email:  lixin@datagrand.com
 # create: 2020/3/18-5:01 下午
 from abc import ABC
+from app.entity import TrainTask
 from app.model.base import BaseModel
 from app.entity.train_term_task import TrainTermTask
-
 from app.common.extension import session
 
 
@@ -33,6 +33,13 @@ class TrainTermTaskModel(BaseModel, ABC):
             q = q.desc()
         q = q.offset(offset).limit(limit)
         return count, q.all()
+
+    def get_by_model_version_and_doc_term_id(self, model_version, doc_term_id):
+        q = session.query(TrainTermTask)\
+            .join(TrainTask, TrainTask.train_task_id == TrainTermTask.train_task_id)\
+            .filter(TrainTask.model_version == model_version,
+                    TrainTermTask.doc_term_id == doc_term_id)
+        return q.one()
 
     def create(self, **kwargs) -> TrainTermTask:
         entity = TrainTermTask(**kwargs)
