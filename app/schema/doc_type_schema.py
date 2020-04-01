@@ -13,3 +13,4 @@ class DocTypeSchema(Schema):
     is_top = fields.Boolean(attribute="is_favorite")
     created_time = fields.DateTime()
     doc_term_list = fields.List(fields.Nested(DocTermSchema))
+    group_id = fields.Integer()

@@ -14,3 +14,4 @@ class EvaluateTaskSchema(Schema):
     model_id = fields.Integer(attribute="train_task_id")
     mark_job_ids = fields.List(fields.Integer())
     created_time = fields.DateTime()
+    last_updated_time = fields.DateTime(attribute="updated_time")

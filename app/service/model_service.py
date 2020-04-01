@@ -172,7 +172,7 @@ class ModelService:
 
     @staticmethod
     def get_latest_model_info_by_doc_type_id(doc_type_id, current_user):
-        return TrainTaskModel().get_all_model_related_by_doc_type_id(doc_type_id=doc_type_id, current_user=current_user, limit=1)
+        return TrainTaskModel().get_all_model_related_by_doc_type_id(doc_type_id=doc_type_id, current_user=current_user, limit=1)[0]
 
 def generate_model_version_by_nlp_task(doc_type_id, mark_job_ids, nlp_task):
     mark_job_ids_str = ','.join([str(i) for i in mark_job_ids])
