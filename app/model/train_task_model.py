@@ -80,14 +80,14 @@ class TrainTaskModel(BaseModel, ABC):
             .join(TrainJob, TrainTask.train_job_id == TrainJob.train_job_id) \
             .join(DocType, DocType.doc_type_id == TrainJob.doc_type_id) \
             .filter(DocType.doc_type_id == doc_type_id,
-                    TrainTask.train_status == int(StatusEnum.online),
-                    EvaluateTask.evaluate_task_status == int(StatusEnum.success),
+                    TrainTask.train_status == StatusEnum.online,
+                    EvaluateTask.evaluate_task_status == StatusEnum.success,
                     ~DocType.is_deleted,
                     ~TrainJob.is_deleted,
                     ~TrainTask.is_deleted,
                     ~EvaluateTask.is_deleted)
         # auth
-        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
+        if current_user.user_role in [RoleEnum.manager, RoleEnum.guest]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
 
         # Filter conditions

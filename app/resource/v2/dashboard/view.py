@@ -24,12 +24,12 @@ class DashboardResource(Resource):
         :return:
         """
         result_skeleton = [
-            {"type": "分类项目", "nlp_task_id": int(NlpTaskEnum.classify)},
-            {"type": "抽取项目", "nlp_task_id": int(NlpTaskEnum.extract)},
-            {"type": "实体关系", "nlp_task_id": int(NlpTaskEnum.relation)},
-            {"type": "分词项目", "nlp_task_id": int(NlpTaskEnum.wordseg)},
+            {"type": "分类项目", "nlp_task_id": NlpTaskEnum.classify},
+            {"type": "抽取项目", "nlp_task_id": NlpTaskEnum.extract},
+            {"type": "实体关系", "nlp_task_id": NlpTaskEnum.relation},
+            {"type": "分词项目", "nlp_task_id": NlpTaskEnum.wordseg},
         ]
-        if self.get_current_role() in [str(RoleEnum.manager), str(RoleEnum.admin), str(RoleEnum.guest)]:
+        if self.get_current_role() in [RoleEnum.manager, RoleEnum.admin, RoleEnum.guest]:
             """
             管理员和超级管理员可以看到模型、标注信息
             """

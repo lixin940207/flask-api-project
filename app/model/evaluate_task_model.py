@@ -62,7 +62,7 @@ class EvaluateTaskModel(BaseModel, ABC):
             .join(TrainTask, TrainTask.train_task_id == EvaluateTask.train_task_id)\
             .join(TrainJob, TrainJob.train_job_id == TrainTask.train_job_id)\
             .filter(
-            EvaluateTask.evaluate_task_status == int(StatusEnum.success),
+            EvaluateTask.evaluate_task_status == StatusEnum.success,
             TrainJob.doc_type_id == doc_type_id,
             ~EvaluateTask.is_deleted,
             ~TrainTask.is_deleted,

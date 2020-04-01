@@ -79,9 +79,9 @@ class DocTypeModel(BaseModel, ABC):
     @staticmethod
     def get_by_mark_job_ids(mark_job_ids, nlp_task_id, current_user: CurrentUser, limit=10, offset=0) -> (typing.List, int):
         q = session.query(DocType).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
-        if current_user.user_role in [str(RoleEnum.manager), str(RoleEnum.guest)]:
+        if current_user.user_role in [RoleEnum.manager, RoleEnum.guest]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
-        elif current_user.user_role in [str(RoleEnum.reviewer), str(RoleEnum.annotator)]:
+        elif current_user.user_role in [RoleEnum.reviewer, RoleEnum.annotator]:
             q = q.fitler(func.json_contains(MarkJob.annotator_ids, current_user.user_id))
         if mark_job_ids:
             q = q.outerjoin(MarkJob, MarkJob.doc_type_id == DocType.doc_type_id) \
@@ -93,15 +93,15 @@ class DocTypeModel(BaseModel, ABC):
     @staticmethod
     def get_by_nlp_task_id_by_user(nlp_task_id, current_user: CurrentUser):
         q = session.query(DocType).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
-        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
+        if current_user.user_role in [RoleEnum.manager, RoleEnum.guest]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
-        elif current_user.user_role in [RoleEnum.reviewer.value]:
+        elif current_user.user_role in [RoleEnum.reviewer]:
             q = q.join(MarkJob, DocType.doc_type_id == MarkJob.doc_type_id)\
                 .filter(~MarkJob.is_deleted,
-                        sa_func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id)))
-        elif current_user.user_role in [RoleEnum.annotator.value]:
+                        sa_func.json_contains(MarkJob.reviewer_ids, current_user.user_id))
+        elif current_user.user_role in [RoleEnum.annotator]:
             q = q.join(MarkJob, DocType.doc_type_id == MarkJob.doc_type_id)\
                 .filter(~MarkJob.is_deleted,
-                        sa_func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)))
+                        sa_func.json_contains(MarkJob.annotator_ids, current_user.user_id))
         q = q.order_by(DocType.created_time.desc())
         return q.all()

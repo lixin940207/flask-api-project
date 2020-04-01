@@ -55,7 +55,7 @@ class TrainJobModel(BaseModel, ABC):
                     ~TrainJob.is_deleted,
                     ~TrainTask.is_deleted)
         # auth
-        if current_user.user_role in [str(RoleEnum.manager), str(RoleEnum.guest)]:
+        if current_user.user_role in [RoleEnum.manager, RoleEnum.guest]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
 
         # Filter conditions
