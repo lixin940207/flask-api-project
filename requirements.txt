@@ -2,6 +2,7 @@ alembic==1.3.2
 attrs==19.3.0
 chardet==3.0.4
 pydash==4.7.6
+Click==7.0
 Flask==1.1.1
 Flask-Cors==3.0.8
 flask-marshmallow==0.11.0
