@@ -21,7 +21,7 @@ RUN rm -rf /root/.ssh
 #folders
 ADD app app
 ADD admin admin
-ADD migrations migrations
+ADD app/migrations migrations
 #清除本地调试产生的迁移脚本
 RUN rm -rf migrations/versions/*.py
 

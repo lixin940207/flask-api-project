@@ -72,7 +72,7 @@ class DocTypeModel(BaseModel, ABC):
         session.bulk_update_mappings(DocType, entity_list)
 
     @staticmethod
-    def count_doc_type_by_nlp_task(current_user: CurrentUser):
+    def count_doc_type_by_nlp_task(current_user: CurrentUser) -> [(int, int)]:
         q = session.query(DocType.nlp_task_id, func.count(DocType.doc_type_id)) \
             .filter(~DocType.is_deleted)
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
@@ -103,7 +103,7 @@ class DocTypeModel(BaseModel, ABC):
         return items, count
 
     @staticmethod
-    def get_by_nlp_task_id_by_user(nlp_task_id, current_user: CurrentUser):
+    def get_by_nlp_task_id_by_user(nlp_task_id, current_user: CurrentUser) -> [DocType]:
         q = session.query(DocType).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))

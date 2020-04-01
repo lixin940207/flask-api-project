@@ -21,16 +21,16 @@ class DashboardService:
         for r in result_skeleton:
             doc_type_list = []
             mark_job_count, labeled_count, reviewed_count = 0, 0, 0
-            for row in mark_job_count_by_nlp_tasks:
-                if row[1] == r["nlp_task_id"]:
-                    mark_job_count += row[0]
-                    if row[2] not in doc_type_list:
-                        doc_type_list.append(row[2])
-                    if row[3] in [StatusEnum.approved.value]:
-                        reviewed_count += row[0]
-                        labeled_count += row[0]
-                    if row[3] in [StatusEnum.labeled.value]:
-                        labeled_count += row[0]
+            for _count, _nlp_task_id, _doc_type_id, _status_id in mark_job_count_by_nlp_tasks:
+                if _nlp_task_id == r["nlp_task_id"]:
+                    mark_job_count += _count
+                    if _doc_type_id not in doc_type_list:
+                        doc_type_list.append(_doc_type_id)
+                    if _status_id in [StatusEnum.approved.value]:
+                        reviewed_count += _count
+                        labeled_count += _count
+                    if _status_id in [StatusEnum.labeled.value]:
+                        labeled_count += _count
             r["doc_type_number"] = len(doc_type_list)
             r["mark_job_number"] = mark_job_count
             r["labeled_number"] = labeled_count

@@ -5,7 +5,7 @@ cd "${PROJECT_DIR}"
 pwd
 
 export PYTHONPATH=$(pwd)
-export FLASK_APP=main.py
+export FLASK_APP=start_server.py
 export FLASK_ENV=production
 export FLASK_DEBUG=0
 
@@ -16,4 +16,4 @@ if [ "$?" != "0" ]; then
     exit 1
 fi
 
-gunicorn main:app -c gunicorn_conf.py --reload
+gunicorn start_server:app -c gunicorn_conf.py --reload
