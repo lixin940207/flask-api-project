@@ -93,13 +93,13 @@ class DocTypeModel(BaseModel, ABC):
     @staticmethod
     def get_by_nlp_task_id_by_user(nlp_task_id, current_user: CurrentUser):
         q = session.query(DocType).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
-        if current_user.user_role == "管理员":
+        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
-        elif current_user.user_role == "审核员":
+        elif current_user.user_role in [RoleEnum.reviewer.value]:
             q = q.join(MarkJob, DocType.doc_type_id == MarkJob.doc_type_id)\
                 .filter(~MarkJob.is_deleted,
                         sa_func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id)))
-        elif current_user.user_role == "标注员":
+        elif current_user.user_role in [RoleEnum.annotator.value]:
             q = q.join(MarkJob, DocType.doc_type_id == MarkJob.doc_type_id)\
                 .filter(~MarkJob.is_deleted,
                         sa_func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)))

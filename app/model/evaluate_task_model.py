@@ -20,6 +20,10 @@ class EvaluateTaskModel(BaseModel, ABC):
         return session.query(EvaluateTask).filter(EvaluateTask.evaluate_task_id == _id,
                                                   ~EvaluateTask.is_deleted).one()
 
+    @staticmethod
+    def is_empty_table():
+        return session.query(EvaluateTask).filter(~EvaluateTask.is_deleted).count() == 0
+
     def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["train_task_id"]
@@ -37,7 +41,8 @@ class EvaluateTaskModel(BaseModel, ABC):
         q = q.offset(offset).limit(limit)
         return q.all()
 
-    def create(self, entity: EvaluateTask) -> EvaluateTask:
+    def create(self, **kwargs) -> EvaluateTask:
+        entity = EvaluateTask(**kwargs)
         session.add(entity)
         session.flush()
         return entity

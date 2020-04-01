@@ -16,17 +16,22 @@ class NlpTaskEnum(int, Enum):
 
 
 class StatusEnum(int, Enum):
-    init = 1,
-    queueing = 2,
-    processing = 3,
-    unlabel = 4,
-    labeling = 5,
-    labeled = 6,
-    reviewing = 7,
-    approved = 8,
-    training = 9,
-    fail = 10,
-    success = 11
+    init = 1,           # 标注任务、模型训练 - 初始化
+    queueing = 2,       # 预处理、模型训练、预测 - 排队中
+    processing = 3,     # 预处理处理中、自定义模型导出中
+    unlabel = 4,        # 标注文件 - 待标注
+    labeling = 5,       # 标注文件 - 标注中（保存但未提交）
+    labeled = 6,        # 标注文件 - 已标注
+    reviewing = 7,      # 标注文件、标注任务 - 审核中
+    approved = 8,       # 标注文件、标注任务 - 审核通过
+    training = 9,       # 模型 - 训练中
+    evaluating = 10,    # 模型 - 评估中
+    fail = 11,          # 预处理、模型训练、模型评估、模型预测 - 失败
+    success = 12,       # 模型、评估、预测 - 完成
+    online = 13,        # 模型 - 模型上线
+    deleted = 14,       # 模型 - 已删除，目前没用，预留
+    unavailable = 15,   # 自定义容器 - 服务不可用
+    available = 16,     # 自定义容器 - 服务可用
 
 
 class RoleEnum(str, Enum):
@@ -75,3 +80,4 @@ class Common:
         args.update({
             'nlp_task_id': nlp_task_id
         })
+        return nlp_task_id

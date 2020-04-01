@@ -15,6 +15,7 @@ class Seeds:
         self.create_mark_task()
         self.creat_user_task()
         self.create_train_task()
+        self.create_evaluate_task()
         session.commit()
 
     @staticmethod
@@ -22,12 +23,9 @@ class Seeds:
         from app.entity import NlpTask
         from app.model import NlpTaskModel
         if len(NlpTaskModel().get_all()) == 0:
-            init_nlp_tasks = [
-                NlpTask(app_id=1, created_by=1, nlp_task_id=NlpTaskEnum.extract, nlp_task_name="extract"),
-                NlpTask(app_id=1, created_by=1, nlp_task_id=NlpTaskEnum.classify, nlp_task_name="classify"),
-                NlpTask(app_id=1, created_by=1, nlp_task_id=NlpTaskEnum.wordseg, nlp_task_name="wordseg"),
-                NlpTask(app_id=1, created_by=1, nlp_task_id=NlpTaskEnum.relation, nlp_task_name="relation"),
-            ]
+            init_nlp_tasks = []
+            for i in NlpTaskEnum:
+                init_nlp_tasks.append(NlpTask(app_id=1, created_by=1, nlp_task_id=int(i), nlp_task_name=i.name))
             NlpTaskModel().bulk_create(init_nlp_tasks)
             session.commit()
             logger.info(" [x] Seeds nlp_task has been created. ")
@@ -37,18 +35,9 @@ class Seeds:
         from app.entity import Status
         from app.model import StatusModel
         if len(StatusModel().get_all()) == 0:
-            init_status = [
-                Status(app_id=1, created_by=1, status_id=int(StatusEnum.init), status_name="init"),
-                Status(app_id=1, created_by=1, status_id=int(StatusEnum.queueing), status_name="queueing"),
-                Status(app_id=1, created_by=1, status_id=int(StatusEnum.processing), status_name="processing"),
-                Status(app_id=1, created_by=1, status_id=int(StatusEnum.unlabel), status_name="unlabel"),
-                Status(app_id=1, created_by=1, status_id=int(StatusEnum.labeling), status_name="labeling"),
-                Status(app_id=1, created_by=1, status_id=int(StatusEnum.labeled), status_name="labeled"),
-                Status(app_id=1, created_by=1, status_id=int(StatusEnum.reviewing), status_name="reviewing"),    # auditing
-                Status(app_id=1, created_by=1, status_id=int(StatusEnum.approved), status_name="approved"),     # audited
-                Status(app_id=1, created_by=1, status_id=int(StatusEnum.fail), status_name="fail"),         # failed
-                Status(app_id=1, created_by=1, status_id=int(StatusEnum.success), status_name="success"),
-            ]
+            init_status = []
+            for i in StatusEnum:
+                init_status.append(Status(app_id=1, created_by=1, status_id=int(i), status_name=i.name))
             StatusModel().bulk_create(init_status)
             session.commit()
             logger.info(" [x] Seeds status has been created. ")
@@ -267,9 +256,9 @@ class Seeds:
         from app.model import TrainTaskModel
         if TrainTaskModel().is_empty_table():
             TrainTaskModel().create(app_id=1, created_by=1, train_task_id=1, train_model_name="test",
-                                    train_status=int(StatusEnum.training), train_job_id=1)
+                                    train_status=int(StatusEnum.online), train_job_id=1)
             TrainTaskModel().create(app_id=1, created_by=1, train_task_id=2, train_model_name="test",
-                                    train_status=int(StatusEnum.training), train_job_id=1)
+                                    train_status=int(StatusEnum.success), train_job_id=1)
             TrainTaskModel().create(app_id=1, created_by=1, train_task_id=3, train_model_name="test",
                                     train_status=int(StatusEnum.training), train_job_id=2)
             TrainTaskModel().create(app_id=1, created_by=1, train_task_id=4, train_model_name="test",
@@ -280,4 +269,24 @@ class Seeds:
                                     train_status=int(StatusEnum.training), train_job_id=4)
             TrainTaskModel().create(app_id=1, created_by=1, train_task_id=7, train_model_name="test",
                                     train_status=int(StatusEnum.training), train_job_id=5)
+        session.commit()
+
+    @staticmethod
+    def create_evaluate_task():
+        from app.model.evaluate_task_model import EvaluateTaskModel
+        if EvaluateTaskModel().is_empty_table():
+            EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=1, evaluate_task_name="test",
+                                    evaluate_task_status=int(StatusEnum.success), train_task_id=1)
+            EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=2, evaluate_task_name="test",
+                                    evaluate_task_status=int(StatusEnum.success), train_task_id=1)
+            EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=3, evaluate_task_name="test",
+                                    evaluate_task_status=int(StatusEnum.success), train_task_id=2)
+            EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=4, evaluate_task_name="test",
+                                    evaluate_task_status=int(StatusEnum.success), train_task_id=3)
+            EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=5, evaluate_task_name="test",
+                                    evaluate_task_status=int(StatusEnum.success), train_task_id=3)
+            EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=6, evaluate_task_name="test",
+                                    evaluate_task_status=int(StatusEnum.success), train_task_id=4)
+            EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=7, evaluate_task_name="test",
+                                    evaluate_task_status=int(StatusEnum.success), train_task_id=5)
         session.commit()
