@@ -7,7 +7,7 @@ from app.common.handler import register_handler
 from app.resource import register_blueprint
 from app.common.middleware import register_middleware
 from app.resource.v2.common_api import register_common_api
-from app.common.seeds import create_seeds
+from app.common.seeds import Seeds
 
 
 def create_app(env: str = 'development', override_config: typing.Dict = None) -> Flask:
@@ -28,8 +28,9 @@ def create_app(env: str = 'development', override_config: typing.Dict = None) ->
 
     with app.app_context():
         try:
-            create_seeds()
-        except Exception:
+            Seeds().create_seeds()
+        except Exception as e:
             app.logger.warning(" [-] Create seeds failed, may caused by first time start up. ")
+            app.logger.warning(e)
 
     return app

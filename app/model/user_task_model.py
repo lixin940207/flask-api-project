@@ -3,7 +3,7 @@ from abc import ABC
 from sqlalchemy import not_
 
 from app.model.base import BaseModel
-from app.entity.user_task import UserTask
+from app.entity import UserTask, MarkTask, MarkJob, DocType
 from app.common.extension import session
 
 
@@ -12,10 +12,14 @@ class UserTaskModel(BaseModel, ABC):
         raise NotImplemented("no get_all")
         # return session.query(UserTask).filter(not_(UserTask.is_deleted)).all()
 
+    @staticmethod
+    def is_empty_table():
+        return session.query(UserTask).filter(not_(UserTask.is_deleted)).count() == 0
+
     def get_by_id(self, _id):
         return session.query(UserTask).filter(UserTask.user_task_id == _id, not_(UserTask.is_deleted)).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["mark_task_id", "annotator_id", "user_task_status"]
         # Compose query

@@ -20,7 +20,7 @@ class RelationM2mTermModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(RelationM2mTerm).filter(RelationM2mTerm.id == _id, not RelationM2mTerm.is_deleted).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["doc_relation_id", "doc_term_id"]
         # Compose query

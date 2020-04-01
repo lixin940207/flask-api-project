@@ -9,7 +9,7 @@ from app.common.log import logger
 # from flask_apscheduler import APScheduler
 
 # apscheduler = APScheduler()
-db = SQLAlchemy()
+db = SQLAlchemy(session_options={"autoflush": False})
 session = db.session
 ma = Marshmallow()
 cors = CORS(resources=r'/*', supports_credentials=True)
