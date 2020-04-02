@@ -1,0 +1,56 @@
+stages:
+  - build
+  - deploy
+
+variables:
+  GIT_STRATEGY: none
+  PROJECT_REPO_NAMESPACE: nlp
+  PROJECT_REPO_NAME: nlp_platform_api_v2
+  DEPLOYMENT_REPO_NAMESPACE: nlp
+  DEPLOYMENT_REPO_NAME: deploy_nlp_platform
+  SERVER: 127.0.0.1
+  PORT: 26822
+  USER: nlponline
+
+before_script:
+  - export ROOT_PATH=$(pwd)
+  - echo 'root path:' $ROOT_PATH
+  - docker login -u $DOCKER_USER -p $DOCKER_PW http://dockerhub.datagrand.com
+  - mkdir $PROJECT_REPO_NAME
+  - cd $PROJECT_REPO_NAME
+  - git init
+  - git remote add origin ssh://git@git.datagrand.com:58422/$PROJECT_REPO_NAMESPACE/$PROJECT_REPO_NAME.git
+  - git fetch --depth=1 origin $CI_COMMIT_SHA
+  - git reset --hard FETCH_HEAD
+  - echo 'commit id:' $CI_COMMIT_SHA
+  - echo 'commit user:' $GITLAB_USER_NAME
+  - echo 'commit e-mail:' $GITLAB_USER_EMAIL
+  - export COMMIT_MESSAGE=$(git log -p -1 --pretty=format:"%s"|head -1)
+  - echo 'commit message:' $COMMIT_MESSAGE
+  - export DATE=$(date +%Y%m%d)
+  - echo 'date:' $DATE
+  - export DOCKER_TAG_SUFFIX="ci"_$DATE"_"${CI_COMMIT_SHA:0:7}
+  - echo 'docker tag suffix:' $DOCKER_TAG_SUFFIX
+
+build_stage:
+  stage: build
+  only:
+    - master
+    - develop
+    - feature/configure_ci
+  script:
+    - cd $ROOT_PATH/$PROJECT_REPO_NAME
+    - sh admin/build_dev.sh $DOCKER_TAG_SUFFIX
+    # - sh scripts/build_prod.sh $DOCKER_TAG_SUFFIX
+  when: always
+  allow_failure: false
+
+deploy_dev_stage:
+  stage: deploy
+  only:
+    - master
+    - develop
+  script:
+    - sh admin/deploy_env.sh nlp_platform_v2
+  when: manual
+  allow_failure: false
