@@ -19,7 +19,12 @@ class UpdateTrainTermResource(Resource):
         """
         修改模型训练的一个字段状态
         """
-        train_term_task = ModelTrainService().update_train_term_by_model_version_and_doc_term_id(model_version=args["model_version"], doc_term_id=args["doc_term_id"], **args)
+        update_params = {}
+        if args.get("train_term_state"):
+            update_params.update(train_term_status=args["train_term_state"])
+        if args.get("train_term_result"):
+            update_params.update(train_term_result=args["train_term_result"])
+        train_term_task = ModelTrainService().update_train_term_by_model_version_and_doc_term_id(model_version=args["model_version"], doc_term_id=args["doc_term_id"], args=update_params)
         result = TrainTermTaskSchema().dump(train_term_task)
         return {
                    "message": "更新成功",
@@ -40,7 +45,10 @@ class UpdateModelTrainResource(Resource):
         """
         修改模型的状态
         """
-        train_task = ModelTrainService().update_train_task_by_model_version(model_version=args["model_version"], args=args)
+        update_params = {}
+        if args.get("model_train_state"):
+            update_params.update(train_status=args["model_train_state"])
+        train_task = ModelTrainService().update_train_task_by_model_version(model_version=args["model_version"], is_check_train_terms=args["check_train_terms"], args=update_params)
         result = TrainTaskSchema().dump(train_task)
         return {
                    "message": "更新成功",

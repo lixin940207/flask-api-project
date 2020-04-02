@@ -25,9 +25,8 @@ from app.common.utils.time import get_now_with_format
 
 class ModelService:
     @staticmethod
-    def get_train_job_list_by_nlp_task(nlp_task, doc_type_id, search, offset, limit, current_user: CurrentUser):
+    def get_train_job_list_by_nlp_task(nlp_task_id, doc_type_id, search, offset, limit, current_user: CurrentUser):
         # get nlp_task id
-        nlp_task_id = int(nlp_task)
         # if exists doc_type_id, get train jobs of this doc_type_id
         if doc_type_id:
             task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
@@ -174,8 +173,7 @@ class ModelService:
 
     @staticmethod
     def get_latest_model_info_by_doc_type_id(doc_type_id, current_user):
-        return TrainTaskModel().get_all_model_related_by_doc_type_id(doc_type_id=doc_type_id, current_user=current_user,
-                                                                     limit=1)[0]
+        return TrainTaskModel().get_all_model_related_by_doc_type_id(doc_type_id=doc_type_id, current_user=current_user)[0]
 
 
 def generate_model_version_by_nlp_task(doc_type_id, mark_job_ids, nlp_task):

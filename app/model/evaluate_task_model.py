@@ -4,6 +4,7 @@
 from abc import ABC
 from sqlalchemy import func as sa_func
 
+from app.common.common import NlpTaskEnum
 from app.common.seeds import StatusEnum
 from app.entity import TrainTask, TrainJob
 from app.model.base import BaseModel
@@ -56,13 +57,13 @@ class EvaluateTaskModel(BaseModel, ABC):
         pass
 
     @staticmethod
-    def get_latest_evaluate_by_doc_type_id(nlp_task, doc_type_id):
-        evaluate_result_path = '$.result.overall."f1-score"' if nlp_task == 'classify' else '$.scores.f1_score.overall.f1'
+    def get_latest_evaluate_by_doc_type_id(nlp_task_id, doc_type_id):
+        evaluate_result_path = '$.result.overall."f1-score"' if nlp_task_id == int(NlpTaskEnum.classify) else '$.scores.f1_score.overall.f1'
         q = session.query(EvaluateTask)\
             .join(TrainTask, TrainTask.train_task_id == EvaluateTask.train_task_id)\
             .join(TrainJob, TrainJob.train_job_id == TrainTask.train_job_id)\
             .filter(
-            EvaluateTask.evaluate_task_status == StatusEnum.success,
+            EvaluateTask.evaluate_task_status == int(StatusEnum.success),
             TrainJob.doc_type_id == doc_type_id,
             ~EvaluateTask.is_deleted,
             ~TrainTask.is_deleted,
