@@ -3,7 +3,6 @@
 # create: 2020/3/24-3:39 下午
 import json
 from flask import g
-
 from app.common.filters import CurrentUser
 from app.common.redis import r
 from app.common.log import logger
@@ -30,31 +29,34 @@ class ModelService:
         # get nlp_task id
         # if exists doc_type_id, get train jobs of this doc_type_id
         if doc_type_id:
-            count, task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task, search=search, offset=offset,
-                                                                limit=limit, current_user=current_user, doc_type_id=doc_type_id)
-        else:   # else get all
-            count, task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task, search=search, offset=offset,
-                                                                limit=limit, current_user=current_user)
-        # assign doc_type, train_list to each train job for dumping
+            task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task, search=search, offset=offset,
+                                                                  limit=limit, current_user=current_user,
+                                                                  doc_type_id=doc_type_id)
+            count = TrainJobModel().count_by_nlp_task_id(nlp_task_id=nlp_task, search=search, current_user=current_user,
+                                                         doc_type_id=doc_type_id)
+        else:  # else get all
+            task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task, search=search, offset=offset,
+                                                                  limit=limit, current_user=current_user)
+            count = TrainJobModel().count_by_nlp_task_id(nlp_task_id=nlp_task, search=search, current_user=current_user)
+        # assign doc_type, train_list to each trainjob for dumping
         result = []
         job_id_list = []
-        for task in task_job_doctype:
-            if task[0].train_job_id not in job_id_list:
-                job_id_list.append(task[0].train_job_id)
-                train_job = task[1]
-                train_job.doc_type = task[2]
-                train_job.train_list = [task[0]]
+        for train_task, train_job, doc_type in task_job_doctype:
+            if train_task.train_job_id not in job_id_list:
+                job_id_list.append(train_task.train_job_id)
+                train_job.doc_type = doc_type
+                train_job.train_list = [train_task]
                 result.append(train_job)
             else:
-                result[job_id_list.index(task[0].train_job_id)].train_list.append(task[0])
-
+                result[job_id_list.index(train_task.train_job_id)].train_list.append(train_task)
         # get the serialized result
         result = TrainJobSchema().dump(result, many=True)
         return count, result
 
     @staticmethod
-    def create_classify_train_job_by_doc_type_id(doc_type_id, train_job_name, train_job_desc, train_config, mark_job_ids,
-                                     custom_id):
+    def create_classify_train_job_by_doc_type_id(doc_type_id, train_job_name, train_job_desc, train_config,
+                                                 mark_job_ids,
+                                                 custom_id):
         # verify doc_type
         doc_type = DocTypeModel().get_by_id(doc_type_id)
         # get nlp_task name
@@ -92,7 +94,8 @@ class ModelService:
             custom = None
 
         # push to redis
-        push_train_task_to_redis(nlp_task, doc_type_id, train_task.train_task_id, model_version, train_config, mark_job_ids, custom)
+        push_train_task_to_redis(nlp_task, doc_type_id, train_task.train_task_id, model_version, train_config,
+                                 mark_job_ids, custom)
         session.commit()
 
         # add some attribute for dumping
@@ -147,7 +150,8 @@ class ModelService:
             TrainTermTaskModel().bulk_create(train_term_task_list)
 
         # push to redis
-        push_train_task_to_redis(nlp_task, doc_type_id, train_task.train_task_id, model_version, train_config, mark_job_ids)
+        push_train_task_to_redis(nlp_task, doc_type_id, train_task.train_task_id, model_version, train_config,
+                                 mark_job_ids)
         session.commit()
 
         # add some attribute for dumping
@@ -157,7 +161,6 @@ class ModelService:
         train_job.model_version = model_version
         result = TrainJobSchema().dump(train_job)
         return result
-
 
     @staticmethod
     def get_train_job_by_id(_id):
@@ -171,7 +174,9 @@ class ModelService:
 
     @staticmethod
     def get_latest_model_info_by_doc_type_id(doc_type_id, current_user):
-        return TrainTaskModel().get_all_model_related_by_doc_type_id(doc_type_id=doc_type_id, current_user=current_user, limit=1)[0]
+        return TrainTaskModel().get_all_model_related_by_doc_type_id(doc_type_id=doc_type_id, current_user=current_user,
+                                                                     limit=1)[0]
+
 
 def generate_model_version_by_nlp_task(doc_type_id, mark_job_ids, nlp_task):
     mark_job_ids_str = ','.join([str(i) for i in mark_job_ids])
@@ -187,7 +192,8 @@ def generate_model_version_by_nlp_task(doc_type_id, mark_job_ids, nlp_task):
         return '{}_WS{}_{}'.format(get_now_with_format(), doc_type_id, mark_job_ids_str)
 
 
-def push_train_task_to_redis(nlp_task, doc_type_id, train_task_id, model_version, train_config, mark_job_ids, custom=None):
+def push_train_task_to_redis(nlp_task, doc_type_id, train_task_id, model_version, train_config, mark_job_ids,
+                             custom=None):
     if nlp_task == "classify":
         r.lpush(_get('CLASSIFY_MODEL_QUEUE_KEY'), json.dumps({
             "version": model_version,

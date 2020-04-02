@@ -2,12 +2,10 @@
 # email:  lixin@datagrand.com
 # create: 2020/3/18-3:40 下午
 from abc import ABC
-from sqlalchemy import not_
-
 from app.common.filters import CurrentUser
 from app.model.base import BaseModel
 from app.entity import TrainTask, TrainJob, DocType, EvaluateTask
-from app.common.common import StatusEnum, NlpTaskEnum, RoleEnum
+from app.common.common import StatusEnum, RoleEnum
 
 from app.common.extension import session
 
@@ -21,7 +19,7 @@ class TrainTaskModel(BaseModel, ABC):
 
     @staticmethod
     def is_empty_table():
-        return session.query(TrainTask).filter(not_(TrainTask.is_deleted)).count() == 0
+        return session.query(TrainTask).filter(~TrainTask.is_deleted).count() == 0
 
     def get_by_filter(self, search="", order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
