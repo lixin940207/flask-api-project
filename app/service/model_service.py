@@ -27,17 +27,17 @@ class ModelService:
     @staticmethod
     def get_train_job_list_by_nlp_task(nlp_task, doc_type_id, search, offset, limit, current_user: CurrentUser):
         # get nlp_task id
+        nlp_task_id = int(nlp_task)
         # if exists doc_type_id, get train jobs of this doc_type_id
         if doc_type_id:
-            task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task, search=search, offset=offset,
-                                                                  limit=limit, current_user=current_user,
-                                                                  doc_type_id=doc_type_id)
-            count = TrainJobModel().count_by_nlp_task_id(nlp_task_id=nlp_task, search=search, current_user=current_user,
+            task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
+                                                                  limit=limit, current_user=current_user, doc_type_id=doc_type_id)
+            count = TrainJobModel().count_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, current_user=current_user,
                                                          doc_type_id=doc_type_id)
         else:  # else get all
-            task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task, search=search, offset=offset,
+            task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
                                                                   limit=limit, current_user=current_user)
-            count = TrainJobModel().count_by_nlp_task_id(nlp_task_id=nlp_task, search=search, current_user=current_user)
+            count = TrainJobModel().count_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, current_user=current_user)
         # assign doc_type, train_list to each trainjob for dumping
         result = []
         job_id_list = []
@@ -60,7 +60,7 @@ class ModelService:
         # verify doc_type
         doc_type = DocTypeModel().get_by_id(doc_type_id)
         # get nlp_task name
-        nlp_task = "classify"
+        nlp_task = NlpTaskEnum.classify
         # generate model version by nlp task
         model_version = generate_model_version_by_nlp_task(doc_type_id, mark_job_ids, nlp_task)
 
@@ -69,7 +69,7 @@ class ModelService:
             train_job_name=train_job_name,
             train_job_desc=train_job_desc,
             doc_type_id=doc_type_id,
-            train_job_status=StatusEnum.processing
+            train_job_status=int(StatusEnum.processing)
         )
         # create TrainM2mMark table
         train_m2m_mark_list = [{"train_job_id": train_job.train_job_id, "mark_job_id": _id} for _id in mark_job_ids]
@@ -81,7 +81,7 @@ class ModelService:
             train_model_name=train_job_name,
             train_model_desc=train_job_desc,
             train_config=train_config,
-            train_status=StatusEnum.processing,
+            train_status=int(StatusEnum.processing),
             model_version=model_version
         )
 
@@ -94,7 +94,7 @@ class ModelService:
             custom = None
 
         # push to redis
-        push_train_task_to_redis(nlp_task, doc_type_id, train_task.train_task_id, model_version, train_config,
+        push_train_task_to_redis(nlp_task, doc_type, train_task.train_task_id, model_version, train_config,
                                  mark_job_ids, custom)
         session.commit()
 
@@ -111,7 +111,7 @@ class ModelService:
         # verify doc_type
         doc_type = DocTypeModel().get_by_id(doc_type_id)
         # get nlp_task name
-        nlp_task = NlpTaskEnum(doc_type.nlp_task_id).name
+        nlp_task = NlpTaskEnum(doc_type.nlp_task_id)
         # generate model version by nlp task
         model_version = generate_model_version_by_nlp_task(doc_type_id, mark_job_ids, nlp_task)
 
@@ -124,7 +124,7 @@ class ModelService:
             train_job_name=train_job_name,
             train_job_desc=train_job_desc,
             doc_type_id=doc_type_id,
-            train_job_status=StatusEnum.processing
+            train_job_status=int(StatusEnum.processing)
         )
         # bulk create TrainM2mMark table
         train_m2m_mark_list = [{"train_job_id": train_job.train_job_id, "mark_job_id": _id} for _id in mark_job_ids]
@@ -135,22 +135,22 @@ class ModelService:
             train_model_name=train_job_name,
             train_model_desc=train_job_desc,
             train_config=train_config,
-            train_status=StatusEnum.processing,
+            train_status=int(StatusEnum.processing),
             model_version=model_version
         )
-        if nlp_task in ["extract", "relation"]:
+        if nlp_task in [NlpTaskEnum.extract, NlpTaskEnum.relation]:
             # create TrainTermTask table for each doc term
             train_term_task_list = []
             for field_config in train_config:
                 train_term_task_list.append({
                     "train_task_id": train_task.train_task_id,
                     "doc_term_id": field_config["field_id"],
-                    "train_term_status": StatusEnum.processing
+                    "train_term_status": int(StatusEnum.processing)
                 })
             TrainTermTaskModel().bulk_create(train_term_task_list)
 
         # push to redis
-        push_train_task_to_redis(nlp_task, doc_type_id, train_task.train_task_id, model_version, train_config,
+        push_train_task_to_redis(nlp_task, doc_type, train_task.train_task_id, model_version, train_config,
                                  mark_job_ids)
         session.commit()
 
@@ -182,36 +182,36 @@ def generate_model_version_by_nlp_task(doc_type_id, mark_job_ids, nlp_task):
     mark_job_ids_str = ','.join([str(i) for i in mark_job_ids])
     if len(mark_job_ids_str) > 50:
         mark_job_ids_str = 'hash' + str(hash(mark_job_ids_str))
-    if nlp_task == "extract":
+    if nlp_task == NlpTaskEnum.extract:
         return "{}_NER{}_{}".format(get_now_with_format(), doc_type_id, mark_job_ids_str)
-    elif nlp_task == "classify":
+    elif nlp_task == NlpTaskEnum.classify:
         return "{}_{}_{}".format(get_now_with_format(), g.app_id, doc_type_id)
-    elif nlp_task == "relation":
+    elif nlp_task == NlpTaskEnum.relation:
         return "{}_RE{}_{}".format(get_now_with_format(), doc_type_id, mark_job_ids_str)
-    elif nlp_task == "wordseg":
+    elif nlp_task == NlpTaskEnum.wordseg:
         return '{}_WS{}_{}'.format(get_now_with_format(), doc_type_id, mark_job_ids_str)
 
 
-def push_train_task_to_redis(nlp_task, doc_type_id, train_task_id, model_version, train_config, mark_job_ids,
+def push_train_task_to_redis(nlp_task, doc_type, train_task_id, model_version, train_config, mark_job_ids,
                              custom=None):
-    if nlp_task == "classify":
+    if nlp_task == NlpTaskEnum.classify:
         r.lpush(_get('CLASSIFY_MODEL_QUEUE_KEY'), json.dumps({
             "version": model_version,
             "task_type": 'train',
             "event_id": train_task_id,
             "configs": train_config,
             "data_path": generate_classify_data(mark_job_ids),
-            "label": DocTypeSchema().dump(DocTypeModel().get_by_id(doc_type_id)),
+            "label": DocTypeSchema().dump(doc_type),
             "custom": custom,
             "use_rule": 0,
         }))
     else:
         prefix_map = {"extract": "NER", "relation": "RE", "wordseg": "WS"}
-        r.lpush(_get("{}_TRAIN_QUEUE_KEY".format(nlp_task.upper())), json.dumps({
+        r.lpush(_get("{}_TRAIN_QUEUE_KEY".format(nlp_task.name.upper())), json.dumps({
             "version": model_version,
-            "doctype": prefix_map[nlp_task] + str(doc_type_id),
+            "doctype": prefix_map[nlp_task.name] + str(doc_type.doc_type_id),
             "tasks": mark_job_ids,
-            "model_type": nlp_task,
+            "model_type": nlp_task.name,
             "configs": [json.dumps(x) for x in train_config],
         }))
 

@@ -38,7 +38,8 @@ class DocTermModel(BaseModel, ABC):
         q = q.offset(offset).limit(limit)
         return q.all()
 
-    def create(self, entity: DocTerm) -> DocTerm:
+    def create(self, **kwargs) -> DocTerm:
+        entity = DocTerm(**kwargs)
         session.add(entity)
         session.flush()
         return entity

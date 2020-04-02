@@ -16,6 +16,10 @@ class TrainTermTaskModel(BaseModel, ABC):
         return session.query(TrainTermTask).filter(TrainTermTask.train_term_task_id == _id,
                                                    ~TrainTermTask.is_deleted).one()
 
+    @staticmethod
+    def is_empty_table():
+        return session.query(TrainTermTask).filter(~TrainTermTask.is_deleted).count() == 0
+
     def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["train_task_id", "doc_term_id", "train_term_status"]

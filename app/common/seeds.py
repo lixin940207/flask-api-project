@@ -9,6 +9,7 @@ class Seeds:
         self.create_nlp_task()
         self.create_status()
         self.create_doc_type()
+        self.create_doc_term()
         self.create_mark_job()
         self.create_train_job()
         self.create_doc()
@@ -74,6 +75,17 @@ class Seeds:
             DocTypeModel().bulk_create(doc_types)
             session.commit()
 
+    @staticmethod
+    def create_doc_term():
+        from app.model.doc_term_model import DocTermModel
+        if len(DocTermModel().get_all()) == 0:
+            DocTermModel().create(app_id=1, created_by=1, doc_term_id=1, doc_term_name="人名", doc_term_alias="nr",
+                                  doc_type_id=1)
+            DocTermModel().create(app_id=1, created_by=1, doc_term_id=2, doc_term_name="地名", doc_term_alias="ns",
+                                  doc_type_id=1)
+            DocTermModel().create(app_id=1, created_by=1, doc_term_id=3, doc_term_name="机构名", doc_term_alias="nt",
+                                  doc_type_id=1)
+            session.commit()
     @staticmethod
     def create_mark_job():
         from app.entity import MarkJob
@@ -300,7 +312,6 @@ class Seeds:
             TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train27", train_status=int(StatusEnum.training), train_job_id=27)
             TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train28", train_status=int(StatusEnum.training), train_job_id=28)
             TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train29", train_status=int(StatusEnum.training), train_job_id=29)
-
         session.commit()
 
     @staticmethod
