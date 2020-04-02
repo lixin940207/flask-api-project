@@ -10,14 +10,14 @@ class ClassifyMarkJobService:
     @staticmethod
     def get_mark_job_list(args):
         nlp_task_id = int(NlpTaskEnum.classify)
-        mark_jobs = MarkJobModel().get_by_nlp_task_id(
+        result = MarkJobModel().get_by_nlp_task_id(
             nlp_task_id=nlp_task_id, doc_type_id=args['doc_type_id'],
             search=args['query'], limit=args['limit'], offset=args['offset'])
 
         count = MarkJobModel().count_mark_job_by_nlp_task_id(
             nlp_task_id=nlp_task_id, search=args['query'])
 
-        mark_job_ids = [item.mark_job_id for item in mark_jobs]
+        mark_job_ids = [mark_job.mark_job_id for mark_job, _ in result]
         status_count = MarkTaskModel().count_mark_task_status(mark_job_ids=mark_job_ids)
         cache = {}
         for task_status_count, task_status, mark_job_id in status_count:
@@ -29,9 +29,11 @@ class ClassifyMarkJobService:
                 cache[mark_job_id]['labeled'] += task_status_count
             if task_status == StatusEnum.approved:
                 cache[mark_job_id]['audited'] += task_status_count
-
-        for mark_job in mark_jobs:
+        items = []
+        for mark_job, doc_type in result:
             mark_job.stats = cache.get(mark_job.mark_job_id, {'all': 0, 'labeled': 0, 'audited': 0})
+            mark_job.doc_type = doc_type
+            items.append(mark_job)
 
-        result = ClassifyMarkJobSchema(many=True).dump(mark_jobs)
+        result = ClassifyMarkJobSchema(many=True).dump(items)
         return count, result

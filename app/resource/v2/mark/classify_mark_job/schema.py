@@ -14,14 +14,37 @@ class GeneralTaskSchema(Schema):
     })
 
 
+class ClassifyDocTermSchema(Schema):
+
+    class Meta:
+        fields = (
+            "doc_term_id",
+            "doc_term_name",
+            "doc_term_color",
+            "doc_term_index",
+            "doc_term_desc"
+        )
+
+
 class ClassifyDocTypeSchema(Schema):
-    pass
+    doc_term_list = fields.List(fields.Nested(ClassifyDocTermSchema), attribute='doc_terms')
+
+    class Meta:
+        fields = (
+            'doc_type_id',
+            'doc_type_name',
+            'doc_type_desc',
+            'doc_term_list',
+            'created_time',
+            'status',
+            'index',
+            'is_top',
+        )
 
 
-class ClassifyMarkJobSchema(Schema):  # type: ignore
+class ClassifyMarkJobSchema(Schema):
     doc_type = fields.Nested(ClassifyDocTypeSchema, exclude=('doc_term_list',))
-    task_list = fields.List(fields.Nested(GeneralTaskSchema))
-    labeler_ids = fields.List(fields.Integer())
+    labeler_ids = fields.List(fields.Integer(), attribute='annotator_ids')
     stats = fields.Nested({
         "all": fields.Integer(),
         "labeled": fields.Integer(),

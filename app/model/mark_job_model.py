@@ -36,7 +36,7 @@ class MarkJobModel(BaseModel, ABC):
         # Define allowed filter keys
         accept_keys = ["assign_mode", "mark_job_status", "mark_job_type", "doc_type_id"]
         # Compose query
-        q = session.query(MarkJob).join(
+        q = session.query(MarkJob, DocType).join(
             DocType, MarkJob.doc_type_id == DocType.doc_type_id
         ).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~MarkJob.is_deleted)
         # Filter conditions
