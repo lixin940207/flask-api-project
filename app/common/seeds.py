@@ -255,20 +255,65 @@ class Seeds:
     def create_train_task():
         from app.model import TrainTaskModel
         if TrainTaskModel().is_empty_table():
-            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=1, train_model_name="test",
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=1, train_model_name="train1",
                                     train_status=int(StatusEnum.online), train_job_id=1)
-            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=2, train_model_name="test",
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=2, train_model_name="train2",
                                     train_status=int(StatusEnum.success), train_job_id=1)
-            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=3, train_model_name="test",
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=3, train_model_name="train3",
+                                    train_status=int(StatusEnum.training), train_job_id=1)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=4, train_model_name="train4",
                                     train_status=int(StatusEnum.training), train_job_id=2)
-            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=4, train_model_name="test",
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=5, train_model_name="train5",
                                     train_status=int(StatusEnum.training), train_job_id=3)
-            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=5, train_model_name="test",
-                                    train_status=int(StatusEnum.training), train_job_id=3)
-            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=6, train_model_name="test",
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=6, train_model_name="train6",
                                     train_status=int(StatusEnum.training), train_job_id=4)
-            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=7, train_model_name="test",
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=7, train_model_name="train7",
+                                    train_status=int(StatusEnum.training), train_job_id=4)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=1, train_model_name="train8",
+                                    train_status=int(StatusEnum.online), train_job_id=5)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=2, train_model_name="train9",
+                                    train_status=int(StatusEnum.success), train_job_id=5)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=3, train_model_name="train10",
+                                    train_status=int(StatusEnum.training), train_job_id=6)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=4, train_model_name="train11",
+                                    train_status=int(StatusEnum.training), train_job_id=7)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=5, train_model_name="train12",
+                                    train_status=int(StatusEnum.training), train_job_id=8)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=6, train_model_name="train13",
+                                    train_status=int(StatusEnum.training), train_job_id=9)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=7, train_model_name="train14",
+                                    train_status=int(StatusEnum.training), train_job_id=9)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=1, train_model_name="train15",
+                                    train_status=int(StatusEnum.online), train_job_id=10)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=2, train_model_name="train16",
+                                    train_status=int(StatusEnum.success), train_job_id=10)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=3, train_model_name="train17",
+                                    train_status=int(StatusEnum.training), train_job_id=10)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=4, train_model_name="train18",
+                                    train_status=int(StatusEnum.training), train_job_id=11)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=5, train_model_name="train19",
+                                    train_status=int(StatusEnum.training), train_job_id=11)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=6, train_model_name="train20",
                                     train_status=int(StatusEnum.training), train_job_id=5)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=7, train_model_name="train21",
+                                    train_status=int(StatusEnum.training), train_job_id=6)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=7, train_model_name="train22",
+                                    train_status=int(StatusEnum.training), train_job_id=6)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=1, train_model_name="train23",
+                                    train_status=int(StatusEnum.online), train_job_id=5)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=2, train_model_name="train24",
+                                    train_status=int(StatusEnum.success), train_job_id=2)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=3, train_model_name="train25",
+                                    train_status=int(StatusEnum.training), train_job_id=2)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=4, train_model_name="train26",
+                                    train_status=int(StatusEnum.training), train_job_id=2)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=5, train_model_name="train27",
+                                    train_status=int(StatusEnum.training), train_job_id=5)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=6, train_model_name="train28",
+                                    train_status=int(StatusEnum.training), train_job_id=8)
+            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=7, train_model_name="train29",
+                                    train_status=int(StatusEnum.training), train_job_id=7)
+
         session.commit()
 
     @staticmethod
