@@ -23,43 +23,37 @@ class DocTypeService:
         return doc_type
 
     @staticmethod
-    def get_doc_type_info_by_nlp_task_by_user(nlp_task, current_user):
+    def get_doc_type_info_by_nlp_task_by_user(nlp_task_id, current_user):
         """
         获取管理大厅首页的doc_type信息
         """
         result = []
-        nlp_task_id = int(nlp_task)
-
-        # get doc_type list by user role and user id
+        # get doc_type list by user
         doc_type_list = DocTypeModel().get_by_nlp_task_id_by_user(nlp_task_id=nlp_task_id, current_user=current_user)
         doc_type_list = [{"doc_type": DocTypeSchema().dump(d)} for d in doc_type_list]
-        # get all job count and approved job count
-        all_status, all_finish_marking_status = MarkTaskModel().count_status_by_user(nlp_task_id=nlp_task_id, current_user=current_user)
 
-        # iterate doc_type list to calculate their progress state
-        for item in doc_type_list:
-            doc_type_id = item["doc_type"]["doc_type_id"]
-            mark_job_count = 0
+        # get all job count and approved job count
+        all_status, all_marked_status = MarkTaskModel().count_status_by_user(nlp_task_id=nlp_task_id, current_user=current_user)
+
+        # calculate marked mark_job count and all mark_job for each doc_type
+        all_status_dict = {_doc_type_id: {_mark_job_id: _count_sum} for _doc_type_id, _mark_job_id, _count_sum in all_status}
+        all_marked_status_dict = {_doc_type_id: {_mark_job_id: _count_sum} for _doc_type_id, _mark_job_id, _count_sum in all_marked_status}
+        for doc_type in doc_type_list:
+            doc_type_id = doc_type["doc_type"]["doc_type_id"]
+            mark_job_count = len(all_status_dict.get(doc_type_id, {}))
             marked_mark_job_count = 0
-            for i in range(len(all_status)):
-                if all_status[i][0] == doc_type_id:
-                    mark_job_count += 1
-                    mark_job_id = all_status[i][1]
-                    count_sum = all_status[i][2]
-                    for j in range(len(all_finish_marking_status)):
-                        if all_finish_marking_status[j][0] == doc_type_id \
-                                and all_finish_marking_status[j][1] == mark_job_id \
-                                and all_finish_marking_status[j][2] == count_sum:
-                            marked_mark_job_count += 1
-                            break
-            item.update(progress_state={"job_num": mark_job_count, "labeled_job_number": marked_mark_job_count,
-                                        "progress_rate": round(marked_mark_job_count / mark_job_count,
-                                                               2) if mark_job_count > 0 else 0})
+            for _mark_job_id, _count_sum in all_status_dict.get(doc_type_id, {}).items():
+                if _count_sum == all_marked_status_dict.get(doc_type_id, {}).get(_mark_job_id, 0):
+                    marked_mark_job_count += 1
+            doc_type.update(progress_state={"job_num": mark_job_count,
+                                            "labeled_job_number": marked_mark_job_count,
+                                            "progress_rate": round(marked_mark_job_count / mark_job_count, 2) if mark_job_count > 0 else 0})
+
             # get latest evaluation result if exists
-            latest_evaluate = EvaluateTaskModel().get_latest_evaluate_by_doc_type_id(nlp_task=nlp_task, doc_type_id=doc_type_id)
+            latest_evaluate = EvaluateTaskModel().get_latest_evaluate_by_doc_type_id(nlp_task_id=nlp_task_id, doc_type_id=doc_type_id)
             if latest_evaluate:
-                item.update(evaluate=EvaluateTaskSchema().dump(latest_evaluate))
-            result.append(item)
+                doc_type.update(evaluate=EvaluateTaskSchema().dump(latest_evaluate))
+            result.append(doc_type)
         return result
 
     def get_doc_type(current_user: CurrentUser, args):

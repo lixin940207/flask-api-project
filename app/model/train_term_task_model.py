@@ -16,6 +16,10 @@ class TrainTermTaskModel(BaseModel, ABC):
         return session.query(TrainTermTask).filter(TrainTermTask.train_term_task_id == _id,
                                                    ~TrainTermTask.is_deleted).one()
 
+    @staticmethod
+    def is_empty_table():
+        return session.query(TrainTermTask).filter(~TrainTermTask.is_deleted).count() == 0
+
     def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["train_task_id", "doc_term_id", "train_term_status"]
@@ -27,10 +31,10 @@ class TrainTermTaskModel(BaseModel, ABC):
                 q = q.filter(getattr(TrainTermTask, key) == val)
         count = q.count()
         # Order by key
-        q = q.order_by(order_by)
-        # Descending order
         if order_by_desc:
-            q = q.desc()
+            q = q.order_by(getattr(TrainTermTask, order_by).desc())
+        else:
+            q = q.order_by(getattr(TrainTermTask, order_by))
         q = q.offset(offset).limit(limit)
         return count, q.all()
 

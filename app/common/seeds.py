@@ -9,6 +9,7 @@ class Seeds:
         self.create_nlp_task()
         self.create_status()
         self.create_doc_type()
+        self.create_doc_term()
         self.create_mark_job()
         self.create_train_job()
         self.create_doc()
@@ -48,21 +49,43 @@ class Seeds:
         from app.model import DocTypeModel
         if len(DocTypeModel().get_all()) == 0:
             doc_types = [
-                DocType(app_id=1, created_by=1, doc_type_id=1, doc_type_name="测试抽取项目1", nlp_task_id=int(NlpTaskEnum.extract)),
-                DocType(app_id=1, created_by=1, doc_type_id=2, doc_type_name="测试抽取项目2", nlp_task_id=int(NlpTaskEnum.extract)),
-                DocType(app_id=1, created_by=1, doc_type_id=3, doc_type_name="测试抽取项目3", nlp_task_id=int(NlpTaskEnum.extract)),
-                DocType(app_id=1, created_by=1, doc_type_id=4, doc_type_name="测试抽取项目4", nlp_task_id=int(NlpTaskEnum.extract)),
-                DocType(app_id=1, created_by=1, doc_type_id=5, doc_type_name="测试分类项目1", nlp_task_id=int(NlpTaskEnum.classify)),
-                DocType(app_id=1, created_by=1, doc_type_id=6, doc_type_name="测试分类项目2", nlp_task_id=int(NlpTaskEnum.classify)),
-                DocType(app_id=1, created_by=1, doc_type_id=7, doc_type_name="测试分类项目3", nlp_task_id=int(NlpTaskEnum.classify)),
-                DocType(app_id=1, created_by=1, doc_type_id=8, doc_type_name="测试关系项目1", nlp_task_id=int(NlpTaskEnum.relation)),
-                DocType(app_id=1, created_by=1, doc_type_id=9, doc_type_name="测试关系项目2", nlp_task_id=int(NlpTaskEnum.relation)),
-                DocType(app_id=1, created_by=1, doc_type_id=10, doc_type_name="测试分词项目1", nlp_task_id=int(NlpTaskEnum.wordseg)),
-                DocType(app_id=1, created_by=1, doc_type_id=11, doc_type_name="测试分词项目2", nlp_task_id=int(NlpTaskEnum.wordseg)),
+                DocType(app_id=1, created_by=1, doc_type_id=1, doc_type_name="测试抽取项目1",
+                        nlp_task_id=int(NlpTaskEnum.extract)),
+                DocType(app_id=1, created_by=1, doc_type_id=2, doc_type_name="测试抽取项目2",
+                        nlp_task_id=int(NlpTaskEnum.extract)),
+                DocType(app_id=1, created_by=1, doc_type_id=3, doc_type_name="测试抽取项目3",
+                        nlp_task_id=int(NlpTaskEnum.extract)),
+                DocType(app_id=1, created_by=1, doc_type_id=4, doc_type_name="测试抽取项目4",
+                        nlp_task_id=int(NlpTaskEnum.extract)),
+                DocType(app_id=1, created_by=1, doc_type_id=5, doc_type_name="测试分类项目1",
+                        nlp_task_id=int(NlpTaskEnum.classify)),
+                DocType(app_id=1, created_by=1, doc_type_id=6, doc_type_name="测试分类项目2",
+                        nlp_task_id=int(NlpTaskEnum.classify)),
+                DocType(app_id=1, created_by=1, doc_type_id=7, doc_type_name="测试分类项目3",
+                        nlp_task_id=int(NlpTaskEnum.classify)),
+                DocType(app_id=1, created_by=1, doc_type_id=8, doc_type_name="测试关系项目1",
+                        nlp_task_id=int(NlpTaskEnum.relation)),
+                DocType(app_id=1, created_by=1, doc_type_id=9, doc_type_name="测试关系项目2",
+                        nlp_task_id=int(NlpTaskEnum.relation)),
+                DocType(app_id=1, created_by=1, doc_type_id=10, doc_type_name="测试分词项目1",
+                        nlp_task_id=int(NlpTaskEnum.wordseg)),
+                DocType(app_id=1, created_by=1, doc_type_id=11, doc_type_name="测试分词项目2",
+                        nlp_task_id=int(NlpTaskEnum.wordseg)),
             ]
             DocTypeModel().bulk_create(doc_types)
             session.commit()
 
+    @staticmethod
+    def create_doc_term():
+        from app.model.doc_term_model import DocTermModel
+        if len(DocTermModel().get_all()) == 0:
+            DocTermModel().create(app_id=1, created_by=1, doc_term_id=1, doc_term_name="人名", doc_term_alias="nr",
+                                  doc_type_id=1)
+            DocTermModel().create(app_id=1, created_by=1, doc_term_id=2, doc_term_name="地名", doc_term_alias="ns",
+                                  doc_type_id=1)
+            DocTermModel().create(app_id=1, created_by=1, doc_term_id=3, doc_term_name="机构名", doc_term_alias="nt",
+                                  doc_type_id=1)
+            session.commit()
     @staticmethod
     def create_mark_job():
         from app.entity import MarkJob
@@ -222,11 +245,16 @@ class Seeds:
         from app.model import MarkTaskModel
         if MarkTaskModel().is_empty_table():
             mark_tasks = [
-                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=1, doc_id=1, mark_task_status=int(StatusEnum.labeled)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=2, doc_id=2, mark_task_status=int(StatusEnum.labeled)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=3, doc_id=3, mark_task_status=int(StatusEnum.labeled)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=4, doc_id=4, mark_task_status=int(StatusEnum.labeled)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=5, doc_id=5, mark_task_status=int(StatusEnum.labeled)),
+                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=1, doc_id=1,
+                         mark_task_status=int(StatusEnum.labeled)),
+                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=2, doc_id=2,
+                         mark_task_status=int(StatusEnum.labeled)),
+                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=3, doc_id=3,
+                         mark_task_status=int(StatusEnum.labeled)),
+                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=4, doc_id=4,
+                         mark_task_status=int(StatusEnum.labeled)),
+                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=5, doc_id=5,
+                         mark_task_status=int(StatusEnum.labeled)),
             ]
             MarkTaskModel().bulk_create(mark_tasks)
             session.commit()
@@ -237,7 +265,8 @@ class Seeds:
         from app.model import UserTaskModel
         if UserTaskModel().is_empty_table():
             user_tasks = [
-                UserTask(app_id=1, created_by=1, mark_task_id=1, annotator_id=3, user_task_status=int(StatusEnum.labeled)),
+                UserTask(app_id=1, created_by=1, mark_task_id=1, annotator_id=3,
+                         user_task_status=int(StatusEnum.labeled)),
                 UserTask(app_id=1, created_by=1, mark_task_id=2, annotator_id=3,
                          user_task_status=int(StatusEnum.labeled)),
                 UserTask(app_id=1, created_by=1, mark_task_id=3, annotator_id=3,
@@ -246,7 +275,6 @@ class Seeds:
                          user_task_status=int(StatusEnum.labeled)),
                 UserTask(app_id=1, created_by=1, mark_task_id=5, annotator_id=3,
                          user_task_status=int(StatusEnum.labeled)),
-
             ]
             UserTaskModel().bulk_create(user_tasks)
             session.commit()
@@ -255,20 +283,35 @@ class Seeds:
     def create_train_task():
         from app.model import TrainTaskModel
         if TrainTaskModel().is_empty_table():
-            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=1, train_model_name="test",
-                                    train_status=int(StatusEnum.online), train_job_id=1)
-            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=2, train_model_name="test",
-                                    train_status=int(StatusEnum.success), train_job_id=1)
-            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=3, train_model_name="test",
-                                    train_status=int(StatusEnum.training), train_job_id=2)
-            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=4, train_model_name="test",
-                                    train_status=int(StatusEnum.training), train_job_id=3)
-            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=5, train_model_name="test",
-                                    train_status=int(StatusEnum.training), train_job_id=3)
-            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=6, train_model_name="test",
-                                    train_status=int(StatusEnum.training), train_job_id=4)
-            TrainTaskModel().create(app_id=1, created_by=1, train_task_id=7, train_model_name="test",
-                                    train_status=int(StatusEnum.training), train_job_id=5)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train1", train_status=int(StatusEnum.online), train_job_id=1)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train2", train_status=int(StatusEnum.success), train_job_id=2)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train3", train_status=int(StatusEnum.training), train_job_id=3)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train4", train_status=int(StatusEnum.training), train_job_id=4)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train5", train_status=int(StatusEnum.training), train_job_id=5)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train6", train_status=int(StatusEnum.training), train_job_id=6)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train7", train_status=int(StatusEnum.training), train_job_id=7)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train8", train_status=int(StatusEnum.online), train_job_id=8)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train9", train_status=int(StatusEnum.success), train_job_id=9)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train10", train_status=int(StatusEnum.training), train_job_id=10)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train11", train_status=int(StatusEnum.training), train_job_id=11)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train12", train_status=int(StatusEnum.training), train_job_id=12)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train13", train_status=int(StatusEnum.training), train_job_id=13)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train14", train_status=int(StatusEnum.training), train_job_id=14)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train15", train_status=int(StatusEnum.online), train_job_id=15)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train16",  train_status=int(StatusEnum.success), train_job_id=16)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train17", train_status=int(StatusEnum.training), train_job_id=17)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train18", train_status=int(StatusEnum.training), train_job_id=18)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train19", train_status=int(StatusEnum.training), train_job_id=19)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train20", train_status=int(StatusEnum.training), train_job_id=20)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train21", train_status=int(StatusEnum.training), train_job_id=21)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train22", train_status=int(StatusEnum.training), train_job_id=22)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train23", train_status=int(StatusEnum.online), train_job_id=23)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train24", train_status=int(StatusEnum.success), train_job_id=24)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train25", train_status=int(StatusEnum.training), train_job_id=25)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train26", train_status=int(StatusEnum.training), train_job_id=26)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train27", train_status=int(StatusEnum.training), train_job_id=27)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train28", train_status=int(StatusEnum.training), train_job_id=28)
+            TrainTaskModel().create(app_id=1, created_by=1, train_model_name="train29", train_status=int(StatusEnum.training), train_job_id=29)
         session.commit()
 
     @staticmethod
@@ -276,17 +319,17 @@ class Seeds:
         from app.model.evaluate_task_model import EvaluateTaskModel
         if EvaluateTaskModel().is_empty_table():
             EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=1, evaluate_task_name="test",
-                                    evaluate_task_status=int(StatusEnum.success), train_task_id=1)
+                                       evaluate_task_status=int(StatusEnum.success), train_task_id=1)
             EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=2, evaluate_task_name="test",
-                                    evaluate_task_status=int(StatusEnum.success), train_task_id=1)
+                                       evaluate_task_status=int(StatusEnum.success), train_task_id=1)
             EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=3, evaluate_task_name="test",
-                                    evaluate_task_status=int(StatusEnum.success), train_task_id=2)
+                                       evaluate_task_status=int(StatusEnum.success), train_task_id=2)
             EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=4, evaluate_task_name="test",
-                                    evaluate_task_status=int(StatusEnum.success), train_task_id=3)
+                                       evaluate_task_status=int(StatusEnum.success), train_task_id=3)
             EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=5, evaluate_task_name="test",
-                                    evaluate_task_status=int(StatusEnum.success), train_task_id=3)
+                                       evaluate_task_status=int(StatusEnum.success), train_task_id=3)
             EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=6, evaluate_task_name="test",
-                                    evaluate_task_status=int(StatusEnum.success), train_task_id=4)
+                                       evaluate_task_status=int(StatusEnum.success), train_task_id=4)
             EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=7, evaluate_task_name="test",
-                                    evaluate_task_status=int(StatusEnum.success), train_task_id=5)
+                                       evaluate_task_status=int(StatusEnum.success), train_task_id=5)
         session.commit()

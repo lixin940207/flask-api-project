@@ -44,11 +44,14 @@ class TrainJobModel(BaseModel, ABC):
     @staticmethod
     def get_by_nlp_task_id(nlp_task_id, search, current_user: CurrentUser, order_by="created_time", order_by_desc=True,
                            limit=10, offset=0, **kwargs):
+        """
+        get (traintask, trainjob, doctype) tuple by nlp_task_id and other filters
+        """
         # Define allowed filter keys
         accept_keys = ["train_job_status", "doc_type_id"]
         # Compose query
         q = session.query(TrainTask, TrainJob, DocType) \
-            .join(TrainJob, TrainTask.train_job_id == TrainJob.train_job_id) \
+            .join(TrainTask, TrainTask.train_job_id == TrainJob.train_job_id) \
             .join(DocType, DocType.doc_type_id == TrainJob.doc_type_id) \
             .filter(DocType.nlp_task_id == nlp_task_id,
                     ~DocType.is_deleted,
@@ -71,6 +74,31 @@ class TrainJobModel(BaseModel, ABC):
             q = q.order_by(getattr(TrainJob, order_by))
         q = q.offset(offset).limit(limit)
         return q.all()
+
+    @staticmethod
+    def count_by_nlp_task_id(nlp_task_id, search, current_user: CurrentUser, **kwargs):
+        """
+        count trainjob by nlp_task_id and other filters
+        """
+        # Define allowed filter keys
+        accept_keys = ["train_job_status", "doc_type_id"]
+        # Compose query
+        q = session.query(func.count(TrainJob.train_job_id)) \
+            .join(DocType, DocType.doc_type_id == TrainJob.doc_type_id) \
+            .filter(DocType.nlp_task_id == nlp_task_id,
+                    ~DocType.is_deleted,
+                    ~TrainJob.is_deleted)
+        # auth
+        if current_user.user_role in [RoleEnum.manager, RoleEnum.guest]:
+            q = q.filter(DocType.group_id.in_(current_user.user_groups))
+
+        # Filter conditions
+        for key, val in kwargs.items():
+            if key in accept_keys:
+                q = q.filter(getattr(TrainJob, key) == val)
+        if search:
+            q = q.filter(TrainJob.train_job_name.like(f'%{search}%'))
+        return q.one()[0]
 
     def create(self, **kwargs) -> TrainJob:
         entity = TrainJob(**kwargs)

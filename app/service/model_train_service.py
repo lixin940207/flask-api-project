@@ -59,8 +59,8 @@ class ModelTrainService():
         return result
 
     @staticmethod
-    def update_train_task_term(train_term_task_id, **kwargs):
-        train_term_task = TrainTermTaskModel().update(train_term_task_id, **kwargs)
+    def update_train_task_term(train_term_task_id, args):
+        train_term_task = TrainTermTaskModel().update(train_term_task_id, **args)
         return train_term_task
 
     @staticmethod
@@ -70,6 +70,9 @@ class ModelTrainService():
         2. 直接设置训练状态和结果
         3. 模型上线状态更新（分类和抽取还不一样）
         """
+        # change key name
+        update_params = {"train_status": args["model_train_state"]}
+
         train_job = TrainJobModel().get_by_id(train_job_id)
         train_task = TrainTaskModel().get_by_id(train_task_id)
 
@@ -82,48 +85,47 @@ class ModelTrainService():
                 # 没有处于训练中
                 if not failed_terms:
                     # 没有处于失败的
-                    args["train_status"] = StatusEnum.success
+                    update_params["train_status"] = int(StatusEnum.success)
                 else:
-                    args["train_status"] = StatusEnum.fail
+                    update_params["train_status"] = int(StatusEnum.fail)
             else:
-                args["train_status"] = StatusEnum.training
+                update_params["train_status"] = int(StatusEnum.training)
         else:
             # no limit to set model_train_state=success/failed
-            if args.get("model_train_state") == "online":
+            if update_params["train_status"] == StatusEnum.online.name:
                 # validation
                 if train_task.train_status == StatusEnum.online:
                     abort(400, message="该模型已经上线")
-                if train_task.train_status != "success":
+                if train_task.train_status != StatusEnum.success:
                     abort(400, message="只能上线训练成功的模型")
 
                 # send model train http request
                 service_url = _get("CLASSIFY_MODEL_ONLINE") if args["model_type"] == "classify" else _get("EXTRACT_MODEL_ONLINE")
                 resp = requests.post(f"{service_url}?model_version={train_task.model_version}")
                 if resp.status_code < 200 or resp.status_code >= 300:
-                    abort(500,
-                          message=f"上线服务 <{service_url}> 出现错误: {resp.text}")
+                    abort(500, message=f"上线服务 <{service_url}> 出现错误: {resp.text}")
+
                 # find all online model under this doc_type_id
                 online_models = TrainTaskModel().get_by_doc_type_id(doc_type_id=train_job.doc_type_id, train_status=int(StatusEnum.online))
 
-                # unload
-                for train in online_models:
-                    TrainTaskModel().update(train.train_task_id, train_status=StatusEnum.success)
+                # unload online models
+                TrainTaskModel().bulk_update([train.train_task_id for train in online_models], train_status=int(StatusEnum.success))
 
         # update train task
-        train_task = TrainTaskModel().update(train_task_id, **args)
+        train_task = TrainTaskModel().update(train_task_id, **update_params)
         return train_task
 
     @staticmethod
-    def update_train_term_by_model_version_and_doc_term_id(model_version, doc_term_id, **kwargs):
+    def update_train_term_by_model_version_and_doc_term_id(model_version, doc_term_id, args):
         train_term = TrainTermTaskModel().get_by_model_version_and_doc_term_id(model_version=model_version, doc_term_id=doc_term_id)
-        train_term_task = TrainTermTaskModel().update(train_term.train_term_task_id, **kwargs)
+        train_term_task = TrainTermTaskModel().update(train_term.train_term_task_id, **args)
         return train_term_task
 
     @staticmethod
-    def update_train_task_by_model_version(model_version, args):
+    def update_train_task_by_model_version(model_version, is_check_train_terms, args):
         train_task = TrainTaskModel().get_by_filter(model_version=model_version)[1][0]
 
-        if args['check_train_terms']:
+        if is_check_train_terms:
             _, training_terms = TrainTermTaskModel().get_by_filter(limit=99999, train_task_id=train_task.train_task_id,
                                                                    train_term_status=int(StatusEnum.training))
             _, failed_terms = TrainTermTaskModel().get_by_filter(limit=99999, train_task_id=train_task.train_task_id,

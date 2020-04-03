@@ -45,7 +45,7 @@ class MarkTaskModel(BaseModel, ABC):
             .join(MarkJob, MarkTask.mark_job_id == MarkJob.mark_job_id) \
             .filter(
             MarkJob.mark_job_id.in_(mark_job_ids),
-            MarkJob.mark_job_status == StatusEnum.approved,
+            MarkJob.mark_job_status == int(StatusEnum.approved),
             ~MarkJob.is_deleted,
             ~Doc.is_deleted,
             ~MarkTask.is_deleted)
@@ -105,7 +105,7 @@ class MarkTaskModel(BaseModel, ABC):
         all_status = q.group_by(MarkJob.doc_type_id, MarkJob.mark_job_id) \
             .with_entities(DocType.doc_type_id, MarkJob.mark_job_id, func.count(MarkTask.mark_task_id)).all()
         # filter >= labeled status
-        q = q.filter(MarkTask.mark_task_status >= StatusEnum.labeled)
+        q = q.filter(MarkTask.mark_task_status >= int(StatusEnum.labeled))
         # get grouped (doc_type_id, mark_job_id, >= labeled count) list
         all_finish_marking_status = q.group_by(MarkJob.doc_type_id, MarkJob.mark_job_id) \
             .with_entities(DocType.doc_type_id, MarkJob.mark_job_id, func.count(MarkTask.mark_task_id)).all()

@@ -132,7 +132,12 @@ class TrainTermItemResource(Resource):
         """
         修改模型训练的一个字段状态
         """
-        train_term_task = ModelTrainService().update_train_task_term(train_term_task_id=train_term_id, **args)
+        update_params = {}
+        if args.get("train_term_state"):
+            update_params.update(train_term_status=args["train_term_state"])
+        if args.get("train_term_result"):
+            update_params.update(train_term_result=args["train_term_result"])
+        train_term_task = ModelTrainService().update_train_task_term(train_term_task_id=train_term_id, args=update_params)
         result = TrainTermTaskSchema().dump(train_term_task)
         return {
                    "message": "更新成功",
