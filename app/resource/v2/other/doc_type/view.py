@@ -7,7 +7,6 @@ from app.service.doc_type_service import DocTypeService
 
 
 class DocTypeListResource(Resource, CurrentUserMixin):
-
     @parse({
         "offset": fields.Integer(missing=0),
         "limit": fields.Integer(missing=10),
@@ -54,3 +53,16 @@ class DocTypeListResource(Resource, CurrentUserMixin):
                    "result": result,
                }, 201
 
+
+class DocTypeItemResource(Resource, CurrentUserMixin):
+    def get(self: Resource, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        获取一个文档类型
+        """
+        item = session.query(ClassifyDocType).filter(ClassifyDocType.doc_type_id == doc_type_id).one()
+        result = ClassifyDocTypeSchema().dump(item)
+        result = DocTypeService().get_doc_type_items()
+        return {
+                   "message": "请求成功",
+                   "result": result,
+               }, 200

@@ -86,6 +86,7 @@ class Seeds:
             DocTermModel().create(app_id=1, created_by=1, doc_term_id=3, doc_term_name="机构名", doc_term_alias="nt",
                                   doc_type_id=1)
             session.commit()
+
     @staticmethod
     def create_mark_job():
         from app.entity import MarkJob
