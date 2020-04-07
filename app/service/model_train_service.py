@@ -59,12 +59,12 @@ class ModelTrainService():
         return result
 
     @staticmethod
-    def update_train_task_term(train_term_task_id, args):
+    def update_train_task_term_by_id(train_term_task_id, args):
         train_term_task = TrainTermTaskModel().update(train_term_task_id, **args)
         return train_term_task
 
     @staticmethod
-    def update_train_task(train_job_id, train_task_id, args):
+    def update_train_task_by_id(train_job_id, train_task_id, args):
         """
         1. 根据字段状态更新训练状态和结果
         2. 直接设置训练状态和结果
@@ -143,5 +143,5 @@ class ModelTrainService():
         return train_task
 
     @staticmethod
-    def delete_train_task(train_task_id):
+    def delete_train_task_by_id(train_task_id):
         TrainTaskModel().delete(train_task_id)

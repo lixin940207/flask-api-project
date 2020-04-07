@@ -26,8 +26,8 @@ class ModelTrainListResource(Resource):
         """
         order_by = args["order_by"][1:]
         order_by_desc = True if args["order_by"][0] == "-" else False
-        count, train_tasks = ModelTrainService().get_train_task_list_by_train_job_id(train_job_id=model_id, order_by=order_by, order_by_desc=order_by_desc, offset=args["offset"], limit=args["limit"])
-        result = TrainTaskSchema(many=True).dump(train_tasks)
+        count, train_task_list = ModelTrainService().get_train_task_list_by_train_job_id(train_job_id=model_id, order_by=order_by, order_by_desc=order_by_desc, offset=args["offset"], limit=args["limit"])
+        result = TrainTaskSchema(many=True).dump(train_task_list)
         return {
                    "message": "请求成功",
                    "result": result,
@@ -69,7 +69,7 @@ class ModelTrainItemResource(Resource):
         """
         修改模型的状态和结果
         """
-        train_task = ModelTrainService().update_train_task(train_job_id=model_id, train_task_id=model_train_id, args=args)
+        train_task = ModelTrainService().update_train_task_by_id(train_job_id=model_id, train_task_id=model_train_id, args=args)
         result = TrainTaskSchema().dump(train_task)
         return {
                    "message": "更新成功",
@@ -88,7 +88,7 @@ class ModelTrainItemResource(Resource):
         """
         删除模型
         """
-        ModelTrainService().delete_train_task(train_task_id=model_train_id)
+        ModelTrainService().delete_train_task_by_id(train_task_id=model_train_id)
         return {
                    "message": "删除成功",
                }, 204
@@ -137,7 +137,7 @@ class TrainTermItemResource(Resource):
             update_params.update(train_term_status=args["train_term_state"])
         if args.get("train_term_result"):
             update_params.update(train_term_result=args["train_term_result"])
-        train_term_task = ModelTrainService().update_train_task_term(train_term_task_id=train_term_id, args=update_params)
+        train_term_task = ModelTrainService().update_train_task_term_by_id(train_term_task_id=train_term_id, args=update_params)
         result = TrainTermTaskSchema().dump(train_term_task)
         return {
                    "message": "更新成功",

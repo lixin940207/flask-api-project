@@ -164,8 +164,7 @@ class ModelService:
     @staticmethod
     def get_train_job_by_id(_id):
         train_job = TrainJobModel().get_by_id(_id)
-        result = TrainJobSchema().dump(train_job)
-        return result
+        return train_job
 
     @staticmethod
     def delete_train_job_by_id(_id):

@@ -11,7 +11,7 @@ class EvaluateTaskSchema(Schema):
     model_evaluate_desc = fields.String(attribute="evaluate_task_desc")
     model_evaluate_state = fields.Integer(attribute="evaluate_task_status")
     model_evaluate_result = fields.Dict(attribute="evaluate_task_result")
-    model_id = fields.Integer(attribute="train_task_id")
+    # model_id = fields.Integer(attribute="train_task_id")
     mark_job_ids = fields.List(fields.Integer())
     created_time = fields.DateTime()
     last_updated_time = fields.DateTime(attribute="updated_time")

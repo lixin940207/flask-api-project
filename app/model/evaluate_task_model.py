@@ -35,12 +35,32 @@ class EvaluateTaskModel(BaseModel, ABC):
             if key in accept_keys:
                 q = q.filter(getattr(EvaluateTask, key) == val)
         # Order by key
-        q = q.order_by(order_by)
-        # Descending order
         if order_by_desc:
-            q = q.desc()
+            q = q.order_by(getattr(EvaluateTask, order_by).desc())
+        else:
+            q = q.order_by(getattr(EvaluateTask, order_by))
         q = q.offset(offset).limit(limit)
         return q.all()
+
+    @staticmethod
+    def get_by_train_job_id(train_job_id, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
+        accept_keys = []
+        # Compose query
+        q = session.query(EvaluateTask)\
+            .join(TrainTask, TrainTask.train_task_id == EvaluateTask.train_task_id)\
+            .filter(TrainTask.train_job_id == train_job_id, ~EvaluateTask.is_deleted, ~TrainTask.is_deleted)
+        # Filter conditions
+        for key, val in kwargs.items():
+            if key in accept_keys:
+                q = q.filter(getattr(EvaluateTask, key) == val)
+        count = q.count()
+        # Order by key
+        if order_by_desc:
+            q = q.order_by(getattr(EvaluateTask, order_by).desc())
+        else:
+            q = q.order_by(getattr(EvaluateTask, order_by))
+        q = q.offset(offset).limit(limit)
+        return count, q.all()
 
     def create(self, **kwargs) -> EvaluateTask:
         entity = EvaluateTask(**kwargs)
@@ -52,9 +72,11 @@ class EvaluateTaskModel(BaseModel, ABC):
         session.query(EvaluateTask).filter(EvaluateTask.doc_type_id == _id).update({EvaluateTask.is_deleted: True})
         session.flush()
 
-    def update(self, entity):
-        # session.bulk_update_mappings
-        pass
+    def update(self, _id, **kwargs):
+        entity = session.query(EvaluateTask).filter(EvaluateTask.evaluate_task_id == _id)
+        entity.update(**kwargs)
+        session.flush()
+        return entity
 
     @staticmethod
     def get_latest_evaluate_by_doc_type_id(nlp_task_id, doc_type_id):

@@ -1,7 +1,6 @@
 # coding=utf-8
 # email:  lixin@datagrand.com
 # create: 2020/3/24-3:29 下午
-from flask import g
 from typing import Tuple, Dict, Any
 from flask_restful import Resource, abort
 from app.common.common import NlpTaskEnum, Common
@@ -107,7 +106,8 @@ class ModelItemResource(Resource):
         """
         获取单条模型记录
         """
-        result = ModelService().get_train_job_by_id(model_id)
+        train_job = ModelService().get_train_job_by_id(model_id)
+        result = TrainJobSchema().dump(train_job)
         return {
                    "message": "请求成功",
                    "result": result,
