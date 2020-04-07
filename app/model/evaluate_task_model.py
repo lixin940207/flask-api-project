@@ -43,16 +43,12 @@ class EvaluateTaskModel(BaseModel, ABC):
         return q.all()
 
     @staticmethod
-    def get_by_train_job_id(train_job_id, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
-        accept_keys = []
+    def get_by_train_job_id(train_job_id, order_by="created_time", order_by_desc=True, limit=10, offset=0):
         # Compose query
         q = session.query(EvaluateTask)\
             .join(TrainTask, TrainTask.train_task_id == EvaluateTask.train_task_id)\
             .filter(TrainTask.train_job_id == train_job_id, ~EvaluateTask.is_deleted, ~TrainTask.is_deleted)
-        # Filter conditions
-        for key, val in kwargs.items():
-            if key in accept_keys:
-                q = q.filter(getattr(EvaluateTask, key) == val)
+        # count
         count = q.count()
         # Order by key
         if order_by_desc:
@@ -69,14 +65,14 @@ class EvaluateTaskModel(BaseModel, ABC):
         return entity
 
     def delete(self, _id):
-        session.query(EvaluateTask).filter(EvaluateTask.doc_type_id == _id).update({EvaluateTask.is_deleted: True})
+        session.query(EvaluateTask).filter(EvaluateTask.evaluate_task_id == _id).update({EvaluateTask.is_deleted: True})
         session.flush()
 
     def update(self, _id, **kwargs):
         entity = session.query(EvaluateTask).filter(EvaluateTask.evaluate_task_id == _id)
-        entity.update(**kwargs)
+        entity.update(kwargs)
         session.flush()
-        return entity
+        return entity.one()
 
     @staticmethod
     def get_latest_evaluate_by_doc_type_id(nlp_task_id, doc_type_id):

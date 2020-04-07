@@ -3,7 +3,7 @@
 # create: 2020/3/24-3:29 下午
 from typing import Tuple, Dict, Any
 from flask_restful import Resource, abort
-from app.common.common import NlpTaskEnum, Common
+from app.common.common import NlpTaskEnum, Common, StatusEnum
 from app.common.patch import parse, fields
 from app.common.filters import CurrentUserMixin
 from app.schema.doc_type_schema import DocTypeSchema
@@ -50,9 +50,12 @@ class ModelListResource(Resource, CurrentUserMixin):
         创建模型
         """
         # create new
-        result = ModelService().create_train_job_by_doc_type_id(
+        train_job = ModelService().create_train_job_by_doc_type_id(
             doc_type_id=args["doc_type_id"], train_job_name=args["model_name"], train_job_desc=args["model_desc"],
             train_config=args["model_train_config"], mark_job_ids=args["mark_job_ids"])
+        # convert int status to string
+        train_job.train_job_status = StatusEnum(train_job.train_job_status).name
+        result = TrainJobSchema().dump(train_job)
         return {
                    "message": "创建成功",
                    "result": result
@@ -92,9 +95,12 @@ class ClassifyModelListResource(Resource, CurrentUserMixin):
         "custom_id": fields.Integer(missing=0),
     })
     def post(self: Resource, args: Dict[str, Any]) -> Tuple[Dict[str, Any], int]:
-        result = ModelService().create_classify_train_job_by_doc_type_id(
+        train_job = ModelService().create_classify_train_job_by_doc_type_id(
             doc_type_id=args["doc_type_id"], train_job_name=args["model_name"], train_job_desc=args["model_desc"],
             train_config=args["model_train_config"], mark_job_ids=args["mark_job_ids"], custom_id=args['custom_id'])
+        # convert int status to string
+        train_job.train_job_status = StatusEnum(train_job.train_job_status).name
+        result = TrainJobSchema().dump(train_job)
         return {
                    "message": "创建成功",
                    "result": result
@@ -107,6 +113,8 @@ class ModelItemResource(Resource):
         获取单条模型记录
         """
         train_job = ModelService().get_train_job_by_id(model_id)
+        # convert int status to string
+        train_job.train_job_status = StatusEnum(train_job.train_job_status).name
         result = TrainJobSchema().dump(train_job)
         return {
                    "message": "请求成功",
