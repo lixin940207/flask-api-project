@@ -102,8 +102,7 @@ class ModelService:
         train_job.train_list = [train_task]
         train_job.doc_type = doc_type
         train_job.model_version = model_version
-        result = TrainJobSchema().dump(train_job)
-        return result
+        return train_job
 
     @staticmethod
     def create_train_job_by_doc_type_id(doc_type_id, train_job_name, train_job_desc, train_config, mark_job_ids):
@@ -158,8 +157,7 @@ class ModelService:
         train_job.train_list = [train_task]
         train_job.doc_type = doc_type
         train_job.model_version = model_version
-        result = TrainJobSchema().dump(train_job)
-        return result
+        return train_job
 
     @staticmethod
     def get_train_job_by_id(_id):
@@ -169,6 +167,7 @@ class ModelService:
     @staticmethod
     def delete_train_job_by_id(_id):
         TrainJobModel().delete(_id)
+        session.commit()
 
     @staticmethod
     def get_latest_model_info_by_doc_type_id(doc_type_id, current_user):

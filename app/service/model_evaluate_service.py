@@ -5,7 +5,7 @@ import json
 from app.common.redis import r
 from app.common.extension import session
 from app.config.config import get_config_from_app as _get
-from app.common.common import NlpTaskEnum
+from app.common.common import NlpTaskEnum, StatusEnum
 from app.entity import EvaluateTask, TrainTask, DocType
 from app.model import TrainTaskModel, TrainJobModel, DocTypeModel
 from app.model.evaluate_task_model import EvaluateTaskModel
@@ -13,10 +13,10 @@ from app.schema.doc_type_schema import DocTypeSchema
 from app.service.model_service import generate_classify_data
 
 
-class ModelEvaluateService():
+class ModelEvaluateService:
     @staticmethod
-    def get_evaluate_task_by_id(_id):
-        evaluate_task = EvaluateTaskModel().get_by_id(id)
+    def get_evaluate_task_by_id(evaluate_task_id):
+        evaluate_task = EvaluateTaskModel().get_by_id(evaluate_task_id)
         return evaluate_task
 
     @staticmethod
@@ -38,7 +38,10 @@ class ModelEvaluateService():
         train_task = train_task_list[0]
 
         # create evaluate_task
-        evaluate_task = EvaluateTaskModel().create(evaluate_task_name=evaluate_task_name, evaluate_task_desc=evaluate_task_desc, train_task_id=train_task.train_task_id)
+        evaluate_task = EvaluateTaskModel().create(evaluate_task_name=evaluate_task_name,
+                                                   evaluate_task_desc=evaluate_task_desc,
+                                                   train_task_id=train_task.train_task_id,
+                                                   evaluate_task_status=int(StatusEnum.processing))
 
         # push to evaluate redis queue
         push_evaluate_task_to_redis(nlp_task, evaluate_task, train_task, doc_type, mark_job_ids, doc_term_ids, doc_relation_ids, use_rule)
@@ -48,11 +51,13 @@ class ModelEvaluateService():
     @staticmethod
     def update_evaluate_task_by_id(evaluate_task_id, args):
         evaluate_task = EvaluateTaskModel().update(evaluate_task_id, **args)
+        session.commit()
         return evaluate_task
 
     @staticmethod
     def delete_evaluate_task_by_id(evaluate_task_id):
         EvaluateTaskModel().delete(evaluate_task_id)
+        session.commit()
 
 
 def push_evaluate_task_to_redis(nlp_task, evaluate_task: EvaluateTask, train_task: TrainTask, doc_type: DocType, mark_job_ids, doc_term_ids, doc_relation_ids, use_rule):
