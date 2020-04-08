@@ -19,38 +19,33 @@ from app.model.train_task_model import TrainTaskModel
 from app.model.train_term_task_model import TrainTermTaskModel
 from app.schema.custom_algorithm_schema import CustomAlgorithmSchema
 from app.schema.doc_type_schema import DocTypeSchema
-from app.schema.train_job_schema import TrainJobSchema
 from app.common.utils.time import get_now_with_format
 
 
 class ModelService:
     @staticmethod
-    def get_train_job_list_by_nlp_task(nlp_task_id, doc_type_id, search, offset, limit, current_user: CurrentUser):
+    def get_train_job_list_by_nlp_task_id(nlp_task_id, doc_type_id, search, offset, limit, current_user: CurrentUser):
         # get nlp_task id
         # if exists doc_type_id, get train jobs of this doc_type_id
         if doc_type_id:
-            task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
+            count, multi_tables = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
                                                                   limit=limit, current_user=current_user, doc_type_id=doc_type_id)
-            count = TrainJobModel().count_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, current_user=current_user,
-                                                         doc_type_id=doc_type_id)
         else:  # else get all
-            task_job_doctype = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
+            count, multi_tables = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
                                                                   limit=limit, current_user=current_user)
-            count = TrainJobModel().count_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, current_user=current_user)
         # assign doc_type, train_list to each trainjob for dumping
-        result = []
+        train_job_list = []
         job_id_list = []
-        for train_task, train_job, doc_type in task_job_doctype:
+        for train_task, train_job, doc_type in multi_tables:
+            # assgin train_task, doc_type to train_job
             if train_task.train_job_id not in job_id_list:
                 job_id_list.append(train_task.train_job_id)
                 train_job.doc_type = doc_type
                 train_job.train_list = [train_task]
-                result.append(train_job)
+                train_job_list.append(train_job)
             else:
-                result[job_id_list.index(train_task.train_job_id)].train_list.append(train_task)
-        # get the serialized result
-        result = TrainJobSchema().dump(result, many=True)
-        return count, result
+                train_job_list[job_id_list.index(train_task.train_job_id)].train_list.append(train_task)
+        return count, train_job_list
 
     @staticmethod
     def create_classify_train_job_by_doc_type_id(doc_type_id, train_job_name, train_job_desc, train_config,
@@ -102,8 +97,7 @@ class ModelService:
         train_job.train_list = [train_task]
         train_job.doc_type = doc_type
         train_job.model_version = model_version
-        result = TrainJobSchema().dump(train_job)
-        return result
+        return train_job
 
     @staticmethod
     def create_train_job_by_doc_type_id(doc_type_id, train_job_name, train_job_desc, train_config, mark_job_ids):
@@ -158,18 +152,17 @@ class ModelService:
         train_job.train_list = [train_task]
         train_job.doc_type = doc_type
         train_job.model_version = model_version
-        result = TrainJobSchema().dump(train_job)
-        return result
+        return train_job
 
     @staticmethod
     def get_train_job_by_id(_id):
         train_job = TrainJobModel().get_by_id(_id)
-        result = TrainJobSchema().dump(train_job)
-        return result
+        return train_job
 
     @staticmethod
     def delete_train_job_by_id(_id):
         TrainJobModel().delete(_id)
+        session.commit()
 
     @staticmethod
     def get_latest_model_info_by_doc_type_id(doc_type_id, current_user):

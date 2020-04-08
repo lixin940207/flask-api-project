@@ -63,6 +63,6 @@ class TrainTermTaskModel(BaseModel, ABC):
 
     def update(self, _id, **kwargs):
         entity = session.query(TrainTermTask).filter(TrainTermTask.train_term_task_id == _id)
-        entity.update(**kwargs)
+        entity.update(kwargs)
         session.flush()
-        return entity
+        return entity.one()

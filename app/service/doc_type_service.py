@@ -1,6 +1,7 @@
 # coding=utf-8
 # email:  lixin@datagrand.com
 # create: 2020/3/30-10:58 上午
+from app.common.common import StatusEnum
 from app.common.extension import session
 from app.common.filters import CurrentUser
 from app.common.seeds import NlpTaskEnum
@@ -52,6 +53,7 @@ class DocTypeService:
             # get latest evaluation result if exists
             latest_evaluate = EvaluateTaskModel().get_latest_evaluate_by_doc_type_id(nlp_task_id=nlp_task_id, doc_type_id=doc_type_id)
             if latest_evaluate:
+                latest_evaluate.evaluate_task_status = StatusEnum(latest_evaluate.evaluate_task_status).name
                 doc_type.update(evaluate=EvaluateTaskSchema().dump(latest_evaluate))
             result.append(doc_type)
         return result

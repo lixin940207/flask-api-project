@@ -1,7 +1,5 @@
 from flask_marshmallow import Schema
-from app.resource.v1.common.models.classify_mark_job import ClassifyMarkJob
-from app.patch import fields
-from app.resource.v1.others.classify_doc_type.schema import ClassifyDocTypeSchema
+from app.common.patch import fields
 
 
 class GeneralTaskSchema(Schema):
@@ -16,10 +14,37 @@ class GeneralTaskSchema(Schema):
     })
 
 
-class ClassifyMarkJobSchema(ClassifyMarkJob.schema_class):  # type: ignore
+class ClassifyDocTermSchema(Schema):
+
+    class Meta:
+        fields = (
+            "doc_term_id",
+            "doc_term_name",
+            "doc_term_color",
+            "doc_term_index",
+            "doc_term_desc"
+        )
+
+
+class ClassifyDocTypeSchema(Schema):
+    doc_term_list = fields.List(fields.Nested(ClassifyDocTermSchema), attribute='doc_terms')
+
+    class Meta:
+        fields = (
+            'doc_type_id',
+            'doc_type_name',
+            'doc_type_desc',
+            'doc_term_list',
+            'created_time',
+            'status',
+            'index',
+            'is_top',
+        )
+
+
+class ClassifyMarkJobSchema(Schema):
     doc_type = fields.Nested(ClassifyDocTypeSchema, exclude=('doc_term_list',))
-    task_list = fields.List(fields.Nested(GeneralTaskSchema))
-    labeler_ids = fields.List(fields.Integer())
+    labeler_ids = fields.List(fields.Integer(), attribute='annotator_ids')
     stats = fields.Nested({
         "all": fields.Integer(),
         "labeled": fields.Integer(),
