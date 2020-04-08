@@ -12,6 +12,7 @@ class DocTypeListResource(Resource, CurrentUserMixin):
         "offset": fields.Integer(missing=0),
         "limit": fields.Integer(missing=10),
         "mark_job_ids": fields.List(fields.Integer(), missing=[]),
+        "is_online": fields.Integer()
     })
     def get(self: Resource, args: typing.Dict) -> typing.Tuple[typing.Dict, int]:
         """
