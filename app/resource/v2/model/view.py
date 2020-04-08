@@ -27,7 +27,7 @@ class ModelListResource(Resource, CurrentUserMixin):
         """
         获取模型记录，分页
         """
-        nlp_task_id = Common.get_nlp_task_id_by_route()
+        nlp_task_id = Common().get_nlp_task_id_by_route()
         count, result = ModelService().get_train_job_list_by_nlp_task(nlp_task_id=nlp_task_id,
                                                                       doc_type_id=args['doc_type_id'],
                                                                       search=args['query'], offset=args['offset'],
@@ -125,7 +125,7 @@ class ModelItemResource(Resource):
 
 class DocTypeInfoListResource(Resource, CurrentUserMixin):
     def get(self):
-        nlp_task_id = Common.get_nlp_task_id_by_route()
+        nlp_task_id = Common().get_nlp_task_id_by_route()
         result = DocTypeService().get_doc_type_info_by_nlp_task_by_user(nlp_task_id=nlp_task_id,
                                                                         current_user=self.get_current_user())
         return {

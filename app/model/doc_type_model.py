@@ -17,10 +17,10 @@ from app.common.filters import CurrentUser
 
 
 class DocTypeModel(BaseModel, ABC):
-    def get_all(self):
+    def get_all(self) -> [DocType]:
         return session.query(DocType).filter(~DocType.is_deleted).all()
 
-    def get_by_id(self, _id):
+    def get_by_id(self, _id) -> DocType:
         return session.query(DocType).filter(DocType.doc_type_id == _id, ~DocType.is_deleted).one()
 
     def get_by_id_by_user_group(self, _id, group_id):
@@ -28,7 +28,7 @@ class DocTypeModel(BaseModel, ABC):
                                              ~DocType.is_deleted).one()
 
     def get_by_filter(self, current_user: CurrentUser, order_by="created_time", order_by_desc=True, limit=10, offset=0,
-                      **kwargs):
+                      **kwargs) -> [DocType]:
         # Define allowed filter keys
         accept_keys = ["doc_type_name", "nlp_task_id", "doc_type_id", "group_id"]
         # Compose query
@@ -51,22 +51,28 @@ class DocTypeModel(BaseModel, ABC):
         session.flush()
         return entity
 
-    def bulk_create(self, entity_list):
+    def bulk_create(self, entity_list) -> [DocType]:
         session.bulk_save_objects(entity_list, return_defaults=True)
         session.flush()
         return entity_list
 
-    def delete(self, _id):
+    def delete(self, _id) -> None:
         session.query(DocType).filter(DocType.doc_type_id == _id).update({DocType.is_deleted: True})
         session.flush()
 
-    def bulk_delete(self, _id_list):
+    def bulk_delete(self, _id_list) -> None:
         session.query(DocType).filter(DocType.doc_type_id.in_(_id_list)).update({DocType.is_deleted: True})
         session.flush()
 
-    def update(self, entity):
-        # session.bulk_update_mappings
-        pass
+    def update(self, doc_type_id, **kwargs) -> DocType:
+        accept_keys = ["doc_type_name", "doc_type_desc", "is_favorite", "group_id"]
+        _doc_type = session.query(DocType).filter(DocType.doc_type_id == doc_type_id).one()
+        for key, val in kwargs.items():
+            if key in accept_keys:
+                setattr(_doc_type, key, val)
+        session.commit()
+
+        return _doc_type
 
     def bulk_update(self, entity_list) -> None:
         session.bulk_update_mappings(DocType, entity_list)

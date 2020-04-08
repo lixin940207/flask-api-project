@@ -3,7 +3,6 @@
 # create: 2020/3/30-10:58 上午
 from app.common.extension import session
 from app.common.filters import CurrentUser
-from app.common.seeds import NlpTaskEnum
 from app.model import DocTypeModel, MarkTaskModel
 from app.model.doc_term_model import DocTermModel
 from app.model.evaluate_task_model import EvaluateTaskModel
@@ -56,6 +55,7 @@ class DocTypeService:
             result.append(doc_type)
         return result
 
+    @staticmethod
     def get_doc_type(current_user: CurrentUser, args):
         offset = args.get('offset', 0)
         limit = args.get('limit', 10)
@@ -77,3 +77,8 @@ class DocTypeService:
         session.commit()
         result = DocTypeSchema().dumps(doc_type)
         return result
+
+    @staticmethod
+    def set_favoriate_doc_type(doc_type_id, is_favorite: bool):
+        _doc_type = DocTypeModel().update(doc_type_id=doc_type_id, is_favorite=is_favorite)
+        return DocTypeSchema().dump(_doc_type)

@@ -7,7 +7,6 @@ from app.service.doc_type_service import DocTypeService
 
 
 class DocTypeListResource(Resource, CurrentUserMixin):
-
     @parse({
         "offset": fields.Integer(missing=0),
         "limit": fields.Integer(missing=10),
@@ -19,7 +18,7 @@ class DocTypeListResource(Resource, CurrentUserMixin):
         :param args:
         :return:
         """
-        Common.get_nlp_task_id_by_route(args)
+        Common().get_nlp_task_id_by_route(args)
         result, count = DocTypeService().get_doc_type(self.get_current_user(), args)
         return {
                    "message": "请求成功",
@@ -47,10 +46,33 @@ class DocTypeListResource(Resource, CurrentUserMixin):
         # args.update({
         #     'nlp_task_id': self.nlp_task_id
         # })
-        Common.get_nlp_task_id_by_route(args)
+        Common().get_nlp_task_id_by_route(args)
         result = DocTypeService().create_doc_type(self.get_current_user(), args)
         return {
                    "message": "创建成功",
                    "result": result,
                }, 201
 
+
+class TopDocTypeResource(Resource, CurrentUserMixin):
+    def patch(self: Resource, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+                置顶一个文档类型，简单修改index=max+1
+                """
+        result = DocTypeService().set_favoriate_doc_type(doc_type_id, True)
+        return {
+                   "message": "更新成功",
+                   "result": result,
+               }, 201
+
+
+class UnTopDocTypeResource(Resource, CurrentUserMixin):
+    def patch(self: Resource, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+                置顶一个文档类型，简单修改index=max+1
+                """
+        result = DocTypeService().set_favoriate_doc_type(doc_type_id, False)
+        return {
+                   "message": "更新成功",
+                   "result": result,
+               }, 201
