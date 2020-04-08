@@ -27,11 +27,18 @@ class ModelListResource(Resource, CurrentUserMixin):
         获取模型记录，分页
         """
         nlp_task_id = Common.get_nlp_task_id_by_route()
-        count, result = ModelService().get_train_job_list_by_nlp_task(nlp_task_id=nlp_task_id,
+        count, train_job_list = ModelService().get_train_job_list_by_nlp_task_id(nlp_task_id=nlp_task_id,
                                                                       doc_type_id=args['doc_type_id'],
                                                                       search=args['query'], offset=args['offset'],
                                                                       limit=args['limit'],
                                                                       current_user=self.get_current_user())
+        # convert int status to string
+        for train_job in train_job_list:
+            train_job.train_job_status = StatusEnum(train_job.train_job_status).name
+            for train_task in train_job.train_list:
+                train_task.train_status = StatusEnum(train_task.train_status).name
+        # get the serialized result
+        result = TrainJobSchema().dump(train_job_list, many=True)
         return {
                    "message": "请求成功",
                    "result": result,
@@ -50,11 +57,16 @@ class ModelListResource(Resource, CurrentUserMixin):
         创建模型
         """
         # create new
-        train_job = ModelService().create_train_job_by_doc_type_id(
-            doc_type_id=args["doc_type_id"], train_job_name=args["model_name"], train_job_desc=args["model_desc"],
-            train_config=args["model_train_config"], mark_job_ids=args["mark_job_ids"])
+        train_job = ModelService().create_train_job_by_doc_type_id(doc_type_id=args["doc_type_id"],
+                                                                   train_job_name=args["model_name"],
+                                                                   train_job_desc=args["model_desc"],
+                                                                   train_config=args["model_train_config"],
+                                                                   mark_job_ids=args["mark_job_ids"])
+
         # convert int status to string
         train_job.train_job_status = StatusEnum(train_job.train_job_status).name
+        for train_task in train_job.train_list:
+            train_task.train_status = StatusEnum(train_task.train_status).name
         result = TrainJobSchema().dump(train_job)
         return {
                    "message": "创建成功",
@@ -74,12 +86,18 @@ class ClassifyModelListResource(Resource, CurrentUserMixin):
         """
         获取模型记录，分页
         """
-        count, result = ModelService().get_train_job_list_by_nlp_task(nlp_task_id=int(NlpTaskEnum.classify),
+        count, train_job_list = ModelService().get_train_job_list_by_nlp_task_id(nlp_task_id=int(NlpTaskEnum.classify),
                                                                       doc_type_id=args['doc_type_id'],
                                                                       search=args['query'], offset=args['offset'],
                                                                       limit=args['limit'],
                                                                       current_user=self.get_current_user())
-
+        # convert int status to string
+        for train_job in train_job_list:
+            train_job.train_job_status = StatusEnum(train_job.train_job_status).name
+            for train_task in train_job.train_list:
+                train_task.train_status = StatusEnum(train_task.train_status).name
+        # get the serialized result
+        result = TrainJobSchema().dump(train_job_list, many=True)
         return {
                    "message": "请求成功",
                    "result": result,
@@ -100,6 +118,8 @@ class ClassifyModelListResource(Resource, CurrentUserMixin):
             train_config=args["model_train_config"], mark_job_ids=args["mark_job_ids"], custom_id=args['custom_id'])
         # convert int status to string
         train_job.train_job_status = StatusEnum(train_job.train_job_status).name
+        for train_task in train_job.train_list:
+            train_task.train_status = StatusEnum(train_task.train_status).name
         result = TrainJobSchema().dump(train_job)
         return {
                    "message": "创建成功",
@@ -115,6 +135,8 @@ class ModelItemResource(Resource):
         train_job = ModelService().get_train_job_by_id(model_id)
         # convert int status to string
         train_job.train_job_status = StatusEnum(train_job.train_job_status).name
+        for train_task in train_job.train_list:
+            train_task.train_status = StatusEnum(train_task.train_status).name
         result = TrainJobSchema().dump(train_job)
         return {
                    "message": "请求成功",
@@ -128,7 +150,7 @@ class ModelItemResource(Resource):
         ModelService().delete_train_job_by_id(model_id)
         return {
                    "message": "删除成功",
-               }, 204
+               }, 200
 
 
 class DocTypeInfoListResource(Resource, CurrentUserMixin):
@@ -153,8 +175,12 @@ class DocTypeLatestInfoResource(Resource, CurrentUserMixin):
         data = ModelService().get_latest_model_info_by_doc_type_id(doc_type_id=args["doc_type_id"], current_user=self.get_current_user())
         if not data:
             abort(400, message="未查询到数据")
-
+        # assign
         train_task, evaluate_task, train_job, doc_type = data
+        # convert int status to string
+        train_task.train_status = StatusEnum(train_task.train_status).name
+        train_job.train_job_status = StatusEnum(train_job.train_job_status).name
+        evaluate_task.evaluate_task_status = StatusEnum(evaluate_task.evaluate_task_status).name
         result = {
             "doc_type": DocTypeSchema().dump(doc_type),
             "model": TrainJobSchema().dump(train_job),
