@@ -6,6 +6,7 @@ from flask_restful import Resource
 
 from app.common.common import StatusEnum
 from app.common.patch import parse, fields
+from app.common.utils.status_mapper import status_str2int_mapper
 from app.schema.evaluate_task_schema import EvaluateTaskSchema
 from app.service.model_evaluate_service import ModelEvaluateService
 
@@ -111,7 +112,7 @@ class ModelEvaluateItemResource(Resource):
         """
         update_params = {}
         if args.get("model_evaluate_state"):
-            update_params.update(evaluate_task_status=int(StatusEnum[args["model_evaluate_state"]]))
+            update_params.update(evaluate_task_status=status_str2int_mapper()[args["model_evaluate_state"]])
         if args.get("model_evaluate_result"):
             update_params.update(evaluate_task_result=args["model_evaluate_result"])
         if args.get("model_evaluate_name"):

@@ -19,7 +19,6 @@ from app.model.train_task_model import TrainTaskModel
 from app.model.train_term_task_model import TrainTermTaskModel
 from app.schema.custom_algorithm_schema import CustomAlgorithmSchema
 from app.schema.doc_type_schema import DocTypeSchema
-from app.schema.train_job_schema import TrainJobSchema
 from app.common.utils.time import get_now_with_format
 
 

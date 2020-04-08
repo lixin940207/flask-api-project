@@ -2,7 +2,9 @@
 # email:  lixin@datagrand.com
 # create: 2020/4/2-6:50 下午
 from flask_restful import Resource
+
 from app.common.patch import parse, fields
+from app.common.utils.status_mapper import status_str2int_mapper
 from app.schema.evaluate_task_schema import EvaluateTaskSchema
 from app.service.model_evaluate_service import ModelEvaluateService
 
@@ -20,11 +22,12 @@ class UpdateModelEvaluateResource(Resource):
         """
         update_params = {}
         if args.get("model_evaluate_state"):
-            update_params.update(evaluate_task_status=args["model_evaluate_state"])
+            update_params.update(evaluate_task_status=status_str2int_mapper()[args["model_evaluate_state"]])
         if args.get("model_evaluate_result"):
             update_params.update(evaluate_task_result=args["model_evaluate_result"])
 
-        evaluate_task = ModelEvaluateService().update_evaluate_task_by_id(evaluate_task_id=args["model_evaluate_id"], args=update_params)
+        evaluate_task = ModelEvaluateService().update_evaluate_task_by_id(evaluate_task_id=args["model_evaluate_id"],
+                                                                          args=update_params)
         result = EvaluateTaskSchema().dump(evaluate_task)
         return {
                    "message": "更新成功",

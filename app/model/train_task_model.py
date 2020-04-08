@@ -64,9 +64,9 @@ class TrainTaskModel(BaseModel, ABC):
 
     def update(self, _id, **kwargs):
         entity = session.query(TrainTask).filter(TrainTask.train_task_id == _id)
-        entity.update(**kwargs)
+        entity.update(kwargs)
         session.flush()
-        return entity
+        return entity.one()
 
     def bulk_update(self, _id_list, **kwargs):
         entity_list = session.query(TrainTask).filter(TrainTask.train_task_id.in_(_id_list))

@@ -6,6 +6,7 @@ from flask_restful import Resource
 
 from app.common.common import StatusEnum
 from app.common.patch import parse, fields
+from app.common.utils.status_mapper import status_str2int_mapper
 from app.schema.train_task_schema import TrainTaskSchema
 from app.schema.train_term_task_schema import TrainTermTaskSchema
 from app.service.model_train_service import ModelTrainService
@@ -84,7 +85,7 @@ class ModelTrainItemResource(Resource):
         """
         update_params = {}
         if args.get("model_train_state"): # 这里不考虑model_train_result因为新的表结构里没有这个列了
-            update_params.update(train_status=int(StatusEnum[args["model_train_state"]]))
+            update_params.update(train_status=status_str2int_mapper()[args["model_train_state"]])
         train_task = ModelTrainService().update_train_task_by_id(train_job_id=model_id, train_task_id=model_train_id, is_check_train_terms=args["check_train_terms"], args=update_params)
         # convert int status to string
         train_task.train_status = StatusEnum(train_task.train_status).name
@@ -155,7 +156,7 @@ class TrainTermItemResource(Resource):
         """
         update_params = {}
         if args.get("train_term_state"):
-            update_params.update(train_term_status=int(StatusEnum[args["train_term_state"]]))
+            update_params.update(train_term_status=status_str2int_mapper()[args["train_term_state"]])
         if args.get("train_term_result"):
             update_params.update(train_term_result=args["train_term_result"])
         train_term_task = ModelTrainService().update_train_task_term_by_id(train_term_task_id=train_term_id, args=update_params)

@@ -11,6 +11,6 @@ class CustomAlgorithm(BaseEntity):
     custom_algorithm_predict_port = db.Column(db.Integer(), nullable=False)
     custom_algorithm_evaluate_port = db.Column(db.Integer(), nullable=False)
     custom_algorithm_config = db.Column(db.JSON(), default={})
-    custom_algorithm_status = db.Column(db.Boolean(), default=False)
+    custom_algorithm_status = db.Column(db.Integer(), db.ForeignKey("status.status_id"), nullable=False)
     nlp_task_id = db.Column(db.Integer(), db.ForeignKey("nlp_task.nlp_task_id"), nullable=False)
 

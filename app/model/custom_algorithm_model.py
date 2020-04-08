@@ -23,7 +23,7 @@ class CustomAlgorithmModel(BaseModel, ABC):
 
     def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
-        accept_keys = ["custom_algorithm_name", "nlp_task_id"]
+        accept_keys = ["custom_algorithm_name", "nlp_task_id", "custom_algorithm_alias"]
         # Compose query
         q = session.query(CustomAlgorithm).filter(~CustomAlgorithm.is_deleted)
         # Filter conditions
@@ -31,12 +31,30 @@ class CustomAlgorithmModel(BaseModel, ABC):
             if key in accept_keys:
                 q = q.filter(getattr(CustomAlgorithm, key) == val)
         # Order by key
-        q = q.order_by(order_by)
-        # Descending order
         if order_by_desc:
-            q = q.desc()
+            q = q.order_by(getattr(CustomAlgorithm, order_by).desc())
+        else:
+            q = q.order_by(getattr(CustomAlgorithm, order_by))
         q = q.offset(offset).limit(limit)
         return q.all()
+
+    def get_by_filter_in(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
+        # Define allowed filter keys
+        accept_keys = ["custom_algorithm_status_list", "nlp_task_id_list"]
+        # Compose query
+        q = session.query(CustomAlgorithm).filter(~CustomAlgorithm.is_deleted)
+        # Filter conditions
+        for key, filtered_list in kwargs.items():
+            if key in accept_keys:
+                q = q.filter(getattr(CustomAlgorithm, key.split("_list")[0]).in_(filtered_list))
+        count = q.count()
+        # Order by key
+        if order_by_desc:
+            q = q.order_by(getattr(CustomAlgorithm, order_by).desc())
+        else:
+            q = q.order_by(getattr(CustomAlgorithm, order_by))
+        q = q.offset(offset).limit(limit)
+        return count, q.all()
 
     def create(self, **kwargs) -> CustomAlgorithm:
         entity = CustomAlgorithm(**kwargs)
@@ -59,9 +77,11 @@ class CustomAlgorithmModel(BaseModel, ABC):
             {CustomAlgorithm.is_deleted: True})
         session.flush()
 
-    def update(self, entity):
-        session.query(CustomAlgorithm).update(entity)
+    def update(self, _id, **kwargs):
+        entity = session.query(CustomAlgorithm).filter(CustomAlgorithm.custom_algorithm_id == _id)
+        entity.update(kwargs)
         session.flush()
+        return entity.one()
 
     def bulk_update(self, entity_list):
         session.bulk_update_mappings(CustomAlgorithm, entity_list)
