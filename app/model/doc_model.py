@@ -29,6 +29,7 @@ class DocModel(BaseModel, ABC):
                     .join(MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id)\
                     .filter(MarkJob.mark_job_id.in_(val))
             elif key == "doc_term_ids":
+                # TODO: optimize logics in here
                 pass
         count = q.count()
         items = q.offset(offset).limit(limit).all()

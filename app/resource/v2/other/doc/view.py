@@ -1,10 +1,8 @@
 import typing
-from flask_restful import Resource
+from flask_restful import Resource, abort
+from app.common.log import logger
 from app.common.patch import parse, fields
-from app.common.extension import session
-from app.resource.v1.common.validator import check_doc_term_include
 from app.schema.DocSchema import DocSchema
-from sqlalchemy import and_
 from app.service.doc_service import DocService
 
 
@@ -35,8 +33,12 @@ class DocItemResource(Resource):
         """
         获取单个文档
         """
-        item = DocService().get_by_id(doc_id)
-        result = DocSchema().dump(item)
+        try:
+            item = DocService().get_by_id(doc_id)
+            result = DocSchema().dump(item)
+        except Exception as e:
+            logger.exception(e)
+            abort()
         return {
                    "message": "请求成功",
                    "result": result,

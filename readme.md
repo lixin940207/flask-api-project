@@ -41,3 +41,8 @@ Postman Header中增加:
 超级管理员：
 `{"app_id":1,"id":99,"username":"superadmin","roles":[{"name": "超级管理员"}],"groups":[{"id": 1}]}`
 `eyJhcHBfaWQiOiAxLCAiaWQiOiA5OSwgInVzZXJuYW1lIjogInN1cGVyYWRtaW4iLCAicm9sZXMiOiBbeyJuYW1lIjogIlx1OGQ4NVx1N2VhN1x1N2JhMVx1NzQwNlx1NTQ1OCJ9XSwgImdyb3VwcyI6IFt7ImlkIjogMX1dfQ==`
+
+
+##### TODO List:
+1. 所有上传的文档都要用chardet检测编码模式
+2. doc_type.is_favorite要改成每个人不同，新增user_doctype_favorite表
