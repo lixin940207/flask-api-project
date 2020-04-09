@@ -12,7 +12,7 @@ class TrainJobSchema(Schema):  # type: ignore
     model_id = fields.Integer(attribute='train_job_id')
     model_name = fields.String(attribute="train_job_name")
     model_desc = fields.String(attribute="train_job_desc")
-    status = fields.Integer(attribute='train_job_status')
+    status = fields.String(attribute='train_job_status')
     doc_type = fields.Nested(DocTypeSchema)
     created_time = fields.String()
     model_version = fields.String()

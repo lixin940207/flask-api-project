@@ -1,6 +1,6 @@
 from abc import ABC
 
-from sqlalchemy import not_, func, or_
+from sqlalchemy import not_, func, or_, text
 
 from app.common.filters import CurrentUser
 from app.model.base import BaseModel
@@ -38,22 +38,20 @@ class MarkJobModel(BaseModel, ABC):
         # Define allowed filter keys
         accept_keys = ["assign_mode", "mark_job_status", "mark_job_type", "doc_type_id"]
         # Compose query
-        q = session.query(MarkJob).join(
-            DocType, DocType.doc_type_id == DocType.doc_type_id
+        q = session.query(MarkJob, DocType).join(
+            DocType, MarkJob.doc_type_id == DocType.doc_type_id
         ).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~MarkJob.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():
-            if key in accept_keys:
+            if key in accept_keys and val is not None:
                 q = q.filter(getattr(MarkJob, key) == val)
         if search:
             q = q.filter(MarkJob.mark_job_name.like(f'%{search}%'))
+        count = q.count()
         # Order by key
-        q = q.order_by(order_by)
-        # Descending order
-        if order_by_desc:
-            q = q.desc()
+        q = q.order_by(text(f"{'-' if order_by_desc else ''}mark_job.{order_by}"))
         q = q.offset(offset).limit(limit)
-        return q.all()
+        return count, q.all()
 
     def create(self, entity):
         session.add(entity)
@@ -89,7 +87,7 @@ class MarkJobModel(BaseModel, ABC):
         accept_keys = ["assign_mode", "mark_job_status", "mark_job_type", "doc_type_id"]
         # Compose query
         q = session.query(func.count(MarkJob.mark_job_id)).join(
-            DocType, DocType.doc_type_id == DocType.doc_type_id
+            DocType, MarkJob.doc_type_id == DocType.doc_type_id
         ).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~MarkJob.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():

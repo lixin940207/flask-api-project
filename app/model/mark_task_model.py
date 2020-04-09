@@ -1,5 +1,6 @@
 from abc import ABC
 from sqlalchemy import not_, func
+from typing import List, Tuple
 
 from app.common.filters import CurrentUser
 from app.common.seeds import StatusEnum
@@ -45,7 +46,7 @@ class MarkTaskModel(BaseModel, ABC):
             .join(MarkJob, MarkTask.mark_job_id == MarkJob.mark_job_id) \
             .filter(
             MarkJob.mark_job_id.in_(mark_job_ids),
-            MarkJob.mark_job_status == StatusEnum.approved,
+            MarkJob.mark_job_status == int(StatusEnum.approved),
             ~MarkJob.is_deleted,
             ~Doc.is_deleted,
             ~MarkTask.is_deleted)
@@ -79,13 +80,14 @@ class MarkTaskModel(BaseModel, ABC):
         session.bulk_update_mappings(MarkTask, entity_list)
 
     @staticmethod
-    def count_mark_task_status(mark_job_ids, user_id):
+    def count_mark_task_status(mark_job_ids) -> [Tuple[int]]:
         all_count = session.query(
-            func.count(MarkTask.mark_task_status), MarkJob.mark_job_status) \
+            func.count(MarkTask.mark_task_status), MarkTask.mark_task_status, MarkTask.mark_job_id) \
             .join(MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id) \
-            .filter(MarkJob.mark_job_id.in_(mark_job_ids), ~MarkTask.is_deleted,
-                    ~MarkJob.is_deleted, ~DocType.is_deleted) \
-            .group_by(MarkJob.mark_job_status, MarkJob.mark_job_id).all()
+            .filter(MarkJob.mark_job_id.in_(mark_job_ids),
+                    ~MarkTask.is_deleted, ~MarkJob.is_deleted) \
+            .group_by(MarkTask.mark_task_status, MarkTask.mark_job_id).all()
+        return all_count
 
     @staticmethod
     def count_status_by_user(nlp_task_id, current_user: CurrentUser):
@@ -95,17 +97,17 @@ class MarkTaskModel(BaseModel, ABC):
             .join(MarkTask, MarkJob.mark_job_id == MarkTask.mark_job_id)\
             .filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~MarkJob.is_deleted, ~MarkTask.is_deleted)
         # filter by user
-        if current_user.user_role in [RoleEnum.manager, RoleEnum.guest]:
+        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
-        elif current_user.user_role in [RoleEnum.reviewer]:
+        elif current_user.user_role in [RoleEnum.reviewer.value]:
             q = q.filter(func.json_contains(MarkJob.reviewer_ids, current_user.user_id))
-        elif current_user.user_role in [RoleEnum.annotator]:
+        elif current_user.user_role in [RoleEnum.annotator.value]:
             q = q.filter(func.json_contains(MarkJob.annotator_ids, current_user.user_id))
         # get grouped (doc_type_id, mark_job_id, count) list
         all_status = q.group_by(MarkJob.doc_type_id, MarkJob.mark_job_id) \
             .with_entities(DocType.doc_type_id, MarkJob.mark_job_id, func.count(MarkTask.mark_task_id)).all()
         # filter >= labeled status
-        q = q.filter(MarkTask.mark_task_status >= StatusEnum.labeled)
+        q = q.filter(MarkTask.mark_task_status >= int(StatusEnum.labeled))
         # get grouped (doc_type_id, mark_job_id, >= labeled count) list
         all_finish_marking_status = q.group_by(MarkJob.doc_type_id, MarkJob.mark_job_id) \
             .with_entities(DocType.doc_type_id, MarkJob.mark_job_id, func.count(MarkTask.mark_task_id)).all()

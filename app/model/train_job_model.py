@@ -2,7 +2,7 @@
 # email:  lixin@datagrand.com
 # create: 2020/3/18-2:34 下午
 from abc import ABC
-from sqlalchemy import not_
+from sqlalchemy import not_, distinct
 
 from app.common.common import RoleEnum
 from app.common.filters import CurrentUser
@@ -44,33 +44,36 @@ class TrainJobModel(BaseModel, ABC):
     @staticmethod
     def get_by_nlp_task_id(nlp_task_id, search, current_user: CurrentUser, order_by="created_time", order_by_desc=True,
                            limit=10, offset=0, **kwargs):
+        """
+        get (traintask, trainjob, doctype) tuple by nlp_task_id and other filters
+        """
         # Define allowed filter keys
         accept_keys = ["train_job_status", "doc_type_id"]
-        # Compose query
+        # Compose query, select 3 tables related to a train job
         q = session.query(TrainTask, TrainJob, DocType) \
-            .join(TrainJob, TrainTask.train_job_id == TrainJob.train_job_id) \
+            .join(TrainTask, TrainTask.train_job_id == TrainJob.train_job_id) \
             .join(DocType, DocType.doc_type_id == TrainJob.doc_type_id) \
             .filter(DocType.nlp_task_id == nlp_task_id,
                     ~DocType.is_deleted,
                     ~TrainJob.is_deleted,
                     ~TrainTask.is_deleted)
         # auth
-        if current_user.user_role in [RoleEnum.manager, RoleEnum.guest]:
+        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
-
         # Filter conditions
         for key, val in kwargs.items():
             if key in accept_keys:
                 q = q.filter(getattr(TrainJob, key) == val)
         if search:
             q = q.filter(TrainJob.train_job_name.like(f'%{search}%'))
+        count = q.with_entities(distinct(TrainJob.train_job_id)).count()
         # Order by key
         if order_by_desc:
             q = q.order_by(getattr(TrainJob, order_by).desc())
         else:
             q = q.order_by(getattr(TrainJob, order_by))
         q = q.offset(offset).limit(limit)
-        return q.all()
+        return count, q.all()
 
     def create(self, **kwargs) -> TrainJob:
         entity = TrainJob(**kwargs)
