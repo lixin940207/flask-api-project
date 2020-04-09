@@ -19,7 +19,7 @@ api.add_resource(view.TopDocTypeResource,
                  '/topping_classify_doc_type/<int:doc_type_id>',
                  '/topping_wordseg_doc_type/<int:doc_type_id>',
                  '/topping_entity_doc_type/<int:doc_type_id>')
-api.add_resource(view.UnTopDocTypeResource,
+api.add_resource(view.CancelTopDocTypeResource,
                  '/cancel_topping_doc_type/<int:doc_type_id>',
                  '/cancel_topping_classify_doc_type/<int:doc_type_id>',
                  '/cancel_topping_wordseg_doc_type/<int:doc_type_id>',

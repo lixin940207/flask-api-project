@@ -19,8 +19,7 @@ class DocTypeListResource(Resource, CurrentUserMixin):
         :param args:
         :return:
         """
-        # TODO: 这里有必要拿nlp_task_id么？和传想讨论一下
-        Common.get_nlp_task_id_by_route(args)
+        Common().get_nlp_task_id_by_route(args)
         result, count = DocTypeService().get_doc_type(self.get_current_user(), args)
         return {
                    "message": "请求成功",
