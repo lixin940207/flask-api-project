@@ -75,7 +75,7 @@ class TrainTaskModel(BaseModel, ABC):
         return entity_list
 
     @staticmethod
-    def get_all_model_related_by_doc_type_id(doc_type_id, current_user: CurrentUser, order_by="created_time", order_by_desc=True):
+    def get_online_model_info_by_doc_type_id(doc_type_id, current_user: CurrentUser, order_by="created_time", order_by_desc=True):
         # Compose query
         q = session.query(TrainTask, EvaluateTask, TrainJob, DocType) \
             .join(EvaluateTask, EvaluateTask.train_task_id == TrainTask.train_task_id) \
@@ -96,4 +96,4 @@ class TrainTaskModel(BaseModel, ABC):
             q = q.order_by(getattr(TrainJob, order_by).desc())
         else:
             q = q.order_by(getattr(TrainJob, order_by))
-        return q.all()
+        return q.first()

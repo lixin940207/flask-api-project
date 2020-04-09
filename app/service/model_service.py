@@ -165,8 +165,8 @@ class ModelService:
         session.commit()
 
     @staticmethod
-    def get_latest_model_info_by_doc_type_id(doc_type_id, current_user):
-        return TrainTaskModel().get_all_model_related_by_doc_type_id(doc_type_id=doc_type_id, current_user=current_user)[0]
+    def get_online_model_info_by_doc_type_id(doc_type_id, current_user):
+        return TrainTaskModel().get_online_model_info_by_doc_type_id(doc_type_id=doc_type_id, current_user=current_user)
 
 
 def generate_model_version_by_nlp_task(doc_type_id, mark_job_ids, nlp_task):

@@ -172,7 +172,7 @@ class DocTypeLatestInfoResource(Resource, CurrentUserMixin):
         """
         查看抽取文档类型下的最新上线模型信息
         """
-        data = ModelService().get_latest_model_info_by_doc_type_id(doc_type_id=args["doc_type_id"], current_user=self.get_current_user())
+        data = ModelService().get_online_model_info_by_doc_type_id(doc_type_id=args["doc_type_id"], current_user=self.get_current_user())
         if not data:
             abort(400, message="未查询到数据")
         # assign
