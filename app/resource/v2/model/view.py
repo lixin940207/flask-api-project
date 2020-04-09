@@ -26,12 +26,16 @@ class ModelListResource(Resource, CurrentUserMixin):
         """
         获取模型记录，分页
         """
-        nlp_task_id = Common.get_nlp_task_id_by_route()
+        nlp_task_id = Common().get_nlp_task_id_by_route()
+        args.update({
+            'nlp_task_id': nlp_task_id
+        })
         count, train_job_list = ModelService().get_train_job_list_by_nlp_task_id(nlp_task_id=nlp_task_id,
-                                                                      doc_type_id=args['doc_type_id'],
-                                                                      search=args['query'], offset=args['offset'],
-                                                                      limit=args['limit'],
-                                                                      current_user=self.get_current_user())
+                                                                                 doc_type_id=args['doc_type_id'],
+                                                                                 search=args['query'],
+                                                                                 offset=args['offset'],
+                                                                                 limit=args['limit'],
+                                                                                 current_user=self.get_current_user())
         # convert int status to string
         for train_job in train_job_list:
             train_job.train_job_status = StatusEnum(train_job.train_job_status).name
@@ -87,10 +91,11 @@ class ClassifyModelListResource(Resource, CurrentUserMixin):
         获取模型记录，分页
         """
         count, train_job_list = ModelService().get_train_job_list_by_nlp_task_id(nlp_task_id=int(NlpTaskEnum.classify),
-                                                                      doc_type_id=args['doc_type_id'],
-                                                                      search=args['query'], offset=args['offset'],
-                                                                      limit=args['limit'],
-                                                                      current_user=self.get_current_user())
+                                                                                 doc_type_id=args['doc_type_id'],
+                                                                                 search=args['query'],
+                                                                                 offset=args['offset'],
+                                                                                 limit=args['limit'],
+                                                                                 current_user=self.get_current_user())
         # convert int status to string
         for train_job in train_job_list:
             train_job.train_job_status = StatusEnum(train_job.train_job_status).name
@@ -155,7 +160,7 @@ class ModelItemResource(Resource):
 
 class DocTypeInfoListResource(Resource, CurrentUserMixin):
     def get(self):
-        nlp_task_id = Common.get_nlp_task_id_by_route()
+        nlp_task_id = Common().get_nlp_task_id_by_route()
         result = DocTypeService().get_doc_type_info_by_nlp_task_by_user(nlp_task_id=nlp_task_id,
                                                                         current_user=self.get_current_user())
         return {
@@ -172,7 +177,8 @@ class DocTypeLatestInfoResource(Resource, CurrentUserMixin):
         """
         查看抽取文档类型下的最新上线模型信息
         """
-        data = ModelService().get_latest_model_info_by_doc_type_id(doc_type_id=args["doc_type_id"], current_user=self.get_current_user())
+        data = ModelService().get_latest_model_info_by_doc_type_id(doc_type_id=args["doc_type_id"],
+                                                                   current_user=self.get_current_user())
         if not data:
             abort(400, message="未查询到数据")
         # assign
