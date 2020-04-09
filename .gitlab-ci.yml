@@ -7,8 +7,9 @@ variables:
   PROJECT_REPO_NAMESPACE: nlp
   PROJECT_REPO_NAME: nlp_platform_api_v2
   DEPLOYMENT_REPO_NAMESPACE: nlp
-  DEPLOYMENT_REPO_NAME: preview_nlp_platform
+  DEPLOYMENT_REPO_NAME: deploy_nlp_platform
   SERVER: 127.0.0.1
+  PORT: 26822
   USER: nlponline
 
 before_script:
@@ -49,6 +50,7 @@ deploy_dev_stage:
   only:
     - master
     - develop
+    - feature/configure_ci
   script:
     - sh admin/deploy_env.sh nlp_platform_v2
   when: manual

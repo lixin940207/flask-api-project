@@ -3,8 +3,8 @@ FROM dockerhub.datagrand.com/base_image/python37_dev:1.1
 ENV TZ=Asia/Shanghai
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ >/etc/timezone
 
-RUN mkdir -p /nlp_platform_api_v2
-WORKDIR /nlp_platform_api_v2
+RUN mkdir -p /nlp_platform_api
+WORKDIR /nlp_platform_api
 
 COPY .ssh /root/.ssh
 RUN chmod 600 /root/.ssh/id_rsa
