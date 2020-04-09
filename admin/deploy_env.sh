@@ -14,6 +14,6 @@ git commit -m "${COMMIT_MESSAGE}"
 git push
 
 ssh -f -p 22 -4 -o "StrictHostKeyChecking no" ci_test@114.118.22.249 -L $PORT:10.120.13.94:22 -N
-cmd="docker service update --image=dockerhub.datagrand.com/nlp_platform/nlp_platform_api_v2:dev_'${DOCKER_TAG_SUFFIX}' deploy${env_name}_nlp_platform_api"
+cmd="docker service update --image=dockerhub.datagrand.com/nlp_platform/nlp_platform_api_v2:dev_${DOCKER_TAG_SUFFIX} ${env_name}_nlp_platform_api"
 echo $cmd
 ssh -o "StrictHostKeyChecking no" $USER@$SERVER -p $PORT $cmd
