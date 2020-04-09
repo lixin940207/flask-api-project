@@ -10,12 +10,9 @@ class ClassifyMarkJobService:
     @staticmethod
     def get_mark_job_list(args):
         nlp_task_id = int(NlpTaskEnum.classify)
-        result = MarkJobModel().get_by_nlp_task_id(
+        count, result = MarkJobModel().get_by_nlp_task_id(
             nlp_task_id=nlp_task_id, doc_type_id=args['doc_type_id'],
             search=args['query'], limit=args['limit'], offset=args['offset'])
-
-        count = MarkJobModel().count_mark_job_by_nlp_task_id(
-            nlp_task_id=nlp_task_id, search=args['query'])
 
         mark_job_ids = [mark_job.mark_job_id for mark_job, _ in result]
         status_count = MarkTaskModel().count_mark_task_status(mark_job_ids=mark_job_ids)

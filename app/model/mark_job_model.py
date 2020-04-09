@@ -1,6 +1,6 @@
 from abc import ABC
 
-from sqlalchemy import not_, func, or_
+from sqlalchemy import not_, func, or_, text
 
 from app.common.filters import CurrentUser
 from app.model.base import BaseModel
@@ -47,10 +47,11 @@ class MarkJobModel(BaseModel, ABC):
                 q = q.filter(getattr(MarkJob, key) == val)
         if search:
             q = q.filter(MarkJob.mark_job_name.like(f'%{search}%'))
+        count = q.count()
         # Order by key
         q = q.order_by(text(f"{'-' if order_by_desc else ''}mark_job.{order_by}"))
         q = q.offset(offset).limit(limit)
-        return q.all()
+        return count, q.all()
 
     def create(self, entity):
         session.add(entity)
