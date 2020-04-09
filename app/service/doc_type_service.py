@@ -4,11 +4,10 @@
 from app.common.common import StatusEnum
 from app.common.extension import session
 from app.common.filters import CurrentUser
-from app.common.seeds import NlpTaskEnum
 from app.model import DocTypeModel, MarkTaskModel
 from app.model.doc_term_model import DocTermModel
 from app.model.evaluate_task_model import EvaluateTaskModel
-from app.schema.doc_type_schema import DocTypeSchema
+from app.schema.doc_type_schema import DocTypeSchema, DocTermSchema
 from app.schema.evaluate_task_schema import EvaluateTaskSchema
 
 
@@ -77,3 +76,14 @@ class DocTypeService:
         session.commit()
         result = DocTypeSchema().dumps(doc_type)
         return result
+
+    @staticmethod
+    def set_favoriate_doc_type(doc_type_id, is_favorite: bool):
+        _doc_type = DocTypeModel().update(doc_type_id=doc_type_id, is_favorite=is_favorite)
+        return DocTypeSchema().dump(_doc_type)
+
+    @staticmethod
+    def get_doc_type_items(doc_type_id: int):
+        item = DocTermModel().get_by_filter(doc_type_id=doc_type_id)
+        return DocTermSchema().dump(item)
+
