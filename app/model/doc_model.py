@@ -35,12 +35,14 @@ class DocModel(BaseModel, ABC):
         items = q.offset(offset).limit(limit).all()
         return items, count
 
-    def create(self, entity):
+    def create(self, **kwargs) -> Doc:
+        entity = Doc(**kwargs)
         session.add(entity)
         session.flush()
         return entity
 
-    def bulk_create(self, entity_list):
+    def bulk_create(self, entity_list) -> [Doc]:
+        entity_list = [Doc(**entity) for entity in entity_list]
         session.bulk_save_objects(entity_list, return_defaults=True)
         session.flush()
         return entity_list

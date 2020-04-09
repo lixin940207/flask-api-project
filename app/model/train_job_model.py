@@ -2,7 +2,7 @@
 # email:  lixin@datagrand.com
 # create: 2020/3/18-2:34 下午
 from abc import ABC
-from sqlalchemy import not_, distinct
+from sqlalchemy import distinct
 
 from app.common.common import RoleEnum
 from app.common.filters import CurrentUser
@@ -16,10 +16,10 @@ from sqlalchemy import func
 
 class TrainJobModel(BaseModel, ABC):
     def get_all(self):
-        return session.query(TrainJob).filter(not_(TrainJob.is_deleted)).all()
+        return session.query(TrainJob).filter(~TrainJob.is_deleted).all()
 
     def get_by_id(self, _id):
-        return session.query(TrainJob).filter(TrainJob.train_job_id == _id, not_(TrainJob.is_deleted)).one()
+        return session.query(TrainJob).filter(TrainJob.train_job_id == _id, ~TrainJob.is_deleted).one()
 
     def get_by_filter(self, search, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
         # Define allowed filter keys
