@@ -29,7 +29,7 @@ class DocTypeService:
         """
         result = []
         # get doc_type list by user
-        doc_type_list = DocTypeModel().get_by_nlp_task_id_by_user(nlp_task_id=nlp_task_id, current_user=current_user)
+        _, doc_type_list = DocTypeModel().get_by_nlp_task_id_by_user(nlp_task_id=nlp_task_id, current_user=current_user)
         doc_type_list = [{"doc_type": DocTypeSchema().dump(d)} for d in doc_type_list]
 
         # get all job count and approved job count
@@ -59,11 +59,8 @@ class DocTypeService:
 
     @staticmethod
     def get_doc_type(current_user: CurrentUser, args):
-        offset = args.get('offset', 0)
-        limit = args.get('limit', 10)
         mark_job_ids = args.get('mark_job_ids', [])
-        nlp_task_id = args.get('nlp_task_id')
-        items, count = DocTypeModel().get_by_mark_job_ids(mark_job_ids=mark_job_ids, nlp_task_id=nlp_task_id, current_user=current_user, offset=offset, limit=limit)
+        count, items = DocTypeModel().get_by_mark_job_ids(mark_job_ids=mark_job_ids, nlp_task_id=args["nlp_task_id"], current_user=current_user, offset=args["offset"], limit=args["limit"])
         result = DocTypeSchema(many=True).dump(items)
         return result, count
 

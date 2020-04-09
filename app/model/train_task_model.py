@@ -89,7 +89,7 @@ class TrainTaskModel(BaseModel, ABC):
                     ~TrainTask.is_deleted,
                     ~EvaluateTask.is_deleted)
         # auth
-        if current_user.user_role in [RoleEnum.manager, RoleEnum.guest]:
+        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
         # Order by key
         if order_by_desc:
