@@ -9,7 +9,6 @@ variables:
   DEPLOYMENT_REPO_NAMESPACE: nlp
   DEPLOYMENT_REPO_NAME: preview_nlp_platform
   SERVER: 127.0.0.1
-  PORT: 26822
   USER: nlponline
 
 before_script:
