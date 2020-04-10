@@ -9,7 +9,7 @@
 from abc import ABC
 
 from app.model.base import BaseModel
-from app.entity.doc_term import DocTerm
+from app.entity import DocTerm, DocType
 from app.common.extension import session
 
 
@@ -67,6 +67,16 @@ class DocTermModel(BaseModel, ABC):
     @staticmethod
     def get_by_exclude_terms(exclude_terms_ids, limit=10, offset=0):
         q = session.query(DocTerm).filter(DocTerm.doc_term_id.notin_(exclude_terms_ids), ~DocTerm.is_deleted)
+        count = q.count()
+        items = q.offset(offset).limit(limit).all()
+        return items, count
+
+    @staticmethod
+    def get_doc_term_by_doctype(doc_type_id, offset=0, limit=10, doc_term_ids=None):
+        q = session.query(DocTerm).join(DocType, DocType.doc_type_id == DocTerm.doc_type_id).\
+            filter(DocTerm.doc_type_id == doc_type_id, ~DocTerm.is_deleted, ~DocType.is_deleted)
+        if doc_term_ids:
+            q = q.filter(DocTerm.doc_term_id.in_(doc_term_ids))
         count = q.count()
         items = q.offset(offset).limit(limit).all()
         return items, count
