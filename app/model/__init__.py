@@ -11,3 +11,4 @@ from app.model.mark_task_model import MarkTaskModel
 from app.model.user_task_model import UserTaskModel
 from app.model.doc_model import DocModel
 from app.model.train_task_model import TrainTaskModel
+from app.model.doc_term_model import DocTermModel
