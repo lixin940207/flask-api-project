@@ -2,7 +2,7 @@ import typing
 from flask_restful import Resource, abort
 from app.common.log import logger
 from app.common.patch import parse, fields
-from app.schema.DocSchema import DocSchema
+from app.schema.doc_schema import DocSchema
 from app.service.doc_service import DocService
 
 

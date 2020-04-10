@@ -1,6 +1,8 @@
 import typing
 import os
 import csv
+
+from flask_restful import abort
 from marshmallow.exceptions import ValidationError
 from app.config.config import BASE_PATH
 from app.common.utils.name import get_ext, generate_unique_name
@@ -103,6 +105,23 @@ class FileSet(object):
         with open(unique_path, 'w+', newline='', encoding='utf-8') as f:
             f.write('\n'.join(results))
         return self.get_relative_path(unique_name)
+
+    @staticmethod
+    def read_csv(file_path):
+        content_list = []
+        try:
+            with open(file_path, newline='', encoding='utf-8-sig') as csv_file:
+                reader = csv.reader(csv_file)
+                next(reader)
+                for row in reader:
+                    if len(row[0].strip()) < 2:
+                        continue
+                    content_list.append(row[0])
+        except UnicodeDecodeError:
+            abort(400, message="文件编码错误 请上传utf-8编码文件")
+        except Exception:
+            abort(400, message="文件格式不合规 请查看csv文件模版")
+        return content_list
 
 
 upload_fileset = FileSet(folder='upload', exts=DEFAULTS)
