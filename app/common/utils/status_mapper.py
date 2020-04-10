@@ -15,6 +15,7 @@ def status_str2int_mapper():
         "online": int(StatusEnum.online)
     }
 
+
 def convert_explicit_status(entity_list, status_column_name):
     """table int status to string status"""
     is_list = True
