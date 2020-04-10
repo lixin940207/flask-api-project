@@ -16,4 +16,6 @@ if [ "$?" != "0" ]; then
     exit 1
 fi
 
+cd ..
+
 gunicorn start_server:app -c gunicorn_conf.py --reload
