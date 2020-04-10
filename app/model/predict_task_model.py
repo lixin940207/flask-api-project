@@ -19,7 +19,7 @@ class PredictTaskModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(PredictTask).filter(PredictTask.predict_task_id == _id, PredictTask.is_deleted).one()
 
-    def get_by_filter(self, search="", order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, search="", order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["predict_task_status", "predict_job_id"]
         # Compose query
@@ -79,7 +79,8 @@ class PredictTaskModel(BaseModel, ABC):
         session.flush()
         return entity
 
-    def bulk_create(self, entity_list: [PredictTask]) -> [PredictTask]:
+    def bulk_create(self, entity_list) -> [PredictTask]:
+        entity_list = [PredictTask(**entity) for entity in entity_list]
         session.bulk_save_objects(entity_list, return_defaults=True)
         session.flush()
         return entity_list

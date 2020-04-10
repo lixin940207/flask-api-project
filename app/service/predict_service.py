@@ -20,34 +20,26 @@ from app.model.predict_task_model import PredictTaskModel
 
 class PredictService:
     @staticmethod
-    def get_predict_job_by_id(predict_job_id):
+    def get_predict_job_by_id(predict_job_id) -> PredictJob:
         predict_job = PredictJobModel().get_by_id(predict_job_id)
-        predict_job.task_list = PredictTaskModel().get_by_filter(limit=99999, predict_job_id=predict_job_id)
+        # get all tasks under this predict job
+        _, predict_task_list = PredictTaskModel().get_by_filter(limit=99999, predict_job_id=predict_job_id)
+        predict_job.task_list = predict_task_list
         return predict_job
 
     @staticmethod
     def get_predict_job_list_by_nlp_task_id(nlp_task_id, doc_type_id, search, order_by, order_by_desc, offset, limit, current_user: CurrentUser):
         # if exists doc_type_id, get train jobs of this doc_type_id
         if doc_type_id:
-            count, multi_tables = PredictJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search,
-                                                                       order_by=order_by, order_by_desc=order_by_desc, offset=offset,
-                                                                       limit=limit, current_user=current_user, doc_type_id=doc_type_id)
+            count, predict_job_list = PredictJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search,
+                                                                           order_by=order_by, order_by_desc=order_by_desc,
+                                                                           offset=offset, limit=limit,
+                                                                           current_user=current_user, doc_type_id=doc_type_id)
         else:  # else get all
-            count, multi_tables = PredictJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search,
-                                                                       order_by=order_by, order_by_desc=order_by_desc, offset=offset,
-                                                                       limit=limit, current_user=current_user)
-        # assign doc_type, train_list to each trainjob for dumping
-        predict_job_list = []
-        job_id_list = []
-        for predict_task, predict_job, doc_type in multi_tables:
-            # assign predict_task, doc_type to predict_job
-            if predict_task.predict_job_id not in job_id_list:
-                job_id_list.append(predict_task.predict_job_id)
-                predict_job.doc_type = doc_type
-                predict_job.task_list = [predict_task]
-                predict_job_list.append(predict_job)
-            else:
-                predict_job_list[job_id_list.index(predict_task.predict_job_id)].task_list.append(predict_task)
+            count, predict_job_list = PredictJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search,
+                                                                           order_by=order_by, order_by_desc=order_by_desc,
+                                                                           offset=offset, limit=limit, current_user=current_user)
+
         return count, predict_job_list
 
     @staticmethod
@@ -123,7 +115,7 @@ def push_predict_task_to_redis(predict_job, predict_task, doc):
         'files': [
             {
                 'file_name': doc.doc_unique_name,
-                'is_scan': predict_job.predict_job_type == int(FileTypeEnum.ocr),
+                'is_scan': predict_job.predict_job_type == FileTypeEnum.ocr,
                 'doc_id': doc.doc_id,
                 'doc_type': f'NER{str(predict_job.doc_type_id)}'
             },

@@ -14,7 +14,7 @@ class TrainM2mMarkbModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(TrainM2mMark).filter(TrainM2mMark.id == _id, ~TrainM2mMark.is_deleted).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["train_job_id", "mark_job_id"]
         # Compose query

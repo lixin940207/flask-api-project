@@ -6,7 +6,7 @@ from flask_restful import Resource
 from app.common.common import Common, StatusEnum
 from app.common.filters import CurrentUserMixin
 from app.common.patch import parse, fields
-from app.common.utils.status_mapper import status_str2int_mapper
+from app.common.utils.status_mapper import status_str2int_mapper, convert_explicit_status
 from app.schema.predict_job_schema import PredictJobSchema
 from app.service.predict_service import PredictService
 
@@ -49,7 +49,7 @@ class ExtractJobListResource(Resource, CurrentUserMixin):
     @parse({
         "extract_job_name": fields.String(required=True),
         "extract_job_type": fields.String(required=True),
-        "extract_job_desc": fields.String(),
+        "extract_job_desc": fields.String(missing=""),
         "doc_type_id": fields.Integer(required=True),
         "files": fields.List(fields.File(), required=True),
         "task_type": fields.String(required=True, validate=lambda x: x in ['machine', 'manual'])
@@ -58,12 +58,13 @@ class ExtractJobListResource(Resource, CurrentUserMixin):
             self: Resource,
             args: typing.Dict
     ) -> typing.Tuple[typing.Dict, int]:
-
         predict_job = PredictService().create_predict_job_by_doc_type_id(doc_type_id=args["doc_type_id"],
-                                                                         predict_job_name=args["model_name"],
-                                                                         predict_job_desc=args["model_desc"],
+                                                                         predict_job_name=args["extract_job_name"],
+                                                                         predict_job_desc=args["extract_job_desc"],
                                                                          predict_job_type=args["extract_job_type"],
                                                                          files=args["files"])
+        # convert int status to string
+        predict_job.predict_job_status = StatusEnum(predict_job.predict_job_status).name
         result = PredictJobSchema().dump(predict_job)
         return {
                    "message": "创建成功",
@@ -73,7 +74,12 @@ class ExtractJobListResource(Resource, CurrentUserMixin):
 
 class ExtractJobItemResource(Resource):
     def get(self: Resource, job_id: int) -> typing.Tuple[typing.Dict, int]:
+        # get predict job
         predict_job = PredictService().get_predict_job_by_id(predict_job_id=job_id)
+
+        # convert int status to string
+        predict_job = convert_explicit_status(predict_job, "predict_job_status")
+        predict_job.task_list = convert_explicit_status(predict_job.task_list, "predict_task_status")
         result = PredictJobSchema().dump(predict_job)
         return {
                    "message": "请求成功",
@@ -113,3 +119,34 @@ class ExtractJobItemResource(Resource):
                    "message": "删除成功",
                }, 204
 
+
+class ExtractJobExportResource(Resource):
+    @parse({
+        "offset": fields.Integer(missing=50),
+        "export_type": fields.String(missing='tags_only', validate=lambda x: x in AVAILABLE_EXPORT_TYPES),
+    })
+    def get(
+            self: Resource,
+            args: typing.Dict,
+            job_id: int
+    ) -> typing.Tuple[typing.Dict, int]:
+        job = session.query(ExtractJob).filter(ExtractJob.extract_job_id == job_id,
+                                               ExtractJob.status).one()
+
+        if job.extract_job_state != ExtractJobStateChoice.success:
+            abort(400, message="有失败或未完成任务，不能导出")
+
+        # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
+        sync_export = SyncExport(job, job_id, 'extract', 'machine')
+        last_exported_file = sync_export.get_last_export_file()
+        if last_exported_file:
+            return {
+                       "message": "请求成功",
+                       "file_path": last_exported_file
+                   }, 200
+        # 重新制作
+        csv_path = sync_export.generate_extract_file(export_type=args['export_type'], offset=args['offset'])
+        return {
+                   "message": "请求成功",
+                   "file_path": csv_path
+               }, 200

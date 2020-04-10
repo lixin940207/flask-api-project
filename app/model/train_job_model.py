@@ -21,7 +21,7 @@ class TrainJobModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(TrainJob).filter(TrainJob.train_job_id == _id, ~TrainJob.is_deleted).one()
 
-    def get_by_filter(self, search, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, search, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["train_job_status", "doc_type_id"]
         # Compose query
