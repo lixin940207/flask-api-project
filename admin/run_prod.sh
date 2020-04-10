@@ -9,7 +9,7 @@ export FLASK_APP=start_server.py
 export FLASK_ENV=production
 export FLASK_DEBUG=0
 
-flask db migrate && flask db upgrade
+cd app && flask db migrate && flask db upgrade
 
 if [ "$?" != "0" ]; then
     echo "An error occurred when flask db migrate or upgrade"
