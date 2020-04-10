@@ -25,19 +25,18 @@ from app.common.utils.time import get_now_with_format
 class ModelService:
     @staticmethod
     def get_train_job_list_by_nlp_task_id(nlp_task_id, doc_type_id, search, offset, limit, current_user: CurrentUser):
-        # get nlp_task id
         # if exists doc_type_id, get train jobs of this doc_type_id
         if doc_type_id:
             count, multi_tables = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
-                                                                  limit=limit, current_user=current_user, doc_type_id=doc_type_id)
+                                                                     limit=limit, current_user=current_user, doc_type_id=doc_type_id)
         else:  # else get all
             count, multi_tables = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
-                                                                  limit=limit, current_user=current_user)
+                                                                     limit=limit, current_user=current_user)
         # assign doc_type, train_list to each trainjob for dumping
         train_job_list = []
         job_id_list = []
         for train_task, train_job, doc_type in multi_tables:
-            # assgin train_task, doc_type to train_job
+            # assign train_task, doc_type to train_job
             if train_task.train_job_id not in job_id_list:
                 job_id_list.append(train_task.train_job_id)
                 train_job.doc_type = doc_type
@@ -165,8 +164,8 @@ class ModelService:
         session.commit()
 
     @staticmethod
-    def get_latest_model_info_by_doc_type_id(doc_type_id, current_user):
-        return TrainTaskModel().get_all_model_related_by_doc_type_id(doc_type_id=doc_type_id, current_user=current_user)[0]
+    def get_online_model_info_by_doc_type_id(doc_type_id, current_user):
+        return TrainTaskModel().get_online_model_info_by_doc_type_id(doc_type_id=doc_type_id, current_user=current_user)
 
 
 def generate_model_version_by_nlp_task(doc_type_id, mark_job_ids, nlp_task):
