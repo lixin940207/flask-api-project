@@ -42,12 +42,12 @@ class PredictJobModel(BaseModel, ABC):
         return count, q.all()
 
     @staticmethod
-    def get_by_nlp_task_id(nlp_task_id, search, current_user: CurrentUser, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
+    def get_by_nlp_task_id(nlp_task_id, current_user: CurrentUser, search="", order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         """
         get (traintask, trainjob, doctype) tuple by nlp_task_id and other filters
         """
         # Define allowed filter keys
-        accept_keys = ["train_job_status", "doc_type_id"]
+        accept_keys = ["train_job_status", "doc_type_id", "predict_job_id"]
         # Compose query, select 3 tables related to a train job
         q = session.query(PredictTask, PredictJob, DocType) \
             .join(PredictTask, PredictTask.predict_job_id == PredictJob.predict_job_id) \

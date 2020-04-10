@@ -72,10 +72,12 @@ class ExtractJobListResource(Resource, CurrentUserMixin):
                }, 201
 
 
-class ExtractJobItemResource(Resource):
+class ExtractJobItemResource(Resource, CurrentUserMixin):
     def get(self: Resource, job_id: int) -> typing.Tuple[typing.Dict, int]:
+        nlp_task_id = Common().get_nlp_task_id_by_route()
+
         # get predict job
-        predict_job = PredictService().get_predict_job_by_id(predict_job_id=job_id)
+        predict_job = PredictService().get_predict_job_by_id(nlp_task_id=nlp_task_id, predict_job_id=job_id, current_user=self.get_current_user)
 
         # convert int status to string
         predict_job = convert_explicit_status(predict_job, "predict_job_status")
@@ -104,6 +106,7 @@ class ExtractJobItemResource(Resource):
         if args.get("extract_job_state"):
             update_params.update(predict_job_status=status_str2int_mapper()[args["extract_job_state"]])
         predict_job = PredictService().update_predict_job_by_id(predict_job_id=job_id, args=update_params)
+        predict_job = convert_explicit_status(predict_job, "predict_job_status")
         result = PredictJobSchema().dump(predict_job)
         return {
                    "message": "更新成功",
@@ -117,36 +120,23 @@ class ExtractJobItemResource(Resource):
         PredictService().delete_predict_job_by_id(predict_job_id=job_id)
         return {
                    "message": "删除成功",
-               }, 204
+               }, 200
 
 
 class ExtractJobExportResource(Resource):
     @parse({
         "offset": fields.Integer(missing=50),
-        "export_type": fields.String(missing='tags_only', validate=lambda x: x in AVAILABLE_EXPORT_TYPES),
     })
     def get(
             self: Resource,
             args: typing.Dict,
             job_id: int
     ) -> typing.Tuple[typing.Dict, int]:
-        job = session.query(ExtractJob).filter(ExtractJob.extract_job_id == job_id,
-                                               ExtractJob.status).one()
 
-        if job.extract_job_state != ExtractJobStateChoice.success:
-            abort(400, message="有失败或未完成任务，不能导出")
+        nlp_task_id = Common().get_nlp_task_id_by_route()
+        file_path = PredictService().export_predict_file(nlp_task_id=nlp_task_id, predict_job_id=job_id, offset=args["offset"])
 
-        # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
-        sync_export = SyncExport(job, job_id, 'extract', 'machine')
-        last_exported_file = sync_export.get_last_export_file()
-        if last_exported_file:
-            return {
-                       "message": "请求成功",
-                       "file_path": last_exported_file
-                   }, 200
-        # 重新制作
-        csv_path = sync_export.generate_extract_file(export_type=args['export_type'], offset=args['offset'])
         return {
                    "message": "请求成功",
-                   "file_path": csv_path
+                   "file_path": file_path
                }, 200

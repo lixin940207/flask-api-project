@@ -8,7 +8,7 @@ from sqlalchemy import distinct
 from app.common.common import RoleEnum
 from app.common.extension import session
 from app.common.filters import CurrentUser
-from app.entity import PredictTask, DocType
+from app.entity import PredictTask, DocType, Doc
 from app.model.base import BaseModel
 
 
@@ -40,38 +40,15 @@ class PredictTaskModel(BaseModel, ABC):
         return count, q.all()
 
     @staticmethod
-    def get_by_nlp_task_id(nlp_task_id, search, current_user: CurrentUser, order_by="created_time", order_by_desc=True,
-                           limit=10, offset=0, **kwargs):
-        """
-        get (traintask, trainjob, doctype) tuple by nlp_task_id and other filters
-        """
-        # Define allowed filter keys
-        accept_keys = ["train_job_status", "doc_type_id"]
-        # Compose query, select 3 tables related to a train job
-        q = session.query(PredictTask, PredictJob, DocType) \
-            .join(PredictTask, PredictTask.predict_job_id == PredictJob.predict_job_id) \
-            .join(DocType, DocType.doc_type_id == PredictJob.doc_type_id) \
-            .filter(DocType.nlp_task_id == nlp_task_id,
-                    ~DocType.is_deleted,
-                    ~PredictJob.is_deleted,
-                    ~PredictTask.is_deleted)
-        # auth
-        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
-            q = q.filter(DocType.group_id.in_(current_user.user_groups))
-        # Filter conditions
-        for key, val in kwargs.items():
-            if key in accept_keys:
-                q = q.filter(getattr(PredictJob, key) == val)
-        if search:
-            q = q.filter(PredictJob.predict_job_name.like(f'%{search}%'))
-        count = q.with_entities(distinct(PredictJob.predict_job_id)).count()
-        # Order by key
-        if order_by_desc:
-            q = q.order_by(getattr(PredictJob, order_by).desc())
-        else:
-            q = q.order_by(getattr(PredictJob, order_by))
-        q = q.offset(offset).limit(limit)
-        return count, q.all()
+    def get_predict_task_and_doc(predict_job_id):
+        q = session.query(PredictTask, Doc) \
+            .join(Doc, Doc.doc_id == PredictTask.doc_id) \
+            .filer(
+            PredictTask.predict_job_id == predict_job_id,
+            ~Doc.is_deleted,
+            ~PredictTask.is_deleted,
+            )
+        return q.all()
 
     def create(self, **kwargs) -> PredictTask:
         entity = PredictTask(**kwargs)

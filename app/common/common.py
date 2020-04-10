@@ -68,7 +68,7 @@ class Common:
 
     @staticmethod
     def get_nlp_task_id_by_route():
-        nlp_task_url = request.url.split('/')[-1]
+        nlp_task_url = request.url
         if 'classify' in nlp_task_url:
             nlp_task_id = int(NlpTaskEnum.classify)
         elif 'entity' in nlp_task_url:
