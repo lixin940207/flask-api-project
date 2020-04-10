@@ -80,48 +80,12 @@ class DocTypeItemResource(Resource, CurrentUserMixin):
             "doc_term_data_type": fields.String(required=True),
         }))
     })
-    def patch(self: Resource, args: typing.Dict, doc_type_id: int) -> typing.Tuple[
-        typing.Dict, int]:
+    def patch(self: Resource, args: typing.Dict, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
         """
         修改一个文档类型，不包括修改它的条款
         """
-        item = session.query(DocType).filter(DocType.doc_type_id == doc_type_id, DocType.status).one()
-        item.update(**args)
-        item.commit()
+        result = DocTypeService().update_doc_type(args, doc_type_id)
 
-        doc_terms = session.query(DocTerm).filter(
-            DocTerm.doc_type_id == item.doc_type_id
-        ).all()
-
-        new_items = []
-        existed_items = []
-        existed_ids = []
-
-        for doc_term in args['doc_term_list']:
-            if not doc_term.get('doc_term_id'):
-                new_items.append(doc_term)
-            else:
-                existed_items.append(doc_term)
-                existed_ids.append(doc_term['doc_term_id'])
-
-        for doc_term in doc_terms:
-            if doc_term.doc_term_id in existed_ids:
-                index = existed_ids.index(doc_term.doc_term_id)
-                doc_term.doc_term_index = existed_items[index]['doc_term_index']
-                doc_term.doc_term_color = existed_items[index]['doc_term_color']
-                doc_term.doc_term_name = existed_items[index]['doc_term_name']
-                doc_term.doc_term_alias = existed_items[index]['doc_term_alias']
-                doc_term.doc_term_data_type = existed_items[index]['doc_term_data_type']
-                doc_term.status = True
-            else:
-                doc_term.status = False
-
-        for new_item in new_items:
-            DocTerm.create(**new_item, doc_type_id=item.doc_type_id)
-
-        session.commit()
-
-        result = DocTypeSchema().dump(item)
         return {
                    "message": "更新成功",
                    "result": result,
@@ -131,10 +95,7 @@ class DocTypeItemResource(Resource, CurrentUserMixin):
         """
         删除一个文档类型
         """
-        DocTypeService().delete_doc_term
-        item = session.query(DocType).filter(DocType.doc_type_id == doc_type_id, DocType.status).one()
-        item.delete()
-        item.commit()
+        DocTypeService().delete_doc_type(doc_type_id)
         return {
                    "message": "删除成功",
                }, 204
@@ -162,3 +123,20 @@ class CancelTopDocTypeResource(Resource):
                    "message": "更新成功",
                    "result": result,
                }, 201
+
+
+class CheckDocTypeItemResource(Resource):
+    @parse({
+        "doc_type_name": fields.String(required=True),
+    })
+    def post(self: Resource, args: typing.Dict) -> typing.Tuple[typing.Dict, int]:
+        """
+        检查文档类型是否合法和重复，暂时只检查名称是否重复
+        """
+        item = DocTypeService().check_doc_type_name_exists(args['doc_type_name'])
+        return {
+                   "message": "请求成功",
+                   "result": {
+                       "existed": bool(item)
+                   },
+               }, 200

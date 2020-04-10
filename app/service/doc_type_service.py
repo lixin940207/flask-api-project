@@ -87,3 +87,48 @@ class DocTypeService:
         item = DocTermModel().get_by_filter(doc_type_id=doc_type_id)
         return DocTermSchema().dump(item)
 
+    @staticmethod
+    def delete_doc_type(doc_type_id):
+        DocTypeModel().delete(doc_type_id)
+        session.commit()
+
+    @staticmethod
+    def update_doc_type(args, doc_type_id):
+        item = DocTypeModel().get_by_id(doc_type_id)
+        item.update(**args)
+        item.commit()
+
+        doc_terms = DocTermModel().get_by_filter(doc_type_id=doc_type_id)
+
+        new_items = []
+        existed_items = []
+        existed_ids = []
+
+        for doc_term in args['doc_term_list']:
+            if not doc_term.get('doc_term_id'):
+                new_items.append(doc_term)
+            else:
+                existed_items.append(doc_term)
+                existed_ids.append(doc_term['doc_term_id'])
+
+        for doc_term in doc_terms:
+            if doc_term.doc_term_id in existed_ids:
+                index = existed_ids.index(doc_term.doc_term_id)
+                doc_term.doc_term_index = existed_items[index]['doc_term_index']
+                doc_term.doc_term_color = existed_items[index]['doc_term_color']
+                doc_term.doc_term_name = existed_items[index]['doc_term_name']
+                doc_term.doc_term_alias = existed_items[index]['doc_term_alias']
+                doc_term.doc_term_data_type = existed_items[index]['doc_term_data_type']
+                doc_term.status = True
+            else:
+                doc_term.status = False
+
+        for new_item in new_items:
+            DocTermModel.create(**new_item, doc_type_id=item.doc_type_id)
+
+        session.commit()
+        return DocTypeSchema().dump(item)
+
+    @staticmethod
+    def check_doc_type_name_exists(doc_type_name):
+        return DocTypeModel().if_exists_by_name(doc_type_name)
