@@ -128,3 +128,7 @@ class DocTypeService:
 
         session.commit()
         return DocTypeSchema().dump(item)
+
+    @staticmethod
+    def check_doc_type_name_exists(doc_type_name):
+        return DocTypeModel().if_exists_by_name(doc_type_name)

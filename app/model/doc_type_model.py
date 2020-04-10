@@ -27,6 +27,11 @@ class DocTypeModel(BaseModel, ABC):
         return session.query(DocType).filter(DocType.doc_type_id == _id, DocType.group_id == group_id,
                                              ~DocType.is_deleted).one()
 
+    @staticmethod
+    def if_exists_by_name(doc_type_name):
+        item = session.query(DocType).filter(DocType.doc_type_name == doc_type_name, DocType.status).first()
+        return item
+
     def get_by_filter(self, current_user: CurrentUser, order_by="created_time", order_by_desc=True, limit=10, offset=0,
                       **kwargs) -> [DocType]:
         # Define allowed filter keys

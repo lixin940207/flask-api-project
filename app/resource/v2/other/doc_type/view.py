@@ -126,4 +126,17 @@ class CancelTopDocTypeResource(Resource):
 
 
 class CheckDocTypeItemResource(Resource):
-    pass
+    @parse({
+        "doc_type_name": fields.String(required=True),
+    })
+    def post(self: Resource, args: typing.Dict) -> typing.Tuple[typing.Dict, int]:
+        """
+        检查文档类型是否合法和重复，暂时只检查名称是否重复
+        """
+        item = DocTypeService().check_doc_type_name_exists(args['doc_type_name'])
+        return {
+                   "message": "请求成功",
+                   "result": {
+                       "existed": bool(item)
+                   },
+               }, 200
