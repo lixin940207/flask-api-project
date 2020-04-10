@@ -9,13 +9,11 @@ export FLASK_APP=start_server.py
 export FLASK_ENV=production
 export FLASK_DEBUG=0
 
-cd app && flask db migrate && flask db upgrade
+flask db migrate && flask db upgrade
 
 if [ "$?" != "0" ]; then
     echo "An error occurred when flask db migrate or upgrade"
     exit 1
 fi
-
-cd ..
 
 gunicorn start_server:app -c gunicorn_conf.py --reload
