@@ -1,9 +1,5 @@
-# coding=utf-8
-# email:  lixin@datagrand.com
-# create: 2020/4/11-1:39 下午
 from flask_restful import Api
-from .. import blueprint
-
+from app.resource.v2 import blueprint
 api = Api(blueprint, prefix='/task', decorators=[])
 
-from . import machine
+from app.resource.v2.task import manual, machine
