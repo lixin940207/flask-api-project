@@ -57,3 +57,13 @@ class ClassifyMarkJobListResource(Resource):
                    "message": "创建成功",
                    "result": result
                }, 201
+
+
+class ClassifyMarkJobItemResource(Resource):
+    def delete(self: Resource, job_id: int) -> typing.Tuple[typing.Dict, int]:
+        MarkJobService().delete_mark_job(job_id)
+
+        return {
+                   "message": "删除成功",
+               }, 200
+
