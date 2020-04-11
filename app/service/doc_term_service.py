@@ -32,7 +32,9 @@ class DocTermService:
         return result, count
 
     @staticmethod
-    def create_doc_term(args, doc_type_id):
+    def create_doc_term(nlp_task_id, args, doc_type_id):
         item = DocTermModel().create(**args, doc_type_id=doc_type_id)
-        item.commit()
-        return DocTermSchema().dump(item)
+        if nlp_task_id == NlpTaskEnum.wordseg:
+            return DocTermSchema().dump(item)
+        else:
+            return WordsegDocTermSchema().dump(item)

@@ -3,7 +3,7 @@
 # create: 2020/3/25-3:51 下午
 from flask_marshmallow import Schema
 from app.common.patch import fields
-from app.schema.doc_term_schema import DocTermSchema
+from app.schema.doc_term_schema import DocTermSchema, WordsegDocLexiconSchema
 
 
 class DocTypeSchema(Schema):
@@ -14,3 +14,20 @@ class DocTypeSchema(Schema):
     created_time = fields.DateTime()
     doc_term_list = fields.List(fields.Nested(DocTermSchema))
     group_id = fields.Integer()
+    status = fields.Integer(attribute="is_deleted")
+
+
+class EntityDocRelationSchema(Schema):
+    doc_relation_id = fields.Integer()
+    doc_relation_name = fields.String()
+    doc_relation_desc = fields.String()
+    doc_term_ids = fields.List(fields.Integer())
+
+
+class EntityDocTypeSchema(DocTypeSchema):
+    doc_term_list = fields.List(fields.Nested(DocTermSchema))
+    doc_relation_list = fields.List(fields.Nested(EntityDocRelationSchema))
+
+
+class WordsegDocTypeSchema(DocTypeSchema):
+    doc_lexicon_list = fields.List(fields.Nested(WordsegDocLexiconSchema), attribute='doc_rules')

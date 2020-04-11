@@ -11,3 +11,4 @@ from app.resource.v2.other.doc_term import view
 
 api.add_resource(view.GetDocTermListResource, "/list_doc_terms", "/list_classify_doc_terms", "/list_entity_doc_terms")
 api.add_resource(view.DocTermListResource, '/doc_type/<int:doc_type_id>/doc_term')
+api.add_resource(view.ListWordsegDocTermResource, '/wordseg_doc_terms')

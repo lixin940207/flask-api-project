@@ -35,7 +35,6 @@ class DocTermListResource(Resource, CurrentUserMixin):
         """
         获取所有条款，不分页
         """
-        # TODO: check if wordseg, wordseg uses WordsegDocTermSchema
         nlp_task_id = Common().get_nlp_task_id_by_route()
         if args.get('doc_term_ids'):
             result, count = DocTermService().get_doc_term_by_doctype(nlp_task_id, doc_type_id, args['offset'], args['limit'])
@@ -57,9 +56,21 @@ class DocTermListResource(Resource, CurrentUserMixin):
         """
         创建一个条款
         """
-        # TODO: check if wordseg, wordseg uses WordsegDocTermSchema
-        result = DocTermService().create_doc_term(args, doc_type_id)
+        nlp_task_id = Common().get_nlp_task_id_by_route()
+        result = DocTermService().create_doc_term(nlp_task_id, args, doc_type_id)
         return {
                    "message": "创建成功",
                    "result": result,
                }, 201
+
+
+class ListWordsegDocTermResource(Resource, CurrentUserMixin):
+    def get(self: Resource) -> typing.Tuple[typing.Dict, int]:
+        """
+        获取所有条款，分页，可选排除条件exclude_terms_ids
+        """
+        result = Common().get_wordseg_doc_terms()
+        return {
+                   "message": "请求成功",
+                   "result": result
+               }, 200

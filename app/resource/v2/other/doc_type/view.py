@@ -20,7 +20,10 @@ class DocTypeListResource(Resource, CurrentUserMixin):
         :param args:
         :return:
         """
-        Common().get_nlp_task_id_by_route(args)
+        nlp_task_id = Common().get_nlp_task_id_by_route(args)
+        args.update({
+            'nlp_task_id': nlp_task_id
+        })
         result, count = DocTypeService().get_doc_type(self.get_current_user(), args)
         return {
                    "message": "请求成功",
@@ -48,7 +51,10 @@ class DocTypeListResource(Resource, CurrentUserMixin):
         # args.update({
         #     'nlp_task_id': self.nlp_task_id
         # })
-        Common().get_nlp_task_id_by_route(args)
+        nlp_task_id = Common().get_nlp_task_id_by_route(args)
+        args.update({
+            'nlp_task_id': nlp_task_id
+        })
         result = DocTypeService().create_doc_type(self.get_current_user(), args)
         return {
                    "message": "创建成功",
@@ -61,7 +67,8 @@ class DocTypeItemResource(Resource, CurrentUserMixin):
         """
         获取一个文档类型
         """
-        result = DocTypeService().get_doc_type_items(doc_type_id)
+        nlp_task_id = Common().get_nlp_task_id_by_route()
+        result = DocTypeService().get_doc_type_items(doc_type_id, nlp_task_id)
         return {
                    "message": "请求成功",
                    "result": result,
