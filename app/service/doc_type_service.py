@@ -100,10 +100,19 @@ class DocTypeService:
     @staticmethod
     def update_doc_type(args, doc_type_id):
         item = DocTypeModel().update(doc_type_id, **args)
+        existed_doc_term_ids = [dt.doc_term_id for dt in DocTermModel().get_by_filter(doc_type_id=doc_type_id)]
+        updated_doc_term_ids = []
         if args.get("doc_term_list"):
             for i in args.get("doc_term_list"):
                 i.update({"doc_type_id": doc_type_id})
+                updated_doc_term_ids.append(i.get("doc_term_id", 0))
             DocTermModel().bulk_update(args.get("doc_term_list"))
+        session.commit()
+
+        # Remove doc terms
+        for i in existed_doc_term_ids:
+            if i not in updated_doc_term_ids:
+                DocTermModel().delete(i)
         session.commit()
 
         return DocTypeSchema().dump(item)
