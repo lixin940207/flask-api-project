@@ -3,14 +3,13 @@ from abc import ABC
 from sqlalchemy import not_
 
 from app.model.base import BaseModel
-from app.entity import UserTask, MarkTask, MarkJob, DocType
+from app.entity import UserTask
 from app.common.extension import session
 
 
 class UserTaskModel(BaseModel, ABC):
     def get_all(self):
         raise NotImplemented("no get_all")
-        # return session.query(UserTask).filter(not_(UserTask.is_deleted)).all()
 
     @staticmethod
     def is_empty_table():

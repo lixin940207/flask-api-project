@@ -1,3 +1,4 @@
+from app.common.common import StatusEnum
 from app.common.extension import db
 from app.entity.base import BaseEntity, FileTypeEnum, AssignModeEnum
 
@@ -8,7 +9,7 @@ class MarkJob(BaseEntity):
     mark_job_name = db.Column(db.String(255), nullable=False)
     mark_job_desc = db.Column(db.Text(), default="")
     mark_job_type = db.Column(db.Enum(FileTypeEnum), nullable=False)  # text, e_doc, ocr
-    mark_job_status = db.Column(db.Integer(), db.ForeignKey("status.status_id"), nullable=False)
+    mark_job_status = db.Column(db.Integer(), db.ForeignKey("status.status_id"), default=int(StatusEnum.processing))
     annotator_ids = db.Column(db.JSON(), default=[])
     reviewer_ids = db.Column(db.JSON(), default=[])
     assign_mode = db.Column(db.Enum(AssignModeEnum), nullable=False)  # average,
