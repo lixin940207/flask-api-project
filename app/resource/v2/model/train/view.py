@@ -86,7 +86,9 @@ class ModelTrainItemResource(Resource):
         update_params = {}
         if args.get("model_train_state"): # 这里不考虑model_train_result因为新的表结构里没有这个列了
             update_params.update(train_status=status_str2int_mapper()[args["model_train_state"]])
-        train_task = ModelTrainService().update_train_task_by_id(train_job_id=model_id, train_task_id=model_train_id, is_check_train_terms=args["check_train_terms"], args=update_params)
+        train_task = ModelTrainService().update_train_task_by_id(train_job_id=model_id, train_task_id=model_train_id,
+                                                                 is_check_train_terms=args["check_train_terms"], model_type = args["model_type"],
+                                                                 args=update_params)
         # convert int status to string
         train_task.train_status = StatusEnum(train_task.train_status).name
         result = TrainTaskSchema().dump(train_task)
