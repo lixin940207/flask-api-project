@@ -31,5 +31,5 @@ class DocTermService:
     @staticmethod
     def create_doc_term(args, doc_type_id):
         item = DocTermModel().create(**args, doc_type_id=doc_type_id)
-        result = DocTermSchema(many=True).dump(item)
+        result = DocTermSchema().dump(item)
         return result
