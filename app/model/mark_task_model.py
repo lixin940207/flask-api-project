@@ -52,7 +52,8 @@ class MarkTaskModel(BaseModel, ABC):
             ~MarkTask.is_deleted)
         return q.all()
 
-    def create(self, entity: MarkTask) -> MarkTask:
+    def create(self, **kwargs) -> MarkTask:
+        entity = MarkTask(**kwargs)
         session.add(entity)
         session.flush()
         return entity

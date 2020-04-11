@@ -53,7 +53,8 @@ class MarkJobModel(BaseModel, ABC):
         q = q.offset(offset).limit(limit)
         return count, q.all()
 
-    def create(self, entity):
+    def create(self, **kwargs):
+        entity = MarkJob(**kwargs)
         session.add(entity)
         session.flush()
         return entity
