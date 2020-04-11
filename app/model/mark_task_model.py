@@ -1,10 +1,8 @@
 from abc import ABC
 from sqlalchemy import not_, func
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 from app.common.filters import CurrentUser
-from app.common.seeds import StatusEnum
-
 from app.common.common import StatusEnum, RoleEnum
 from app.entity import DocType, MarkJob, Doc
 from app.model.base import BaseModel
@@ -52,12 +50,14 @@ class MarkTaskModel(BaseModel, ABC):
             ~MarkTask.is_deleted)
         return q.all()
 
-    def create(self, entity: MarkTask) -> MarkTask:
+    def create(self, **kwargs) -> MarkTask:
+        entity = MarkTask(**kwargs)
         session.add(entity)
         session.flush()
         return entity
 
-    def bulk_create(self, entity_list: [MarkTask]) -> [MarkTask]:
+    def bulk_create(self, mark_task_list: List[Dict]) -> List[MarkTask]:
+        entity_list = [MarkTask(**mark_task) for mark_task in mark_task_list]
         session.bulk_save_objects(entity_list, return_defaults=True)
         session.flush()
         return entity_list
