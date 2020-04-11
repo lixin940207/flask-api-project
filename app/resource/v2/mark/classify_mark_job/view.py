@@ -67,3 +67,15 @@ class ClassifyMarkJobItemResource(Resource):
                    "message": "删除成功",
                }, 200
 
+
+class ClassifyMarkJobMultiDelete(Resource):
+    @parse({
+        "job_ids": fields.List(fields.Integer(), missing=[])
+    })
+    def post(self: Resource, args: typing.Dict) -> typing.Tuple[typing.Dict, int]:
+        MarkJobService().delete_mark_jobs(args["job_ids"])
+
+        return {
+                   "message": "批量删除成功",
+                   "result": args
+               }, 200

@@ -88,6 +88,16 @@ class MarkJobService:
         session.query(MarkTask).filter(MarkTask.mark_job_id == mark_job_id).update({MarkTask.is_deleted: True})
         session.commit()
 
+    @staticmethod
+    def delete_mark_jobs(mark_job_ids: List[int]):
+        session.query(MarkJob).filter(
+            MarkJob.mark_job_id.in_(mark_job_ids)
+        ).update({MarkJob.is_deleted: True}, synchronize_session='fetch')
+        session.query(MarkTask).filter(
+            MarkTask.mark_job_id.in_(mark_job_ids)
+        ).update({MarkTask.is_deleted: True}, synchronize_session='fetch')
+        session.commit()
+
     def upload_batch_files(self, f: FileStorage, mark_job: MarkJob, nlp_task) -> List[MarkTask]:
         doc_unique_name, doc_relative_path = upload_fileset.save_file(f.filename, f.stream.read())
         csv_doc = DocModel().create(doc_raw_name=f.filename, doc_unique_name=doc_unique_name)
