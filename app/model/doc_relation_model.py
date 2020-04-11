@@ -9,7 +9,7 @@
 from abc import ABC
 
 from app.model.base import BaseModel
-from app.entity.doc_relation import DocRelation
+from app.entity import DocRelation
 from app.common.extension import session
 
 
@@ -20,7 +20,7 @@ class DocRelationModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(DocRelation).filter(DocRelation.doc_relation_id == _id, not DocRelation.is_deleted).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["doc_relation_name", "doc_type_id"]
         # Compose query

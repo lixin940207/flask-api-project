@@ -7,7 +7,7 @@ from app.common.handler import register_handler
 from app.resource import register_blueprint
 from app.common.middleware import register_middleware
 from app.resource.v2.common_api import register_common_api
-from app.common.seeds import create_seeds
+from app.common.seeds import Seeds
 
 
 def create_app(env: str = 'development', override_config: typing.Dict = None) -> Flask:
@@ -21,17 +21,16 @@ def create_app(env: str = 'development', override_config: typing.Dict = None) ->
     add_file_handler(app.logger)
 
     register_extension(app)
-    app.logger.info(" [x] Extensions Registered.")
     register_handler(app)
-    app.logger.info(" [x] Handlers Registered.")
     register_middleware(app)
-    app.logger.info(" [x] Middleware Registered.")
     register_blueprint(app)
-    app.logger.info(" [x] Blueprint Registered.")
     register_common_api(app)
 
     with app.app_context():
-        create_seeds()
+        try:
+            Seeds().create_seeds()
+        except Exception as e:
+            app.logger.warning(" [-] Create seeds failed, may caused by first time start up. ")
+            app.logger.warning(e)
 
-    app.logger.info(" [x] ----- Flask app started -----")
     return app

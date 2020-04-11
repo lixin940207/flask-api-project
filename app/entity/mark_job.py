@@ -9,4 +9,6 @@ class MarkJob(BaseEntity):
     mark_job_desc = db.Column(db.Text(), default="")
     mark_job_type = db.Column(db.Enum(FileTypeEnum), nullable=False)  # text, e_doc, ocr
     mark_job_status = db.Column(db.Integer(), db.ForeignKey("status.status_id"), nullable=False)
+    annotator_ids = db.Column(db.JSON(), default=[])
+    reviewer_ids = db.Column(db.JSON(), default=[])
     assign_mode = db.Column(db.Enum(AssignModeEnum), nullable=False)  # average,

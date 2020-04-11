@@ -7,42 +7,44 @@
 @IDE: PyCharm 
 """
 from abc import ABC
-
+from typing import List
 from app.model.base import BaseModel
-from app.entity.doc_term import DocTerm
+from app.entity import DocTerm, DocType
 from app.common.extension import session
 
 
 class DocTermModel(BaseModel, ABC):
     def get_all(self):
-        return session.query(DocTerm).filter(DocTerm.is_deleted == False).all()
+        return session.query(DocTerm).filter(~DocTerm.is_deleted).all()
 
     def get_by_id(self, _id):
-        return session.query(DocTerm).filter(DocTerm.doc_term_id == _id, not DocTerm.is_deleted).one()
+        return session.query(DocTerm).filter(DocTerm.doc_term_id == _id, ~DocTerm.is_deleted).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["doc_term_name", "doc_type_id"]
         # Compose query
-        q = session.query(DocTerm).filter(DocTerm.is_deleted == False)
+        q = session.query(DocTerm).filter(~DocTerm.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():
             if key in accept_keys:
                 q = q.filter(getattr(DocTerm, key) == val)
         # Order by key
-        q = q.order_by(order_by)
-        # Descending order
         if order_by_desc:
-            q = q.desc()
+            q = q.order_by(getattr(DocTerm, order_by).desc())
+        else:
+            q = q.order_by(getattr(DocTerm, order_by))
         q = q.offset(offset).limit(limit)
         return q.all()
 
-    def create(self, entity: DocTerm) -> DocTerm:
+    def create(self, **kwargs) -> DocTerm:
+        entity = DocTerm(**kwargs)
         session.add(entity)
         session.flush()
         return entity
 
-    def bulk_create(self, entity_list):
+    def bulk_create(self, entity_list) -> List[DocTerm]:
+        entity_list = [DocTerm(**entity) for entity in entity_list]
         session.bulk_save_objects(entity_list, return_defaults=True)
         session.flush()
         return entity_list
@@ -62,3 +64,20 @@ class DocTermModel(BaseModel, ABC):
     def bulk_update(self, entity_list):
         session.bulk_update_mappings(DocTerm, entity_list)
         session.flush()
+
+    @staticmethod
+    def get_by_exclude_terms(exclude_terms_ids, limit=10, offset=0):
+        q = session.query(DocTerm).filter(DocTerm.doc_term_id.notin_(exclude_terms_ids), ~DocTerm.is_deleted)
+        count = q.count()
+        items = q.offset(offset).limit(limit).all()
+        return items, count
+
+    @staticmethod
+    def get_doc_term_by_doctype(doc_type_id, offset=0, limit=10, doc_term_ids=None):
+        q = session.query(DocTerm).join(DocType, DocType.doc_type_id == DocTerm.doc_type_id).\
+            filter(DocTerm.doc_type_id == doc_type_id, ~DocTerm.is_deleted, ~DocType.is_deleted)
+        if doc_term_ids:
+            q = q.filter(DocTerm.doc_term_id.in_(doc_term_ids))
+        count = q.count()
+        items = q.offset(offset).limit(limit).all()
+        return items, count

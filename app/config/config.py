@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from flask import Config, current_app
 
-BASE_PATH: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_PATH: str = os.getcwd()
 ROOT_PATH: Path = Path(__file__).parents[1]  # is same as 'BASE_PATH', but more conveniently to be used
 
 
@@ -35,8 +35,8 @@ class SqlalchemyConfigMixin:
         os.getenv('MYSQL_USER', 'root'),
         os.getenv('MYSQL_PASSWORD', 'root'),
         os.getenv('MYSQL_HOST', '127.0.0.1'),
-        os.getenv('MYSQL_PORT', 3306),
-        os.getenv('MYSQL_DATABASE', 'szse'),
+        os.getenv('MYSQL_PORT', 43306),
+        os.getenv('MYSQL_DATABASE', 'nlp_platform'),
     )
     # 调试SQL语句时使用，慎开
     # SQLALCHEMY_ECHO = True
@@ -55,9 +55,9 @@ class AsyncQueueConfigMixin:
     EXTRACT_TRAIN_QUEUE_KEY = 'queue:a'
     EXTRACT_TASK_QUEUE_KEY = 'task:contract:queue'
     EXTRACT_EVALUATE_QUEUE_KEY = 'model:evaluate:queue'
-    ENTITY_TRAIN_QUEUE_KEY = 'queue:a'
-    ENTITY_TASK_QUEUE_KEY = 'task:contract:queue'
-    ENTITY_EVALUATE_QUEUE_KEY = 'model:evaluate:queue'
+    RELATION_TRAIN_QUEUE_KEY = 'queue:a'
+    RELATION_TASK_QUEUE_KEY = 'task:contract:queue'
+    RELATION_EVALUATE_QUEUE_KEY = 'model:evaluate:queue'
     WORDSEG_TRAIN_QUEUE_KEY = 'queue:a'
     WORDSEG_TASK_QUEUE_KEY = 'task:contract:queue'
     WORDSEG_EVALUATE_QUEUE_KEY = 'model:evaluate:queue'

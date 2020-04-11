@@ -15,7 +15,7 @@ class StatusModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(Status).filter(Status.status_id == _id, not Status.is_deleted).one()
 
-    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         pass
 
     def create(self, entity):
