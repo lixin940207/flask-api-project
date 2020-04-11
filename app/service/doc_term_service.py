@@ -6,7 +6,7 @@
 @Email: guochuanxiang@datagrand.com
 @IDE: PyCharm 
 """
-from app.common.common import Common
+from app.common.extension import session
 from app.model.doc_term_model import DocTermModel
 from app.schema.doc_term_schema import DocTermSchema
 
@@ -31,5 +31,6 @@ class DocTermService:
     @staticmethod
     def create_doc_term(args, doc_type_id):
         item = DocTermModel().create(**args, doc_type_id=doc_type_id)
+        session.commit()
         result = DocTermSchema().dump(item)
         return result
