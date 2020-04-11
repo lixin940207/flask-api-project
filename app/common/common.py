@@ -7,6 +7,8 @@ import datetime
 from flask_restful import request
 from enum import Enum
 
+from app.common.utils.name import get_ext
+
 
 class NlpTaskEnum(int, Enum):
     extract = 1,
@@ -135,27 +137,13 @@ class Common:
         return doc_terms
 
     @staticmethod
-    def get_doc_type_schema_by_nlp_task_id(nlp_task_id: int):
-        from app.resource.v2.mark.classify_mark_job.schema import ClassifyDocTypeSchema
-        from app.schema.doc_type_schema import DocTypeSchema, WordsegDocTypeSchema, EntityDocTypeSchema
-        if nlp_task_id == NlpTaskEnum.extract:
-            return DocTypeSchema
-        elif nlp_task_id == NlpTaskEnum.classify:
-            return ClassifyDocTypeSchema
-        elif nlp_task_id == NlpTaskEnum.wordseg:
-            return WordsegDocTypeSchema
+    def check_job_type_by_files(files):
+        """检查任务类型"""
+        ext_sets = set([get_ext(f.filename) for f in files])
+        if ext_sets.issubset(('pdf', 'doc', 'docx')):
+            job_type = 'e_doc'
+        elif ext_sets.issubset(('txt', 'csv')):
+            job_type = 'text'
         else:
-            return EntityDocTypeSchema
-
-    @staticmethod
-    def get_doc_term_schema_by_nlp_task_id(nlp_task_id: int):
-        from app.resource.v2.mark.classify_mark_job.schema import ClassifyDocTermSchema
-        from app.schema.doc_term_schema import DocTermSchema, WordsegDocTermSchema, EntityDocTermSchema
-        if nlp_task_id == NlpTaskEnum.extract:
-            return DocTermSchema
-        elif nlp_task_id == NlpTaskEnum.classify:
-            return ClassifyDocTermSchema
-        elif nlp_task_id == NlpTaskEnum.wordseg:
-            return WordsegDocTermSchema
-        else:
-            return EntityDocTermSchema
+            job_type = ''
+        return job_type

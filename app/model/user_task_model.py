@@ -11,7 +11,6 @@ from app.common.extension import session
 class UserTaskModel(BaseModel, ABC):
     def get_all(self):
         raise NotImplemented("no get_all")
-        # return session.query(UserTask).filter(not_(UserTask.is_deleted)).all()
 
     @staticmethod
     def is_empty_table():
@@ -37,7 +36,8 @@ class UserTaskModel(BaseModel, ABC):
         q = q.offset(offset).limit(limit)
         return q.all()
 
-    def create(self, entity):
+    def create(self, **kwargs):
+        entity = UserTask(**kwargs)
         session.add(entity)
         session.flush()
         return entity

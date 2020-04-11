@@ -1,12 +1,13 @@
 # coding=utf-8
 # email:  lixin@datagrand.com
 # create: 2020/3/30-10:58 上午
-from app.common.common import StatusEnum, Common
+from app.common.common import StatusEnum, NlpTaskEnum, Common
 from app.common.extension import session
 from app.common.filters import CurrentUser
 from app.model import DocTypeModel, MarkTaskModel
 from app.model.doc_term_model import DocTermModel
 from app.model.evaluate_task_model import EvaluateTaskModel
+from app.schema.doc_type_schema import DocTypeSchema, DocTermSchema
 from app.schema.evaluate_task_schema import EvaluateTaskSchema
 
 
@@ -29,12 +30,10 @@ class DocTypeService:
         result = []
         # get doc_type list by user
         _, doc_type_list = DocTypeModel().get_by_nlp_task_id_by_user(nlp_task_id=nlp_task_id, current_user=current_user)
-        schema = Common().get_doc_type_schema_by_nlp_task_id(nlp_task_id)
-        doc_type_list = [{"doc_type": schema().dump(d)} for d in doc_type_list]
+        doc_type_list = [{"doc_type": DocTypeSchema().dump(d)} for d in doc_type_list]
 
         # get all job count and approved job count
-        all_status, all_marked_status = MarkTaskModel().count_status_by_user(nlp_task_id=nlp_task_id,
-                                                                             current_user=current_user)
+        all_status, all_marked_status = MarkTaskModel().count_status_by_user(nlp_task_id=nlp_task_id, current_user=current_user)
 
         # calculate marked mark_job count and all mark_job for each doc_type
         all_status_dict = {_doc_type_id: {_mark_job_id: _count_sum} for _doc_type_id, _mark_job_id, _count_sum in
@@ -50,14 +49,12 @@ class DocTypeService:
                     marked_mark_job_count += 1
             doc_type.update(progress_state={"job_num": mark_job_count,
                                             "labeled_job_number": marked_mark_job_count,
-                                            "progress_rate": round(marked_mark_job_count / mark_job_count,
-                                                                   2) if mark_job_count > 0 else 0})
+                                            "progress_rate": round(marked_mark_job_count / mark_job_count, 2) if mark_job_count > 0 else 0})
 
             # get latest evaluation result if exists
             latest_evaluate = EvaluateTaskModel().get_latest_evaluate_by_doc_type_id(nlp_task_id=nlp_task_id,
                                                                                      doc_type_id=doc_type_id)
             if latest_evaluate:
-                latest_evaluate.evaluate_task_status = StatusEnum(latest_evaluate.evaluate_task_status).name
                 doc_type.update(evaluate=EvaluateTaskSchema().dump(latest_evaluate))
             result.append(doc_type)
         return result
@@ -69,14 +66,12 @@ class DocTypeService:
         count, items = DocTypeModel().get_by_mark_job_ids(mark_job_ids=mark_job_ids, nlp_task_id=nlp_task_id,
                                                           current_user=current_user, offset=args["offset"],
                                                           limit=args["limit"])
-        schema = Common().get_doc_type_schema_by_nlp_task_id(nlp_task_id)
-        result = schema(many=True).dump(items)
+        result = DocTypeSchema(many=True).dump(items)
         return result, count
 
     @staticmethod
     def create_doc_type(current_user: CurrentUser, args):
         doc_term_list = args.pop('doc_term_list')
-        nlp_task_id = args.get("nlp_task_id")
         if 'group_id' not in args or args['group_id'] < 1:
             args['group_id'] = current_user.user_groups[0]
         doc_type = DocTypeModel().create(**args)
@@ -84,21 +79,20 @@ class DocTypeService:
             item.update({'doc_type_id': doc_type.doc_type_id})
         doc_type.doc_term_list = DocTermModel().bulk_create(doc_term_list)
         session.commit()
-        schema = Common().get_doc_type_schema_by_nlp_task_id(nlp_task_id)
-        result = schema().dumps(doc_type)
+        result = DocTypeSchema().dumps(doc_type)
         return result
 
     @staticmethod
-    def set_favoriate_doc_type(doc_type_id, is_favorite: bool, nlp_task_id: int):
+    def set_favoriate_doc_type(doc_type_id, is_favorite: bool):
         _doc_type = DocTypeModel().update(doc_type_id=doc_type_id, is_favorite=is_favorite)
-        schema = Common().get_doc_type_schema_by_nlp_task_id(nlp_task_id)
-        return schema().dump(_doc_type)
+        return DocTypeSchema().dump(_doc_type)
 
     @staticmethod
-    def get_doc_type_items(doc_type_id: int, nlp_task_id: int):
-        item = DocTermModel().get_by_filter(doc_type_id=doc_type_id)
-        schema = Common().get_doc_term_schema_by_nlp_task_id(nlp_task_id)
-        return schema().dump(item)
+    def get_doc_type_items(doc_type_id: int):
+        item = DocTypeModel().get_by_id(doc_type_id)
+        item.doc_term_list = DocTermModel().get_by_filter(doc_type_id=doc_type_id)
+
+        return DocTypeSchema().dump(item)
 
     @staticmethod
     def delete_doc_type(doc_type_id):
@@ -106,53 +100,30 @@ class DocTypeService:
         session.commit()
 
     @staticmethod
-    def update_doc_type(args, doc_type_id, nlp_task_id):
-        item = DocTypeModel().get_by_id(doc_type_id)
-        item.update(**args)
-        item.commit()
-
-        doc_terms = DocTermModel().get_by_filter(doc_type_id=doc_type_id)
-
-        new_items = []
-        existed_items = []
-        existed_ids = []
-
-        for doc_term in args['doc_term_list']:
-            if not doc_term.get('doc_term_id'):
-                new_items.append(doc_term)
-            else:
-                existed_items.append(doc_term)
-                existed_ids.append(doc_term['doc_term_id'])
-
-        for doc_term in doc_terms:
-            if doc_term.doc_term_id in existed_ids:
-                index = existed_ids.index(doc_term.doc_term_id)
-                doc_term.doc_term_index = existed_items[index]['doc_term_index']
-                doc_term.doc_term_color = existed_items[index]['doc_term_color']
-                doc_term.doc_term_name = existed_items[index]['doc_term_name']
-                doc_term.doc_term_alias = existed_items[index]['doc_term_alias']
-                doc_term.doc_term_data_type = existed_items[index]['doc_term_data_type']
-                doc_term.status = True
-            else:
-                doc_term.status = False
-
-        for new_item in new_items:
-            DocTermModel.create(**new_item, doc_type_id=item.doc_type_id)
-
+    def update_relation_doc_type(args, doc_type_id):
+        item = DocTypeModel().update(doc_type_id, **args)
         session.commit()
-        schema = Common().get_doc_type_schema_by_nlp_task_id(nlp_task_id)
-        return schema().dump(item)
+        return DocTypeSchema().dump(item)
+
+    @staticmethod
+    def update_doc_type(args, doc_type_id):
+        item = DocTypeModel().update(doc_type_id, **args)
+        existed_doc_term_ids = [dt.doc_term_id for dt in DocTermModel().get_by_filter(doc_type_id=doc_type_id)]
+        updated_doc_term_ids = []
+        if args.get("doc_term_list"):
+            for i in args.get("doc_term_list"):
+                i.update({"doc_type_id": doc_type_id})
+                updated_doc_term_ids.append(i.get("doc_term_id", 0))
+            DocTermModel().bulk_update(args.get("doc_term_list"))
+        session.commit()
+
+        # Remove doc terms
+        for i in existed_doc_term_ids:
+            if i not in updated_doc_term_ids:
+                DocTermModel().delete(i)
+        session.commit()
+        return DocTypeSchema().dump(item)
 
     @staticmethod
     def check_doc_type_name_exists(doc_type_name):
         return DocTypeModel().if_exists_by_name(doc_type_name)
-
-# def get_doc_type_schema_by_nlp_task_id(nlp_task_id: int):
-#     if nlp_task_id == NlpTaskEnum.extract:
-#         return DocTypeSchema
-#     elif nlp_task_id == NlpTaskEnum.classify:
-#         return ClassifyDocTypeSchema
-#     elif nlp_task_id == NlpTaskEnum.wordseg:
-#         return WordsegDocTypeSchema
-#     else:
-#         return EntityDocTypeSchema

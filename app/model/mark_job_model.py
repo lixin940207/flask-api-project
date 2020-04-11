@@ -53,13 +53,13 @@ class MarkJobModel(BaseModel, ABC):
         q = q.offset(offset).limit(limit)
         return count, q.all()
 
-    def create(self, entity):
+    def create(self, **kwargs):
+        entity = MarkJob(**kwargs)
         session.add(entity)
         session.flush()
         return entity
 
-    def bulk_create(self, entity_list: List[dict]) -> List[MarkJob]:
-        entity_list = [MarkJob(**entity) for entity in entity_list]
+    def bulk_create(self, entity_list: List[MarkJob]) -> List[MarkJob]:
         session.bulk_save_objects(entity_list, return_defaults=True)
         session.flush()
         return entity_list
@@ -83,7 +83,6 @@ class MarkJobModel(BaseModel, ABC):
 
     def bulk_update(self, entity_list):
         raise NotImplemented("no bulk_update")
-        pass
 
     @staticmethod
     def count_mark_job_by_nlp_task_id(nlp_task_id, search, **kwargs):

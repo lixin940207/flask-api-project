@@ -15,7 +15,7 @@ from app.common.fileset import upload_fileset, FileSet
 from app.common.filters import CurrentUser
 from app.common.redis import r
 from app.common.utils.name import get_ext
-from app.entity import PredictJob
+from app.entity import PredictJob, PredictTask
 from app.entity.base import FileTypeEnum
 from app.model import DocTypeModel, DocModel, DocTermModel
 from app.model.predict_job_model import PredictJobModel
@@ -48,6 +48,12 @@ class PredictService:
         predict_job = PredictJobModel().update(predict_job_id, **args)
         session.commit()
         return predict_job
+
+    @staticmethod
+    def update_predict_task_by_id(predict_task_id, args) -> PredictTask:
+        predict_task = PredictTaskModel().update(predict_task_id, **args)
+        session.commit()
+        return predict_task
 
     @staticmethod
     def delete_predict_job_by_id(predict_job_id):

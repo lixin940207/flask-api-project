@@ -47,7 +47,7 @@ class PredictJobModel(BaseModel, ABC):
         get (traintask, trainjob, doctype) tuple by nlp_task_id and other filters
         """
         # Define allowed filter keys
-        accept_keys = ["train_job_status", "doc_type_id", "predict_job_id"]
+        accept_keys = ["predict_job_status", "doc_type_id", "predict_job_id"]
         # Compose query, select 3 tables related to a train job
         q = session.query(PredictTask, PredictJob, DocType) \
             .join(PredictTask, PredictTask.predict_job_id == PredictJob.predict_job_id) \
