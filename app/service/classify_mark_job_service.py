@@ -16,7 +16,7 @@ from app.config.config import get_config_from_app as _get
 from app.entity import MarkJob, MarkTask
 from app.entity.base import FileTypeEnum
 from app.model import MarkJobModel, MarkTaskModel, UserTaskModel, DocModel
-from app.resource.v2.mark.classify_mark_job.schema import ClassifyMarkJobSchema
+from app.schema.mark_job_schema import MarkJobSchema
 
 
 class ClassifyMarkJobService:
@@ -45,7 +45,7 @@ class ClassifyMarkJobService:
             mark_job.doc_type = doc_type
             items.append(mark_job)
 
-        result = ClassifyMarkJobSchema(many=True).dump(items)
+        result = MarkJobSchema(many=True).dump(items)
         return count, result
 
     def create_mark_job(self, files, args):
@@ -79,7 +79,7 @@ class ClassifyMarkJobService:
 
         pipe.execute()
         session.commit()
-        result = ClassifyMarkJobSchema().dump(mark_job)
+        result = MarkJobSchema().dump(mark_job)
         return result
 
     def upload_batch_files(self, f: FileStorage, mark_job: MarkJob) -> List[MarkTask]:
