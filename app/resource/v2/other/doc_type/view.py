@@ -78,10 +78,11 @@ class DocTypeItemResource(Resource, CurrentUserMixin):
             "doc_term_name": fields.String(required=True),
             "doc_term_alias": fields.String(default=""),
             "doc_term_color": fields.String(required=True),
-            "doc_term_index": fields.Integer(required=True),
+            "doc_term_index": fields.Integer(),
+            "doc_term_shortcut": fields.String(default=""),
             "doc_term_id": fields.Integer(required=False),
             "doc_term_desc": fields.String(required=False, allow_none=True),
-            "doc_term_data_type": fields.String(required=True),
+            "doc_term_data_type": fields.String(default="String"),
         }))
     })
     def patch(self: Resource, args: typing.Dict, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:

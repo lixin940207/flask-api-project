@@ -99,10 +99,10 @@ class DocTypeService:
 
     @staticmethod
     def update_doc_type(args, doc_type_id):
-        item = DocTypeModel().get_by_id(doc_type_id)
-        item.update(**args)
-        item.commit()
-
+        item = DocTypeModel().update(doc_type_id, **args)
+        if args.get("doc_term_list"):
+            DocTermModel().bulk_update(args.get("doc_term_list"))
+        session.commit()
         doc_terms = DocTermModel().get_by_filter(doc_type_id=doc_type_id)
 
         new_items = []
