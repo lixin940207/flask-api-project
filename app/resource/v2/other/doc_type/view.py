@@ -89,7 +89,8 @@ class DocTypeItemResource(Resource, CurrentUserMixin):
         """
         修改一个文档类型，不包括修改它的条款
         """
-        result = DocTypeService().update_doc_type(args, doc_type_id)
+        nlp_task_id = Common().get_nlp_task_id_by_route()
+        result = DocTypeService().update_doc_type(args, doc_type_id, nlp_task_id)
 
         return {
                    "message": "更新成功",
@@ -111,7 +112,8 @@ class TopDocTypeResource(Resource):
         """
         置顶一个文档类型，简单修改index=max+1
         """
-        result = DocTypeService().set_favoriate_doc_type(doc_type_id, True)
+        nlp_task_id = Common().get_nlp_task_id_by_route()
+        result = DocTypeService().set_favoriate_doc_type(doc_type_id, True, nlp_task_id)
         return {
                    "message": "更新成功",
                    "result": result,

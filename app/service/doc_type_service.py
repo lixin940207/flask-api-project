@@ -1,7 +1,7 @@
 # coding=utf-8
 # email:  lixin@datagrand.com
 # create: 2020/3/30-10:58 上午
-from app.common.common import StatusEnum, NlpTaskEnum
+from app.common.common import StatusEnum, NlpTaskEnum, Common
 from app.common.extension import session
 from app.common.filters import CurrentUser
 from app.model import DocTypeModel, MarkTaskModel
@@ -36,8 +36,10 @@ class DocTypeService:
         all_status, all_marked_status = MarkTaskModel().count_status_by_user(nlp_task_id=nlp_task_id, current_user=current_user)
 
         # calculate marked mark_job count and all mark_job for each doc_type
-        all_status_dict = {_doc_type_id: {_mark_job_id: _count_sum} for _doc_type_id, _mark_job_id, _count_sum in all_status}
-        all_marked_status_dict = {_doc_type_id: {_mark_job_id: _count_sum} for _doc_type_id, _mark_job_id, _count_sum in all_marked_status}
+        all_status_dict = {_doc_type_id: {_mark_job_id: _count_sum} for _doc_type_id, _mark_job_id, _count_sum in
+                           all_status}
+        all_marked_status_dict = {_doc_type_id: {_mark_job_id: _count_sum} for _doc_type_id, _mark_job_id, _count_sum in
+                                  all_marked_status}
         for doc_type in doc_type_list:
             doc_type_id = doc_type["doc_type"]["doc_type_id"]
             mark_job_count = len(all_status_dict.get(doc_type_id, {}))
@@ -50,7 +52,8 @@ class DocTypeService:
                                             "progress_rate": round(marked_mark_job_count / mark_job_count, 2) if mark_job_count > 0 else 0})
 
             # get latest evaluation result if exists
-            latest_evaluate = EvaluateTaskModel().get_latest_evaluate_by_doc_type_id(nlp_task_id=nlp_task_id, doc_type_id=doc_type_id)
+            latest_evaluate = EvaluateTaskModel().get_latest_evaluate_by_doc_type_id(nlp_task_id=nlp_task_id,
+                                                                                     doc_type_id=doc_type_id)
             if latest_evaluate:
                 doc_type.update(evaluate=EvaluateTaskSchema().dump(latest_evaluate))
             result.append(doc_type)
@@ -59,13 +62,18 @@ class DocTypeService:
     @staticmethod
     def get_doc_type(current_user: CurrentUser, args):
         mark_job_ids = args.get('mark_job_ids', [])
-        count, items = DocTypeModel().get_by_mark_job_ids(mark_job_ids=mark_job_ids, nlp_task_id=args["nlp_task_id"], current_user=current_user, offset=args["offset"], limit=args["limit"])
-        result = DocTypeSchema(many=True).dump(items)
+        nlp_task_id = args["nlp_task_id"]
+        count, items = DocTypeModel().get_by_mark_job_ids(mark_job_ids=mark_job_ids, nlp_task_id=nlp_task_id,
+                                                          current_user=current_user, offset=args["offset"],
+                                                          limit=args["limit"])
+        schema = Common().get_doc_type_schema_by_nlp_task_id(nlp_task_id)
+        result = schema(many=True).dump(items)
         return result, count
 
     @staticmethod
     def create_doc_type(current_user: CurrentUser, args):
         doc_term_list = args.pop('doc_term_list')
+        nlp_task_id = args.get("nlp_task_id")
         if 'group_id' not in args or args['group_id'] < 1:
             args['group_id'] = current_user.user_groups[0]
         doc_type = DocTypeModel().create(**args)
@@ -82,13 +90,17 @@ class DocTypeService:
         return result
 
     @staticmethod
-    def set_favoriate_doc_type(doc_type_id, is_favorite: bool):
+    def set_favoriate_doc_type(doc_type_id, is_favorite: bool, nlp_task_id: int):
         _doc_type = DocTypeModel().update(doc_type_id=doc_type_id, is_favorite=is_favorite)
         return DocTypeSchema().dump(_doc_type)
 
     @staticmethod
-    def get_doc_type_items(doc_type_id: int):
+    def get_doc_type_items(doc_type_id: int, nlp_task_id: int):
         item = DocTermModel().get_by_filter(doc_type_id=doc_type_id)
+        if nlp_task_id == NlpTaskEnum.wordseg:
+            return WordsegDocTypeSchema().dump(item)
+        elif nlp_task_id == NlpTaskEnum.relation:
+            return EntityDocTypeSchema().dump(item)
         return DocTermSchema().dump(item)
 
     @staticmethod
@@ -97,14 +109,26 @@ class DocTypeService:
         session.commit()
 
     @staticmethod
-    def update_doc_type(args, doc_type_id):
+    def update_doc_type(args, doc_type_id, nlp_task_id):
         item = DocTypeModel().update(doc_type_id, **args)
+        existed_doc_term_ids = [dt.doc_term_id for dt in DocTermModel().get_by_filter(doc_type_id=doc_type_id)]
+        updated_doc_term_ids = []
         if args.get("doc_term_list"):
             for i in args.get("doc_term_list"):
                 i.update({"doc_type_id": doc_type_id})
+                updated_doc_term_ids.append(i.get("doc_term_id", 0))
             DocTermModel().bulk_update(args.get("doc_term_list"))
         session.commit()
 
+        # Remove doc terms
+        for i in existed_doc_term_ids:
+            if i not in updated_doc_term_ids:
+                DocTermModel().delete(i)
+        session.commit()
+        if nlp_task_id == NlpTaskEnum.wordseg:
+            return WordsegDocTypeSchema().dump(item)
+        elif nlp_task_id == NlpTaskEnum.relation:
+            return EntityDocTypeSchema().dump(item)
         return DocTypeSchema().dump(item)
 
     @staticmethod
