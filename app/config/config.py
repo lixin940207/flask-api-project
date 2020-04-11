@@ -2,7 +2,7 @@ import os
 from pathlib import Path
 from flask import Config, current_app
 
-BASE_PATH: str = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_PATH: str = os.getcwd()
 ROOT_PATH: Path = Path(__file__).parents[1]  # is same as 'BASE_PATH', but more conveniently to be used
 
 
@@ -35,8 +35,8 @@ class SqlalchemyConfigMixin:
         os.getenv('MYSQL_USER', 'root'),
         os.getenv('MYSQL_PASSWORD', 'root'),
         os.getenv('MYSQL_HOST', '127.0.0.1'),
-        os.getenv('MYSQL_PORT', 3306),
-        os.getenv('MYSQL_DATABASE', 'szse'),
+        os.getenv('MYSQL_PORT', 43306),
+        os.getenv('MYSQL_DATABASE', 'nlp_platform'),
     )
     # 调试SQL语句时使用，慎开
     # SQLALCHEMY_ECHO = True

@@ -1,13 +1,13 @@
 # coding=utf-8
 # email:  lixin@datagrand.com
 # create: 2020/3/30-10:58 上午
-from app.common.common import StatusEnum
+from app.common.common import StatusEnum, NlpTaskEnum
 from app.common.extension import session
 from app.common.filters import CurrentUser
 from app.model import DocTypeModel, MarkTaskModel
 from app.model.doc_term_model import DocTermModel
 from app.model.evaluate_task_model import EvaluateTaskModel
-from app.schema.doc_type_schema import DocTypeSchema, DocTermSchema
+from app.schema.doc_type_schema import DocTypeSchema, DocTermSchema, EntityDocTypeSchema, WordsegDocTypeSchema
 from app.schema.evaluate_task_schema import EvaluateTaskSchema
 
 
@@ -74,7 +74,12 @@ class DocTypeService:
             item.update({'doc_type_id': doc_type.doc_type_id})
         doc_type.doc_term_list = DocTermModel().bulk_create(doc_term_list)
         session.commit()
-        result = DocTypeSchema().dumps(doc_type)
+        if args.get("nlp_task_id") == NlpTaskEnum.wordseg:
+            result = WordsegDocTypeSchema().dumps(doc_type)
+        elif args.get("nlp_task_id") == NlpTaskEnum.relation:
+            result = EntityDocTypeSchema().dumps(doc_type)
+        else:
+            result = DocTypeSchema().dumps(doc_type)
         return result
 
     @staticmethod

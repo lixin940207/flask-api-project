@@ -9,7 +9,7 @@
 from abc import ABC
 
 from app.model.base import BaseModel
-from app.entity.doc_relation import DocRelation
+from app.entity import DocRelation
 from app.common.extension import session
 
 

@@ -78,3 +78,58 @@ class Common:
         else:
             nlp_task_id = int(NlpTaskEnum.extract)
         return nlp_task_id
+
+    @staticmethod
+    def get_wordseg_doc_terms():
+        doc_terms = [
+            dict(name='n', desc='名词', color='#d4380d'),
+            dict(name='nr', desc='人名', color='#d4b106'),
+            dict(name='ns', desc='地名', color='#096dd9'),
+            dict(name='nt', desc='机构团体名', color='#389e0d'),
+            dict(name='nz', desc='其他专名', color='#0d519e'),
+            dict(name='t', desc='时间词', color='#c41d5c'),
+            dict(name='s', desc='处所词', color='#cf1322'),
+            dict(name='f', desc='方位词', color='#c41d7f'),
+            dict(name='v', desc='动词', color='#08979c'),
+            dict(name='a', desc='形容词', color='#1d39c4'),
+            dict(name='b', desc='区别词', color='#d48806'),
+            dict(name='z', desc='状态词', color='#b4ac2c'),
+            dict(name='r', desc='代词', color='#d45d06'),
+            dict(name='m', desc='数词', color='#929f24'),
+            dict(name='q', desc='量词', color='#58089c'),
+            dict(name='d', desc='副词', color='#2e6bbe'),
+            dict(name='p', desc='介词', color='#2f54eb'),
+            dict(name='c', desc='连词', color='#531dab'),
+            dict(name='u', desc='助词', color='#7cb305'),
+            dict(name='e', desc='叹词', color='#13c2c2'),
+            dict(name='y', desc='语气词', color='#9e330d'),
+            dict(name='o', desc='拟声词', color='#8c11f3'),
+            dict(name='h', desc='前缀', color='#ee8311'),
+            dict(name='k', desc='后缀', color='#08709c'),
+            dict(name='w', desc='标点符号', color='#0da3d4'),
+            dict(name='Ag', desc='形语素', color='#089c82'),
+            dict(name='ad', desc='副形词', color='#089c82'),
+            dict(name='An', desc='名形词', color='#089c82'),
+            dict(name='Bg', desc='区别语素', color='#089c82'),
+            dict(name='Dg', desc='副语素', color='#089c82'),
+            dict(name='g', desc='语素', color='#089c82'),
+            dict(name='i', desc='成语', color='#089c82'),
+            dict(name='j', desc='简略词', color='#089c82'),
+            dict(name='l', desc='习用语', color='#089c82'),
+            dict(name='Mg', desc='数语素', color='#089c82'),
+            dict(name='Ng', desc='名语素', color='#089c82'),
+            dict(name='nx', desc='外文字符', color='#089c82'),
+            dict(name='Qg', desc='量语素', color='#089c82'),
+            dict(name='Rg', desc='代语素', color='#089c82'),
+            dict(name='Tg', desc='时间语素', color='#089c82'),
+            dict(name='Ug', desc='助语素', color='#089c82'),
+            dict(name='Vg', desc='动语素', color='#089c82'),
+            dict(name='vd', desc='副动词', color='#089c82'),
+            dict(name='vn', desc='名动词', color='#089c82'),
+            dict(name='x', desc='非语素词', color='#089c82'),
+            dict(name='Yg', desc='语气语素', color='#089c82'),
+        ]
+
+        for i in range(len(doc_terms)):
+            doc_terms[i]['index'] = i + 1
+        return doc_terms
