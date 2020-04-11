@@ -64,7 +64,7 @@ class ModelTrainService():
         return train_term_task
 
     @staticmethod
-    def update_train_task_by_id(train_job_id, train_task_id, is_check_train_terms, args):
+    def update_train_task_by_id(train_job_id, train_task_id, is_check_train_terms, model_type, args):
         """
         1. 根据字段状态更新训练状态和结果
         2. 直接设置训练状态和结果
@@ -97,7 +97,7 @@ class ModelTrainService():
                     abort(400, message="只能上线训练成功的模型")
 
                 # send model train http request
-                service_url = _get("CLASSIFY_MODEL_ONLINE") if args["model_type"] == "classify" else _get("EXTRACT_MODEL_ONLINE")
+                service_url = _get("CLASSIFY_MODEL_ONLINE") if model_type == "classify" else _get("EXTRACT_MODEL_ONLINE")
                 resp = requests.post(f"{service_url}?model_version={train_task.model_version}")
                 if resp.status_code < 200 or resp.status_code >= 300:
                     abort(500, message=f"上线服务 <{service_url}> 出现错误: {resp.text}")

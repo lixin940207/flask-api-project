@@ -105,7 +105,7 @@ class DocTypeModel(BaseModel, ABC):
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
         elif current_user.user_role in [RoleEnum.reviewer.value, RoleEnum.annotator.value]:
-            q = q.fitler(or_(func.json_contains(MarkJob.annotator_ids, current_user.user_id),
+            q = q.filter(or_(func.json_contains(MarkJob.annotator_ids, current_user.user_id),
                              func.json_contains(MarkJob.reviewer_ids, current_user.user_id)))
         if mark_job_ids:
             q = q.outerjoin(MarkJob, MarkJob.doc_type_id == DocType.doc_type_id) \
@@ -121,7 +121,7 @@ class DocTypeModel(BaseModel, ABC):
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
         elif current_user.user_role in [RoleEnum.reviewer.value, RoleEnum.annotator.value]:
-            q = q.fitler(or_(func.json_contains(MarkJob.annotator_ids, current_user.user_id),
+            q = q.filter(or_(func.json_contains(MarkJob.annotator_ids, current_user.user_id),
                              func.json_contains(MarkJob.reviewer_ids, current_user.user_id)))
         count = q.count()
         q = q.order_by(DocType.created_time.desc())
