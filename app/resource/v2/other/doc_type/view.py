@@ -40,8 +40,9 @@ class DocTypeListResource(Resource, CurrentUserMixin):
             "doc_term_alias": fields.String(default=""),
             "doc_term_shortcut": fields.String(default="", validate=lambda x: len(x) < 2),
             "doc_term_color": fields.String(required=True),
+            "doc_term_index": fields.Integer(required=False),
             "doc_term_desc": fields.String(required=False, allow_none=True),
-            "doc_term_data_type": fields.String(required=True),
+            "doc_term_data_type": fields.String(default=""),
         }), missing=[])
     })
     def post(self: Resource, args: typing.Dict) -> typing.Tuple[typing.Dict, int]:
@@ -65,7 +66,7 @@ class DocTypeItemResource(Resource, CurrentUserMixin):
         获取一个文档类型
         """
         nlp_task_id = Common().get_nlp_task_id_by_route()
-        result = DocTypeService().get_doc_type_items(doc_type_id, nlp_task_id)
+        result = DocTypeService().get_doc_type_items(self.get_current_user(), doc_type_id, nlp_task_id)
         return {
                    "message": "请求成功",
                    "result": result,
@@ -125,7 +126,8 @@ class CancelTopDocTypeResource(Resource):
         """
         取消置顶一个文档类型，简单修改index=0
         """
-        result = DocTypeService().set_favoriate_doc_type(doc_type_id, False)
+        nlp_task_id = Common().get_nlp_task_id_by_route()
+        result = DocTypeService().set_favoriate_doc_type(doc_type_id, False, nlp_task_id)
         return {
                    "message": "更新成功",
                    "result": result,

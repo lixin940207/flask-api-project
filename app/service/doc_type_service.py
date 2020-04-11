@@ -96,8 +96,8 @@ class DocTypeService:
         return DocTypeSchema().dump(_doc_type)
 
     @staticmethod
-    def get_doc_type_items(doc_type_id: int, nlp_task_id: int):
-        item = DocTermModel().get_by_filter(doc_type_id=doc_type_id)
+    def get_doc_type_items(current_user: CurrentUser, doc_type_id: int, nlp_task_id: int):
+        item = DocTypeModel().get_by_id(doc_type_id)
         if nlp_task_id == NlpTaskEnum.wordseg:
             return WordsegDocTypeSchema().dump(item)
         elif nlp_task_id == NlpTaskEnum.relation:
