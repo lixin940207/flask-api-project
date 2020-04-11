@@ -6,4 +6,4 @@ from .. import blueprint
 
 api = Api(blueprint, prefix='/task', decorators=[])
 
-from . import machine, manual
+from . import machine
