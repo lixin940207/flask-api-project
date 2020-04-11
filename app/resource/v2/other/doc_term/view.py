@@ -17,6 +17,10 @@ class GetDocTermListResource(Resource, CurrentUserMixin):
         """
         获取所有条款，分页，可选排除条件exclude_terms_ids
         """
+        nlp_task_id = Common().get_nlp_task_id_by_route()
+        args.update({
+            'nlp_task_id': nlp_task_id
+        })
         result, count = DocTermService().get_doc_term_list(self.get_current_user_id(), self.get_current_role(), args)
         return {
                    "message": "请求成功",
