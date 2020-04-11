@@ -101,37 +101,11 @@ class DocTypeService:
     def update_doc_type(args, doc_type_id):
         item = DocTypeModel().update(doc_type_id, **args)
         if args.get("doc_term_list"):
+            for i in args.get("doc_term_list"):
+                i.update({"doc_type_id": doc_type_id})
             DocTermModel().bulk_update(args.get("doc_term_list"))
         session.commit()
-        doc_terms = DocTermModel().get_by_filter(doc_type_id=doc_type_id)
 
-        new_items = []
-        existed_items = []
-        existed_ids = []
-
-        for doc_term in args['doc_term_list']:
-            if not doc_term.get('doc_term_id'):
-                new_items.append(doc_term)
-            else:
-                existed_items.append(doc_term)
-                existed_ids.append(doc_term['doc_term_id'])
-
-        for doc_term in doc_terms:
-            if doc_term.doc_term_id in existed_ids:
-                index = existed_ids.index(doc_term.doc_term_id)
-                doc_term.doc_term_index = existed_items[index]['doc_term_index']
-                doc_term.doc_term_color = existed_items[index]['doc_term_color']
-                doc_term.doc_term_name = existed_items[index]['doc_term_name']
-                doc_term.doc_term_alias = existed_items[index]['doc_term_alias']
-                doc_term.doc_term_data_type = existed_items[index]['doc_term_data_type']
-                doc_term.status = True
-            else:
-                doc_term.status = False
-
-        for new_item in new_items:
-            DocTermModel.create(**new_item, doc_type_id=item.doc_type_id)
-
-        session.commit()
         return DocTypeSchema().dump(item)
 
     @staticmethod
