@@ -91,6 +91,7 @@ class DocTypeService:
     def get_doc_type_items(doc_type_id: int):
         item = DocTypeModel().get_by_id(doc_type_id)
         item.doc_term_list = DocTermModel().get_by_filter(doc_type_id=doc_type_id)
+
         return DocTypeSchema().dump(item)
 
     @staticmethod

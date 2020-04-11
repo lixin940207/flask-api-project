@@ -106,6 +106,41 @@ class DocTypeItemResource(Resource, CurrentUserMixin):
                }, 204
 
 
+class RelationDocTypeItemResource(Resource, CurrentUserMixin):
+    def get(self: Resource, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        获取一个文档类型
+        """
+        result = DocTypeService().get_doc_type_items(doc_type_id)
+        return {
+                   "message": "请求成功",
+                   "result": result,
+               }, 200
+
+    @parse({
+        "doc_type_name": fields.String(),
+        "doc_type_desc": fields.String(),
+    })
+    def patch(self: Resource, args: typing.Dict, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        修改一个文档类型，不包括修改它的条款
+        """
+        result = DocTypeService().update_doc_type(args, doc_type_id)
+        return {
+                   "message": "更新成功",
+                   "result": result,
+               }, 201
+
+    def delete(self: Resource, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        删除一个文档类型
+        """
+        DocTypeService().delete_doc_type(doc_type_id)
+        return {
+                   "message": "删除成功",
+               }, 204
+
+
 class TopDocTypeResource(Resource):
     def patch(self: Resource, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
         """
