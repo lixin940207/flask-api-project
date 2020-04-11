@@ -110,7 +110,7 @@ class DocTypeService:
         session.commit()
 
     @staticmethod
-    def update_doc_type(args, doc_type_id):
+    def update_doc_type(args, doc_type_id, nlp_task_id):
         item = DocTypeModel().update(doc_type_id, **args)
         existed_doc_term_ids = [dt.doc_term_id for dt in DocTermModel().get_by_filter(doc_type_id=doc_type_id)]
         updated_doc_term_ids = []
@@ -126,7 +126,10 @@ class DocTypeService:
             if i not in updated_doc_term_ids:
                 DocTermModel().delete(i)
         session.commit()
-
+        if nlp_task_id == NlpTaskEnum.wordseg:
+            return WordsegDocTypeSchema().dump(item)
+        elif nlp_task_id == NlpTaskEnum.relation:
+            return EntityDocTypeSchema().dump(item)
         return DocTypeSchema().dump(item)
 
     @staticmethod
