@@ -7,6 +7,8 @@ import datetime
 from flask_restful import request
 from enum import Enum
 
+from app.common.utils.name import get_ext
+
 
 class NlpTaskEnum(int, Enum):
     extract = 1,
@@ -157,3 +159,15 @@ class Common:
             return ClassifyDocTermSchema
         elif nlp_task_id == NlpTaskEnum.wordseg:
             return WordsegDocTermSchema
+
+    @staticmethod
+    def check_job_type_by_files(files):
+        """检查任务类型"""
+        ext_sets = set([get_ext(f.filename) for f in files])
+        if ext_sets.issubset(('pdf', 'doc', 'docx')):
+            job_type = 'e_doc'
+        elif ext_sets.issubset(('txt', 'csv')):
+            job_type = 'text'
+        else:
+            job_type = ''
+        return job_type

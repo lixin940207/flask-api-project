@@ -226,66 +226,63 @@ class Seeds:
 
     @staticmethod
     def create_doc():
-        from app.entity import Doc
         from app.model import DocModel
         from uuid import uuid4
         if DocModel().is_empty_table():
             docs = [
-                Doc(app_id=1, created_by=1, doc_id=1, doc_raw_name="doc1.pdf", doc_unique_name=str(uuid4())),
-                Doc(app_id=1, created_by=1, doc_id=2, doc_raw_name="doc1.pdf", doc_unique_name=str(uuid4())),
-                Doc(app_id=1, created_by=1, doc_id=3, doc_raw_name="doc1.pdf", doc_unique_name=str(uuid4())),
-                Doc(app_id=1, created_by=1, doc_id=4, doc_raw_name="doc1.pdf", doc_unique_name=str(uuid4())),
-                Doc(app_id=1, created_by=1, doc_id=5, doc_raw_name="doc1.pdf", doc_unique_name=str(uuid4())),
+                dict(app_id=1, created_by=1, doc_id=1, doc_raw_name="doc1.pdf", doc_unique_name=str(uuid4())),
+                dict(app_id=1, created_by=1, doc_id=2, doc_raw_name="doc1.pdf", doc_unique_name=str(uuid4())),
+                dict(app_id=1, created_by=1, doc_id=3, doc_raw_name="doc1.pdf", doc_unique_name=str(uuid4())),
+                dict(app_id=1, created_by=1, doc_id=4, doc_raw_name="doc1.pdf", doc_unique_name=str(uuid4())),
+                dict(app_id=1, created_by=1, doc_id=5, doc_raw_name="doc1.pdf", doc_unique_name=str(uuid4())),
             ]
             DocModel().bulk_create(docs)
             session.commit()
 
     @staticmethod
     def create_mark_task():
-        from app.entity import MarkTask
         from app.model import MarkTaskModel
         if MarkTaskModel().is_empty_table():
             mark_tasks = [
-                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=1, doc_id=1,
-                         mark_task_status=int(StatusEnum.labeled)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=2, doc_id=2,
-                         mark_task_status=int(StatusEnum.labeled)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=3, doc_id=3,
-                         mark_task_status=int(StatusEnum.labeled)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=4, doc_id=4,
-                         mark_task_status=int(StatusEnum.labeled)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=1, mark_task_id=5, doc_id=5,
-                         mark_task_status=int(StatusEnum.labeled)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=8, mark_task_id=6, doc_id=1,
-                         mark_task_status=int(StatusEnum.approved)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=8, mark_task_id=7, doc_id=2,
-                         mark_task_status=int(StatusEnum.approved)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=9, mark_task_id=8, doc_id=3,
-                         mark_task_status=int(StatusEnum.approved)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=9, mark_task_id=9, doc_id=4,
-                         mark_task_status=int(StatusEnum.labeled)),
-                MarkTask(app_id=1, created_by=1, mark_job_id=9, mark_task_id=10, doc_id=5,
-                         mark_task_status=int(StatusEnum.labeled)),
+                dict(app_id=1, created_by=1, mark_job_id=1, mark_task_id=1, doc_id=1,
+                     mark_task_status=int(StatusEnum.labeled)),
+                dict(app_id=1, created_by=1, mark_job_id=1, mark_task_id=2, doc_id=2,
+                     mark_task_status=int(StatusEnum.labeled)),
+                dict(app_id=1, created_by=1, mark_job_id=1, mark_task_id=3, doc_id=3,
+                     mark_task_status=int(StatusEnum.labeled)),
+                dict(app_id=1, created_by=1, mark_job_id=1, mark_task_id=4, doc_id=4,
+                     mark_task_status=int(StatusEnum.labeled)),
+                dict(app_id=1, created_by=1, mark_job_id=1, mark_task_id=5, doc_id=5,
+                     mark_task_status=int(StatusEnum.labeled)),
+                dict(app_id=1, created_by=1, mark_job_id=8, mark_task_id=6, doc_id=1,
+                     mark_task_status=int(StatusEnum.approved)),
+                dict(app_id=1, created_by=1, mark_job_id=8, mark_task_id=7, doc_id=2,
+                     mark_task_status=int(StatusEnum.approved)),
+                dict(app_id=1, created_by=1, mark_job_id=9, mark_task_id=8, doc_id=3,
+                     mark_task_status=int(StatusEnum.approved)),
+                dict(app_id=1, created_by=1, mark_job_id=9, mark_task_id=9, doc_id=4,
+                     mark_task_status=int(StatusEnum.labeled)),
+                dict(app_id=1, created_by=1, mark_job_id=9, mark_task_id=10, doc_id=5,
+                     mark_task_status=int(StatusEnum.labeled)),
             ]
             MarkTaskModel().bulk_create(mark_tasks)
             session.commit()
 
     @staticmethod
     def creat_user_task():
-        from app.entity import UserTask
         from app.model import UserTaskModel
         if UserTaskModel().is_empty_table():
             user_tasks = [
-                UserTask(app_id=1, created_by=1, mark_task_id=1, annotator_id=3,
-                         user_task_status=int(StatusEnum.labeled)),
-                UserTask(app_id=1, created_by=1, mark_task_id=2, annotator_id=3,
-                         user_task_status=int(StatusEnum.labeled)),
-                UserTask(app_id=1, created_by=1, mark_task_id=3, annotator_id=3,
-                         user_task_status=int(StatusEnum.labeled)),
-                UserTask(app_id=1, created_by=1, mark_task_id=4, annotator_id=3,
-                         user_task_status=int(StatusEnum.labeled)),
-                UserTask(app_id=1, created_by=1, mark_task_id=5, annotator_id=3,
-                         user_task_status=int(StatusEnum.labeled)),
+                dict(app_id=1, created_by=1, mark_task_id=1, annotator_id=3,
+                     user_task_status=int(StatusEnum.labeled)),
+                dict(app_id=1, created_by=1, mark_task_id=2, annotator_id=3,
+                     user_task_status=int(StatusEnum.labeled)),
+                dict(app_id=1, created_by=1, mark_task_id=3, annotator_id=3,
+                     user_task_status=int(StatusEnum.labeled)),
+                dict(app_id=1, created_by=1, mark_task_id=4, annotator_id=3,
+                     user_task_status=int(StatusEnum.labeled)),
+                dict(app_id=1, created_by=1, mark_task_id=5, annotator_id=3,
+                     user_task_status=int(StatusEnum.labeled)),
             ]
             UserTaskModel().bulk_create(user_tasks)
             session.commit()

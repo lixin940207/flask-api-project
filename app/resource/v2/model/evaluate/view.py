@@ -4,7 +4,6 @@
 import typing
 from flask_restful import Resource
 
-from app.common.common import StatusEnum
 from app.common.patch import parse, fields
 from app.common.utils.status_mapper import status_str2int_mapper
 from app.schema.evaluate_task_schema import EvaluateTaskSchema
@@ -30,9 +29,6 @@ class ModelEvaluateListResource(Resource):
         order_by = args["order_by"][1:]
         order_by_desc = True if args["order_by"][0] == "-" else False
         count, evaluate_task_list = ModelEvaluateService().get_evaluate_task_list_by_train_job_id(train_job_id=model_id, order_by=order_by, order_by_desc=order_by_desc, offset=args["offset"], limit=args["limit"])
-        # convert int status to string
-        for evaluate_task in evaluate_task_list:
-            evaluate_task.evaluate_task_status = StatusEnum(evaluate_task.evaluate_task_status).name
         result = EvaluateTaskSchema(many=True).dump(evaluate_task_list)
         return {
                    "message": "请求成功",
@@ -61,8 +57,6 @@ class ModelEvaluateListResource(Resource):
         evaluate_task = ModelEvaluateService().create_evaluate_task_by_train_job_id(train_job_id=model_id, evaluate_task_name=args["model_evaluate_name"], evaluate_task_desc=args["model_evaluate_desc"],
                                                                     mark_job_ids=args["mark_job_ids"], doc_term_ids=args["doc_term_ids"], doc_relation_ids=args["doc_relation_ids"],
                                                                     use_rule=args["use_rule"])
-        # convert int status to string
-        evaluate_task.evaluate_task_status = StatusEnum(evaluate_task.evaluate_task_status).name
         result = EvaluateTaskSchema().dump(evaluate_task)
         return {
                    "message": "创建成功",
@@ -85,8 +79,6 @@ class ModelEvaluateItemResource(Resource):
         获取单条模型评估记录
         """
         evaluate_task = ModelEvaluateService().get_evaluate_task_by_id(model_evaluate_id)
-        # convert int status to string
-        evaluate_task.evaluate_task_status = StatusEnum(evaluate_task.evaluate_task_status).name
         result = EvaluateTaskSchema().dump(evaluate_task)
         return {
                    "message": "请求成功",
@@ -120,8 +112,6 @@ class ModelEvaluateItemResource(Resource):
         if args.get("model_evaluate_desc"):
             update_params.update(evaluate_task_desc=args["model_evaluate_desc"])
         evaluate_task = ModelEvaluateService().update_evaluate_task_by_id(evaluate_task_id=model_evaluate_id, args=update_params)
-        # convert int status to string
-        evaluate_task.evaluate_task_status = StatusEnum(evaluate_task.evaluate_task_status).name
         result = EvaluateTaskSchema().dump(evaluate_task)
         return {
                    "message": "更新成功",

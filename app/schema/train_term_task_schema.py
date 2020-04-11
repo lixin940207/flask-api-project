@@ -2,12 +2,14 @@
 # email:  lixin@datagrand.com
 # create: 2020/3/25-3:54 下午
 from flask_marshmallow import Schema
+
+from app.common.common import StatusEnum
 from app.common.patch import fields
 
 
 class TrainTermTaskSchema(Schema):  # type: ignore
     train_term_id = fields.Integer(attribute="train_term_task_id")
     train_term_result = fields.Dict()
-    train_term_state = fields.String(attribute="train_term_status")
+    train_term_state = fields.Function(lambda obj: StatusEnum(obj.train_term_status).name)
     model_train_id = fields.Integer(attribute="train_task_id")
     doc_term_id = fields.Integer()

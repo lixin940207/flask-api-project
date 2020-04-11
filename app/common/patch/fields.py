@@ -2,7 +2,7 @@ import typing
 import collections
 from werkzeug.datastructures import FileStorage
 from marshmallow.base import SchemaABC
-from marshmallow.fields import Raw, String, Integer, List, Boolean, DateTime, Nested as _Nested
+from marshmallow.fields import Raw, String, Integer, List, Boolean, DateTime, Nested as _Nested, Function
 from webargs.core import dict2schema
 
 

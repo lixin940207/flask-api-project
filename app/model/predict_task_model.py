@@ -8,7 +8,7 @@ from sqlalchemy import distinct
 from app.common.common import RoleEnum
 from app.common.extension import session
 from app.common.filters import CurrentUser
-from app.entity import PredictTask, DocType, Doc
+from app.entity import PredictTask, DocType, Doc, PredictJob
 from app.model.base import BaseModel
 
 
@@ -40,15 +40,61 @@ class PredictTaskModel(BaseModel, ABC):
         return count, q.all()
 
     @staticmethod
-    def get_predict_task_and_doc(predict_job_id):
+    def get_predict_task_and_doc(**kwargs):
+        accept_keys = ["predict_task_id", "predict_job_id"]
         q = session.query(PredictTask, Doc) \
             .join(Doc, Doc.doc_id == PredictTask.doc_id) \
-            .filer(
-            PredictTask.predict_job_id == predict_job_id,
+            .filter(
             ~Doc.is_deleted,
             ~PredictTask.is_deleted,
             )
+        for key, val in kwargs.items():
+            if key in accept_keys:
+                q = q.filter(getattr(PredictTask, key) == val)
         return q.all()
+
+    @staticmethod
+    def get_by_predict_job_id(predict_job_id, current_user: CurrentUser, search="", order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
+        """
+        get (traintask, trainjob, doctype) tuple by nlp_task_id and other filters
+        """
+        # Define allowed filter keys
+        accept_keys = ["predict_task_status", "doc_type_id"]
+        # Compose query, select 3 tables related to a train job
+        q = session.query(PredictTask, Doc, DocType) \
+            .join(PredictJob, PredictJob.predict_job_id == PredictTask.predict_job_id)\
+            .join(DocType,  PredictJob.doc_type_id == DocType.doc_type_id)\
+            .join(Doc, Doc.doc_id == PredictTask.doc_id) \
+            .filter(PredictTask.predict_job_id == predict_job_id,
+                    ~DocType.is_deleted,
+                    ~Doc.is_deleted,
+                    ~PredictTask.is_deleted,
+                    ~PredictJob.is_deleted)
+        # auth
+        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
+            q = q.filter(DocType.group_id.in_(current_user.user_groups))
+        # Filter conditions
+        for key, val in kwargs.items():
+            if key in accept_keys:
+                q = q.filter(getattr(PredictTask, key) == val)
+        if search:
+            q = q.filter(PredictTask.predict_task_name.like(f'%{search}%'))
+        # Order by key
+        if order_by_desc:
+            q = q.order_by(getattr(PredictTask, order_by).desc())
+        else:
+            q = q.order_by(getattr(PredictTask, order_by))
+
+        # assign doc_type, train_list to each trainjob for dumping
+        predict_task_list = []
+        for predict_task, doc, doc_type in q.all():
+            # assign doc, doc_type to predict_job
+            predict_task.doc_type = doc_type
+            predict_task.doc = doc
+            predict_task_list.append(predict_task)
+
+        count = len(predict_task_list)
+        return count, predict_task_list[offset: offset + limit]
 
     def create(self, **kwargs) -> PredictTask:
         entity = PredictTask(**kwargs)
@@ -63,9 +109,13 @@ class PredictTaskModel(BaseModel, ABC):
         return entity_list
 
     def delete(self, _id):
-        session.query(PredictTask).filter(PredictTask.predict_task_id == _id).update({PredictTask.is_deleted: True})
+        entity = session.query(PredictTask).filter(PredictTask.predict_task_id == _id)
+        entity.update({PredictTask.is_deleted: True})
         session.flush()
+        return entity.one()
 
-    def update(self, entity):
-        # session.bulk_update_mapping
-        pass
+    def update(self, _id, **kwargs):
+        entity = session.query(PredictTask).filter(PredictTask.predict_task_id == _id)
+        entity.update(kwargs)
+        session.flush()
+        return entity.one()

@@ -14,7 +14,7 @@ class DocTypeSchema(Schema):
     created_time = fields.DateTime()
     doc_term_list = fields.List(fields.Nested(DocTermSchema))
     group_id = fields.Integer()
-    status = fields.Integer(attribute="is_deleted")
+    status = fields.Function(lambda obj: not obj.is_deleted)
 
 
 class EntityDocRelationSchema(Schema):
