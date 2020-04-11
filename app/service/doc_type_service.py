@@ -7,7 +7,7 @@ from app.common.filters import CurrentUser
 from app.model import DocTypeModel, MarkTaskModel
 from app.model.doc_term_model import DocTermModel
 from app.model.evaluate_task_model import EvaluateTaskModel
-from app.schema.doc_type_schema import DocTypeSchema, DocTermSchema, EntityDocTypeSchema, WordsegDocTypeSchema
+from app.schema.doc_type_schema import DocTypeSchema, DocTermSchema
 from app.schema.evaluate_task_schema import EvaluateTaskSchema
 
 
@@ -66,14 +66,12 @@ class DocTypeService:
         count, items = DocTypeModel().get_by_mark_job_ids(mark_job_ids=mark_job_ids, nlp_task_id=nlp_task_id,
                                                           current_user=current_user, offset=args["offset"],
                                                           limit=args["limit"])
-        schema = Common().get_doc_type_schema_by_nlp_task_id(nlp_task_id)
-        result = schema(many=True).dump(items)
+        result = DocTypeSchema(many=True).dump(items)
         return result, count
 
     @staticmethod
     def create_doc_type(current_user: CurrentUser, args):
         doc_term_list = args.pop('doc_term_list')
-        nlp_task_id = args.get("nlp_task_id")
         if 'group_id' not in args or args['group_id'] < 1:
             args['group_id'] = current_user.user_groups[0]
         doc_type = DocTypeModel().create(**args)
@@ -81,26 +79,18 @@ class DocTypeService:
             item.update({'doc_type_id': doc_type.doc_type_id})
         doc_type.doc_term_list = DocTermModel().bulk_create(doc_term_list)
         session.commit()
-        if args.get("nlp_task_id") == NlpTaskEnum.wordseg:
-            result = WordsegDocTypeSchema().dumps(doc_type)
-        elif args.get("nlp_task_id") == NlpTaskEnum.relation:
-            result = EntityDocTypeSchema().dumps(doc_type)
-        else:
-            result = DocTypeSchema().dumps(doc_type)
+        result = DocTypeSchema().dumps(doc_type)
         return result
 
     @staticmethod
-    def set_favoriate_doc_type(doc_type_id, is_favorite: bool, nlp_task_id: int):
+    def set_favoriate_doc_type(doc_type_id, is_favorite: bool):
         _doc_type = DocTypeModel().update(doc_type_id=doc_type_id, is_favorite=is_favorite)
         return DocTypeSchema().dump(_doc_type)
 
     @staticmethod
-    def get_doc_type_items(doc_type_id: int, nlp_task_id: int):
+    def get_doc_type_items(doc_type_id: int):
         item = DocTypeModel().get_by_id(doc_type_id)
-        if nlp_task_id == NlpTaskEnum.wordseg:
-            return WordsegDocTypeSchema().dump(item)
-        elif nlp_task_id == NlpTaskEnum.relation:
-            return EntityDocTypeSchema().dump(item)
+        item.doc_term_list = DocTermModel().get_by_filter(doc_type_id=doc_type_id)
         return DocTypeSchema().dump(item)
 
     @staticmethod
@@ -109,7 +99,7 @@ class DocTypeService:
         session.commit()
 
     @staticmethod
-    def update_doc_type(args, doc_type_id, nlp_task_id):
+    def update_doc_type(args, doc_type_id):
         item = DocTypeModel().update(doc_type_id, **args)
         existed_doc_term_ids = [dt.doc_term_id for dt in DocTermModel().get_by_filter(doc_type_id=doc_type_id)]
         updated_doc_term_ids = []
@@ -125,10 +115,6 @@ class DocTypeService:
             if i not in updated_doc_term_ids:
                 DocTermModel().delete(i)
         session.commit()
-        if nlp_task_id == NlpTaskEnum.wordseg:
-            return WordsegDocTypeSchema().dump(item)
-        elif nlp_task_id == NlpTaskEnum.relation:
-            return EntityDocTypeSchema().dump(item)
         return DocTypeSchema().dump(item)
 
     @staticmethod

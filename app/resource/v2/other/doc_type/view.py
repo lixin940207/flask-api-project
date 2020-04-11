@@ -65,8 +65,7 @@ class DocTypeItemResource(Resource, CurrentUserMixin):
         """
         获取一个文档类型
         """
-        nlp_task_id = Common().get_nlp_task_id_by_route()
-        result = DocTypeService().get_doc_type_items(doc_type_id, nlp_task_id)
+        result = DocTypeService().get_doc_type_items(doc_type_id)
         return {
                    "message": "请求成功",
                    "result": result,
@@ -90,8 +89,7 @@ class DocTypeItemResource(Resource, CurrentUserMixin):
         """
         修改一个文档类型，不包括修改它的条款
         """
-        nlp_task_id = Common().get_nlp_task_id_by_route()
-        result = DocTypeService().update_doc_type(args, doc_type_id, nlp_task_id)
+        result = DocTypeService().update_doc_type(args, doc_type_id)
 
         return {
                    "message": "更新成功",
@@ -113,8 +111,7 @@ class TopDocTypeResource(Resource):
         """
         置顶一个文档类型，简单修改index=max+1
         """
-        nlp_task_id = Common().get_nlp_task_id_by_route()
-        result = DocTypeService().set_favoriate_doc_type(doc_type_id, True, nlp_task_id)
+        result = DocTypeService().set_favoriate_doc_type(doc_type_id, True)
         return {
                    "message": "更新成功",
                    "result": result,
@@ -126,8 +123,7 @@ class CancelTopDocTypeResource(Resource):
         """
         取消置顶一个文档类型，简单修改index=0
         """
-        nlp_task_id = Common().get_nlp_task_id_by_route()
-        result = DocTypeService().set_favoriate_doc_type(doc_type_id, False, nlp_task_id)
+        result = DocTypeService().set_favoriate_doc_type(doc_type_id, False)
         return {
                    "message": "更新成功",
                    "result": result,
