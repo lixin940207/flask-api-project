@@ -30,9 +30,6 @@ class CustomListResource(Resource):
         if args.get("custom_states"):
             filtered_list.update(custom_algorithm_status_list=[int(StatusEnum[status]) for status in args['custom_states'].split(',')])
         count, custom_algorithm_list = ModelCustomService().get_custom_algorithm_list_by_filter_in(offset=args["offset"], limit=args["limit"], args=filtered_list)
-        # convert int status to int
-        for custom_algorithm in custom_algorithm_list:
-            custom_algorithm.custom_algorithm_status = StatusEnum(custom_algorithm.custom_algorithm_status).name
         result = CustomAlgorithmSchema(many=True).dump(custom_algorithm_list)
         return {
                    "message": "请求成功",
@@ -65,8 +62,6 @@ class CustomListResource(Resource):
                                                                         custom_algorithm_evaluate_port=args["custom_evaluate_port"],
                                                                         custom_algorithm_config=args["custom_config"],
                                                                         nlp_task_id=int(NlpTaskEnum[args["custom_type"]]))
-        # convert int status to string
-        custom_algorithm.custom_algorithm_status = StatusEnum(custom_algorithm.custom_algorithm_status).name
         result = CustomAlgorithmSchema().dump(custom_algorithm)
 
         return {
@@ -81,8 +76,6 @@ class CustomItemResource(Resource):
         获取单条自定义容器的记录
         """
         custom_algorithm = ModelCustomService().get_custom_algorithm_by_id(custom_algorithm_id=custom_id)
-        # convert int status to string
-        custom_algorithm.custom_algorithm_status = StatusEnum(custom_algorithm.custom_algorithm_status).name
         result = CustomAlgorithmSchema().dump(custom_algorithm)
         return {
                    "message": "请求成功",
@@ -108,8 +101,6 @@ class CustomItemResource(Resource):
         if args.get("custom_config"):
             update_params.update(custom_algorithm_config=args["custom_config"])
         custom_algorithm = ModelCustomService().update_custom_algorithm_by_id(custom_algorithm_id=custom_id, args=update_params)
-        # convert int status to string
-        custom_algorithm.custom_algorithm_status = StatusEnum(custom_algorithm.custom_algorithm_status).name
         result = CustomAlgorithmSchema().dump(custom_algorithm)
         return {
                    "message": "更新成功",
