@@ -125,7 +125,7 @@ class RelationDocTypeItemResource(Resource, CurrentUserMixin):
         """
         修改一个文档类型，不包括修改它的条款
         """
-        result = DocTypeService().update_doc_type(args, doc_type_id)
+        result = DocTypeService().update_relation_doc_type(args, doc_type_id)
         return {
                    "message": "更新成功",
                    "result": result,
