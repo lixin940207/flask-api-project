@@ -6,6 +6,7 @@ from flask_restful import Resource, abort
 
 from app.common.common import Common, NlpTaskEnum
 from app.common.patch import parse, fields
+from app.common.utils.name import get_ext
 from app.service.classify_mark_job_service import MarkJobService
 
 
@@ -79,3 +80,31 @@ class ClassifyMarkJobMultiDelete(Resource):
                    "message": "批量删除成功",
                    "result": args
                }, 200
+
+
+class ClassifyMarkJobImportResource(Resource):
+    @parse({
+        "mark_job_name": fields.String(required=True),
+        "mark_job_type": fields.String(required=True),
+        "mark_job_desc": fields.String(),
+        "doc_type_id": fields.Integer(required=True),
+        "files": fields.List(fields.File(), required=True),
+    }, locations=('form', 'files'))
+    def post(
+            self: Resource,
+            args: typing.Dict
+    ) -> typing.Tuple[typing.Dict, int]:
+        files = args['files']
+        for f in files:
+            if get_ext(f.filename) not in ["csv"]:
+                abort(400, message="已标注分类数据仅支持csv格式。")
+        try:
+            result = MarkJobService().import_mark_job(files, args)
+            return {
+                       "message": "创建成功",
+                       "result": result
+                   }, 201
+        except UnicodeDecodeError:
+            abort(400, message="文件编码错误 请上传utf-8编码文件")
+        except KeyError:
+            abort(400, message="文件格式不合规 请查看csv文件模版")
