@@ -14,17 +14,6 @@ class WordsegDocLexiconSchema(Schema):
 
 
 class DocTermSchema(Schema):
-    doc_term_id = fields.Integer()
-    doc_term_name = fields.String()
-    doc_term_alias = fields.String()
-    doc_term_index = fields.String()
-    doc_term_color = fields.String()
-    doc_term_desc = fields.String()
-    doc_term_data_type = fields.String()
-    doc_term_shortcut = fields.String()
-
-
-class WordsegDocTermSchema(Schema):
     doc_lexicon_list = fields.List(fields.Nested(WordsegDocLexiconSchema), attribute='doc_rules')
 
     doc_term_id = fields.Integer()
