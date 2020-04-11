@@ -46,7 +46,7 @@ class MarkTaskModel(BaseModel, ABC):
             .join(MarkJob, MarkTask.mark_job_id == MarkJob.mark_job_id) \
             .filter(
             MarkJob.mark_job_id.in_(mark_job_ids),
-            MarkJob.mark_job_status == int(StatusEnum.approved),
+            MarkTask.mark_task_status == int(StatusEnum.approved),
             ~MarkJob.is_deleted,
             ~Doc.is_deleted,
             ~MarkTask.is_deleted)

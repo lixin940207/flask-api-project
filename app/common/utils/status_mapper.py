@@ -14,3 +14,16 @@ def status_str2int_mapper():
         "evaluating": int(StatusEnum.evaluating),
         "online": int(StatusEnum.online)
     }
+
+
+def convert_explicit_status(entity_list, status_column_name):
+    """table int status to string status"""
+    is_list = True
+    if type(entity_list) != list:
+        entity_list = [entity_list]
+        is_list = False
+    for i in entity_list:
+        setattr(i, status_column_name, StatusEnum(getattr(i, status_column_name)).name)
+    if not is_list:
+        return entity_list[0]
+    return entity_list

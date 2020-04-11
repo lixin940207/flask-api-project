@@ -67,8 +67,8 @@ class Common:
         return _datetime.strftime(format_string)
 
     @staticmethod
-    def get_nlp_task_id_by_route(args=None):
-        nlp_task_url = request.url.split('/')[-1]
+    def get_nlp_task_id_by_route():
+        nlp_task_url = request.url
         if 'classify' in nlp_task_url:
             nlp_task_id = int(NlpTaskEnum.classify)
         elif 'entity' in nlp_task_url:
@@ -77,10 +77,6 @@ class Common:
             nlp_task_id = int(NlpTaskEnum.wordseg)
         else:
             nlp_task_id = int(NlpTaskEnum.extract)
-        if args:
-            args.update({
-                'nlp_task_id': nlp_task_id
-            })
         return nlp_task_id
 
     @staticmethod

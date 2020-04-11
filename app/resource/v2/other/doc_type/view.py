@@ -20,7 +20,7 @@ class DocTypeListResource(Resource, CurrentUserMixin):
         :param args:
         :return:
         """
-        nlp_task_id = Common().get_nlp_task_id_by_route(args)
+        nlp_task_id = Common().get_nlp_task_id_by_route()
         args.update({
             'nlp_task_id': nlp_task_id
         })
@@ -48,10 +48,7 @@ class DocTypeListResource(Resource, CurrentUserMixin):
         """
         创建一个文档类型包括它的条款
         """
-        # args.update({
-        #     'nlp_task_id': self.nlp_task_id
-        # })
-        nlp_task_id = Common().get_nlp_task_id_by_route(args)
+        nlp_task_id = Common().get_nlp_task_id_by_route()
         args.update({
             'nlp_task_id': nlp_task_id
         })
