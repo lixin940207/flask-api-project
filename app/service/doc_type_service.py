@@ -101,7 +101,7 @@ class DocTypeService:
             return WordsegDocTypeSchema().dump(item)
         elif nlp_task_id == NlpTaskEnum.relation:
             return EntityDocTypeSchema().dump(item)
-        return DocTermSchema().dump(item)
+        return DocTypeSchema().dump(item)
 
     @staticmethod
     def delete_doc_type(doc_type_id):

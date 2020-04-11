@@ -17,7 +17,7 @@ class DocTermSchema(Schema):
     doc_term_id = fields.Integer()
     doc_term_name = fields.String()
     doc_term_alias = fields.String()
-    # doc_term_index = fields.String()
+    doc_term_index = fields.String()
     doc_term_color = fields.String()
     doc_term_desc = fields.String()
     doc_term_data_type = fields.String()
@@ -30,18 +30,7 @@ class WordsegDocTermSchema(Schema):
     doc_term_id = fields.Integer()
     doc_term_name = fields.String()
     doc_term_alias = fields.String()
-    # doc_term_index = fields.String()
-    doc_term_color = fields.String()
-    doc_term_desc = fields.String()
-    doc_term_data_type = fields.String()
-    doc_term_shortcut = fields.String()
-
-
-class EntityDocTermSchema(Schema):  # type: ignore
-    doc_term_id = fields.Integer()
-    doc_term_name = fields.String()
-    doc_term_alias = fields.String()
-    # doc_term_index = fields.String()
+    doc_term_index = fields.String()
     doc_term_color = fields.String()
     doc_term_desc = fields.String()
     doc_term_data_type = fields.String()

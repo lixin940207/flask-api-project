@@ -152,16 +152,14 @@ class Common:
     @staticmethod
     def get_doc_term_schema_by_nlp_task_id(nlp_task_id: int):
         from app.resource.v2.mark.classify_mark_job.schema import ClassifyDocTermSchema
-        from app.schema.doc_term_schema import DocTermSchema, WordsegDocTermSchema, EntityDocTermSchema
+        from app.schema.doc_term_schema import DocTermSchema, WordsegDocTermSchema
         if nlp_task_id == NlpTaskEnum.extract:
             return DocTermSchema
         elif nlp_task_id == NlpTaskEnum.classify:
             return ClassifyDocTermSchema
         elif nlp_task_id == NlpTaskEnum.wordseg:
             return WordsegDocTermSchema
-        else:
-            return EntityDocTermSchema
-    
+
     @staticmethod
     def check_job_type_by_files(files):
         """检查任务类型"""
