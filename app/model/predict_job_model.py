@@ -2,6 +2,8 @@
 # email:  lixin@datagrand.com
 # create: 2020/4/9-2:32 下午
 from abc import ABC
+from itertools import groupby
+from operator import itemgetter
 
 from sqlalchemy import distinct
 
@@ -17,9 +19,9 @@ class PredictJobModel(BaseModel, ABC):
         return session.query(PredictJob).filter(~PredictJob.is_deleted).all()
 
     def get_by_id(self, _id):
-        return session.query(PredictJob).filter(PredictJob.predict_job_id == _id, PredictJob.is_deleted).one()
+        return session.query(PredictJob).filter(PredictJob.predict_job_id == _id, ~PredictJob.is_deleted).one()
 
-    def get_by_filter(self, search, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+    def get_by_filter(self, search, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["predict_job_status", "doc_type_id"]
         # Compose query
@@ -40,13 +42,12 @@ class PredictJobModel(BaseModel, ABC):
         return count, q.all()
 
     @staticmethod
-    def get_by_nlp_task_id(nlp_task_id, search, current_user: CurrentUser, order_by="created_time", order_by_desc=True,
-                           limit=10, offset=0, **kwargs):
+    def get_by_nlp_task_id(nlp_task_id, current_user: CurrentUser, search="", order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         """
         get (traintask, trainjob, doctype) tuple by nlp_task_id and other filters
         """
         # Define allowed filter keys
-        accept_keys = ["train_job_status", "doc_type_id"]
+        accept_keys = ["train_job_status", "doc_type_id", "predict_job_id"]
         # Compose query, select 3 tables related to a train job
         q = session.query(PredictTask, PredictJob, DocType) \
             .join(PredictTask, PredictTask.predict_job_id == PredictJob.predict_job_id) \
@@ -64,14 +65,27 @@ class PredictJobModel(BaseModel, ABC):
                 q = q.filter(getattr(PredictJob, key) == val)
         if search:
             q = q.filter(PredictJob.predict_job_name.like(f'%{search}%'))
-        count = q.with_entities(distinct(PredictJob.predict_job_id)).count()
         # Order by key
         if order_by_desc:
             q = q.order_by(getattr(PredictJob, order_by).desc())
         else:
             q = q.order_by(getattr(PredictJob, order_by))
-        q = q.offset(offset).limit(limit)
-        return count, q.all()
+
+        # assign doc_type, train_list to each trainjob for dumping
+        predict_job_list = []
+        job_id_list = []
+        for predict_task, predict_job, doc_type in q.all():
+            # assign predict_task, doc_type to predict_job
+            if predict_task.predict_job_id not in job_id_list:
+                job_id_list.append(predict_task.predict_job_id)
+                predict_job.doc_type = doc_type
+                predict_job.task_list = [predict_task]
+                predict_job_list.append(predict_job)
+            else:
+                predict_job_list[job_id_list.index(predict_task.predict_job_id)].task_list.append(predict_task)
+
+        count = len(predict_job_list)
+        return count, predict_job_list[offset: offset + limit]
 
     def create(self, **kwargs) -> PredictJob:
         entity = PredictJob(**kwargs)

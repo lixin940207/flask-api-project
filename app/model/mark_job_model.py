@@ -34,7 +34,7 @@ class MarkJobModel(BaseModel, ABC):
         return q.all()
 
     def get_by_nlp_task_id(
-            self, nlp_task_id, search, order_by="created_time", order_by_desc=True, limit=0, offset=10, **kwargs):
+            self, nlp_task_id, search, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["assign_mode", "mark_job_status", "mark_job_type", "doc_type_id"]
         # Compose query

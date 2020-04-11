@@ -7,8 +7,8 @@ from app.schema.doc_schema import DocSchema
 
 
 class PredictTaskSchema(Schema):
-    task_id = fields.Integer(attribute="predict_task_id"),
-    task_result = fields.Dict(attribute="predict_task_result"),
-    task_state = fields.String(attribute="predict_task_status"),
-    created_time = fields.DateTime(),
+    task_id = fields.Integer(attribute="predict_task_id")
+    task_result = fields.Dict(attribute="predict_task_result")
+    task_state = fields.String(attribute="predict_task_status")
+    created_time = fields.DateTime()
     doc = fields.Nested(DocSchema)

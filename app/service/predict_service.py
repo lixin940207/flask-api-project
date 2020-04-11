@@ -2,52 +2,45 @@
 # email:  lixin@datagrand.com
 # create: 2020/4/9-2:27 下午
 import json
+import os
+
 from flask_restful import abort
 
+from app.common.export_sync import get_last_export_file, generate_extract_file, generate_classify_file, \
+    generate_wordseg_file
 from app.common.extension import session
 from app.config.config import get_config_from_app as _get
-from app.common.common import StatusEnum
-from app.common.fileset import upload_fileset
+from app.common.common import StatusEnum, NlpTaskEnum
+from app.common.fileset import upload_fileset, FileSet
 from app.common.filters import CurrentUser
 from app.common.redis import r
 from app.common.utils.name import get_ext
 from app.entity import PredictJob
 from app.entity.base import FileTypeEnum
-from app.model import DocTypeModel, DocModel
+from app.model import DocTypeModel, DocModel, DocTermModel
 from app.model.predict_job_model import PredictJobModel
 from app.model.predict_task_model import PredictTaskModel
 
 
 class PredictService:
     @staticmethod
-    def get_predict_job_by_id(predict_job_id):
-        predict_job = PredictJobModel().get_by_id(predict_job_id)
-        predict_job.task_list = PredictTaskModel().get_by_filter(limit=99999, predict_job_id=predict_job_id)
-        return predict_job
+    def get_predict_job_by_id(nlp_task_id, predict_job_id, current_user:CurrentUser) -> PredictJob:
+        _, predict_job_list = PredictJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, predict_job_id=predict_job_id, current_user=current_user)
+        return predict_job_list[0]
 
     @staticmethod
     def get_predict_job_list_by_nlp_task_id(nlp_task_id, doc_type_id, search, order_by, order_by_desc, offset, limit, current_user: CurrentUser):
         # if exists doc_type_id, get train jobs of this doc_type_id
         if doc_type_id:
-            count, multi_tables = PredictJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search,
-                                                                       order_by=order_by, order_by_desc=order_by_desc, offset=offset,
-                                                                       limit=limit, current_user=current_user, doc_type_id=doc_type_id)
+            count, predict_job_list = PredictJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search,
+                                                                           order_by=order_by, order_by_desc=order_by_desc,
+                                                                           offset=offset, limit=limit,
+                                                                           current_user=current_user, doc_type_id=doc_type_id)
         else:  # else get all
-            count, multi_tables = PredictJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search,
-                                                                       order_by=order_by, order_by_desc=order_by_desc, offset=offset,
-                                                                       limit=limit, current_user=current_user)
-        # assign doc_type, train_list to each trainjob for dumping
-        predict_job_list = []
-        job_id_list = []
-        for predict_task, predict_job, doc_type in multi_tables:
-            # assign predict_task, doc_type to predict_job
-            if predict_task.predict_job_id not in job_id_list:
-                job_id_list.append(predict_task.predict_job_id)
-                predict_job.doc_type = doc_type
-                predict_job.task_list = [predict_task]
-                predict_job_list.append(predict_job)
-            else:
-                predict_job_list[job_id_list.index(predict_task.predict_job_id)].task_list.append(predict_task)
+            count, predict_job_list = PredictJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search,
+                                                                           order_by=order_by, order_by_desc=order_by_desc,
+                                                                           offset=offset, limit=limit, current_user=current_user)
+
         return count, predict_job_list
 
     @staticmethod
@@ -117,13 +110,40 @@ class PredictService:
         session.commit()
         return predict_job
 
+    @staticmethod
+    def export_predict_file(nlp_task_id, predict_job_id, offset):
+        predict_job = PredictJobModel().get_by_id(predict_job_id)
+        if predict_job.predict_job_status != StatusEnum.success:
+            abort(400, message="有失败或未完成任务，不能导出")
+        export_file_path = os.path.join('upload/export', '{}_job_{}'.format(NlpTaskEnum(nlp_task_id).name, predict_job_id))
+        # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
+        last_exported_file = get_last_export_file(predict_job=predict_job, export_file_path=export_file_path)
+        if last_exported_file:
+            return last_exported_file
+
+        # 重新制作
+        export_fileset = FileSet(folder=export_file_path)
+        predict_task_and_doc_list = PredictTaskModel().get_predict_task_and_doc(predict_job_id=predict_job_id)
+
+        if nlp_task_id == int(NlpTaskEnum.extract):
+            doc_terms = DocTermModel().get_by_filter(limit=99999, doc_type_id=predict_job.doc_type_id)
+            file_path = generate_extract_file(predict_task_and_doc_list=predict_task_and_doc_list, export_fileset=export_fileset, doc_terms=doc_terms, offset=offset)
+        elif nlp_task_id == int(NlpTaskEnum.classify):
+            file_path = generate_classify_file(predict_task_and_doc_list=predict_task_and_doc_list, export_fileset=export_fileset)
+        elif nlp_task_id == int(NlpTaskEnum.wordseg):
+            file_path = generate_wordseg_file(predict_task_and_doc_list=predict_task_and_doc_list, export_fileset=export_fileset)
+        else:
+            abort(400, message="该任务无法导出")
+        return file_path
+
+
 
 def push_predict_task_to_redis(predict_job, predict_task, doc):
     r.lpush(_get('EXTRACT_TASK_QUEUE_KEY'), json.dumps({
         'files': [
             {
                 'file_name': doc.doc_unique_name,
-                'is_scan': predict_job.predict_job_type == int(FileTypeEnum.ocr),
+                'is_scan': predict_job.predict_job_type == FileTypeEnum.ocr,
                 'doc_id': doc.doc_id,
                 'doc_type': f'NER{str(predict_job.doc_type_id)}'
             },
