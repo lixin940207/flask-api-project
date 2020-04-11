@@ -61,7 +61,7 @@ class DocTermModel(BaseModel, ABC):
         session.flush()
 
     def bulk_update(self, entity_list):
-        session.bulk_update_mappings(DocTerm, entity_list)
+        session.merge([DocTerm(**e) for e in entity_list])
         session.flush()
 
     @staticmethod
