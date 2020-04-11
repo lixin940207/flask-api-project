@@ -2,10 +2,9 @@
 # @Author: James Gu
 # @Date: 2020/3/12
 from abc import ABC
-from sqlalchemy import func, or_
-from app.entity import MarkJob
+from sqlalchemy import or_
 
-import typing
+from typing import List
 
 from app.entity import MarkJob
 from app.model.base import BaseModel
@@ -17,7 +16,7 @@ from app.common.filters import CurrentUser
 
 
 class DocTypeModel(BaseModel, ABC):
-    def get_all(self) -> [DocType]:
+    def get_all(self) -> List[DocType]:
         return session.query(DocType).filter(~DocType.is_deleted).all()
 
     def get_by_id(self, _id) -> DocType:
@@ -56,7 +55,8 @@ class DocTypeModel(BaseModel, ABC):
         session.flush()
         return entity
 
-    def bulk_create(self, entity_list) -> [DocType]:
+    def bulk_create(self, entity_list: dict) -> List[DocType]:
+        entity_list = [DocType(**entity) for entity in entity_list]
         session.bulk_save_objects(entity_list, return_defaults=True)
         session.flush()
         return entity_list
@@ -99,7 +99,7 @@ class DocTypeModel(BaseModel, ABC):
         return count
 
     @staticmethod
-    def get_by_mark_job_ids(mark_job_ids, nlp_task_id, current_user: CurrentUser, limit=10, offset=0) -> (typing.List, int):
+    def get_by_mark_job_ids(mark_job_ids, nlp_task_id, current_user: CurrentUser, limit=10, offset=0) -> (int, List):
         q = session.query(DocType).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
         # 权限filter
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:

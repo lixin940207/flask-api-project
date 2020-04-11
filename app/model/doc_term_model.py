@@ -7,7 +7,7 @@
 @IDE: PyCharm 
 """
 from abc import ABC
-
+from typing import List
 from app.model.base import BaseModel
 from app.entity import DocTerm, DocType
 from app.common.extension import session
@@ -43,7 +43,8 @@ class DocTermModel(BaseModel, ABC):
         session.flush()
         return entity
 
-    def bulk_create(self, entity_list):
+    def bulk_create(self, entity_list) -> List[DocTerm]:
+        entity_list = [DocTerm(**entity) for entity in entity_list]
         session.bulk_save_objects(entity_list, return_defaults=True)
         session.flush()
         return entity_list
