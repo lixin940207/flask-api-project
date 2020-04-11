@@ -9,5 +9,5 @@
 from .. import api
 from . import view
 
-api.add_resource(view.ManualTaskListResource, '/manual')
 api.add_resource(view.ManualTaskItemResource, '/manual/<int:task_id>')
+api.add_resource(view.RejectManualTaskResource, '/reject_manual_task/<int:task_id>')

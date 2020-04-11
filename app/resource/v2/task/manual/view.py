@@ -16,3 +16,11 @@ class ManualTaskItemResource(Resource):
         return {
                    "message": "删除成功",
                }, 204
+
+
+class RejectManualTaskResource(Resource):
+    def put(self, task_id):
+        ManualTaskService().reject_manual_task(task_id)
+        return {
+                   "message": "更新成功",
+               }, 201

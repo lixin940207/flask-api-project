@@ -57,7 +57,8 @@ class MarkTaskModel(BaseModel, ABC):
         session.flush()
         return entity
 
-    def bulk_create(self, entity_list: [MarkTask]) -> [MarkTask]:
+    def bulk_create(self, entity_list: List[dict]) -> List[MarkTask]:
+        entity_list = [MarkTask(**entity) for entity in entity_list]
         session.bulk_save_objects(entity_list, return_defaults=True)
         session.flush()
         return entity_list
@@ -112,3 +113,14 @@ class MarkTaskModel(BaseModel, ABC):
         all_finish_marking_status = q.group_by(MarkJob.doc_type_id, MarkJob.mark_job_id) \
             .with_entities(DocType.doc_type_id, MarkJob.mark_job_id, func.count(MarkTask.mark_task_id)).all()
         return all_status, all_finish_marking_status
+
+    @staticmethod
+    def get_mark_job_id_by_id(_id):
+        q = session.query(MarkTask).filter(MarkTask.mark_task_id == _id).one()
+        return q.mark_job_id
+
+    @staticmethod
+    def update_status_to_unlabel_by_manual_task_id(_id):
+        q = session.query(MarkTask).filter(MarkTask.mark_task_id == _id).one()
+        q.mark_task_result = []
+        q.mark_task_status = int(StatusEnum.unlabel)

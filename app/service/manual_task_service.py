@@ -6,7 +6,7 @@
 @Email: guochuanxiang@datagrand.com
 @IDE: PyCharm 
 """
-from app.model import MarkTaskModel, MarkJobModel
+from app.model import MarkTaskModel, MarkJobModel, UserTaskModel
 from app.common.extension import session
 
 
@@ -20,3 +20,9 @@ class ManualTaskService:
         mark_job = MarkJobModel().update(mark_job_id, **{'mark_job_status': mark_job_status})
         session.commit()
         return mark_job
+
+    @staticmethod
+    def reject_manual_task(mark_task_id):
+        UserTaskModel().update_status_to_unlabel_by_manual_task_id(mark_task_id)
+        MarkTaskModel().update_status_to_unlabel_by_manual_task_id(mark_task_id)
+        session.commit()
