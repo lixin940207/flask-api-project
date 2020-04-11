@@ -19,10 +19,10 @@ from app.model import MarkJobModel, MarkTaskModel, UserTaskModel, DocModel
 from app.schema.mark_job_schema import MarkJobSchema
 
 
-class ClassifyMarkJobService:
+class MarkJobService:
     @staticmethod
-    def get_mark_job_list(args):
-        nlp_task_id = int(NlpTaskEnum.classify)
+    def get_mark_job_list_by_nlp_task(args, nlp_task: NlpTaskEnum):
+        nlp_task_id = int(nlp_task)
         count, result = MarkJobModel().get_by_nlp_task_id(
             nlp_task_id=nlp_task_id, doc_type_id=args['doc_type_id'],
             search=args['query'], limit=args['limit'], offset=args['offset'])
@@ -48,7 +48,7 @@ class ClassifyMarkJobService:
         result = MarkJobSchema(many=True).dump(items)
         return count, result
 
-    def create_mark_job(self, files, args):
+    def create_mark_job(self, files, nlp_task: NlpTaskEnum, args):
         reviewer_ids = [args['assessor_id']] if args.get('assessor_id') else []
         mark_job = MarkJobModel().create(
             mark_job_name=args['mark_job_name'],
@@ -65,9 +65,9 @@ class ClassifyMarkJobService:
         for f in files:
             filename = f.filename
             if get_ext(filename) == 'csv':
-                tasks = self.upload_batch_files(f, mark_job)
+                tasks = self.upload_batch_files(f, mark_job, nlp_task)
             elif get_ext(filename) in ['txt', 'docx', 'doc', 'pdf']:
-                tasks = self.upload_single_file(f, mark_job)
+                tasks = self.upload_single_file(f, mark_job, nlp_task)
             else:
                 raise TypeError('file type illegal')
             for task in tasks:
@@ -82,7 +82,7 @@ class ClassifyMarkJobService:
         result = MarkJobSchema().dump(mark_job)
         return result
 
-    def upload_batch_files(self, f: FileStorage, mark_job: MarkJob) -> List[MarkTask]:
+    def upload_batch_files(self, f: FileStorage, mark_job: MarkJob, nlp_task) -> List[MarkTask]:
         doc_unique_name, doc_relative_path = upload_fileset.save_file(f.filename, f.stream.read())
         csv_doc = DocModel().create(doc_raw_name=f.filename, doc_unique_name=doc_unique_name)
         content_list = upload_fileset.read_csv(doc_relative_path)
@@ -104,16 +104,16 @@ class ClassifyMarkJobService:
         # push redis
         for i in range(len(doc_list)):
             self.push_mark_task_message(
-                mark_job=mark_job, mark_task=task_list[i], doc=doc_list[i], business="classify_label")
+                mark_job=mark_job, mark_task=task_list[i], doc=doc_list[i], business=f"{nlp_task.name}_label")
 
         return task_list
 
-    def upload_single_file(self, f: FileStorage, mark_job: MarkJob) -> List[MarkTask]:
+    def upload_single_file(self, f: FileStorage, mark_job: MarkJob, nlp_task) -> List[MarkTask]:
         doc_unique_name, doc_relative_path = upload_fileset.save_file(f.filename, f.stream.read())
         doc = DocModel().create(doc_raw_name=f.filename, doc_unique_name=doc_unique_name)
         mark_task = MarkTaskModel().create(doc_id=doc.doc_id, mark_job_id=mark_job.mark_job_id)
         self.push_mark_task_message(
-            mark_job=mark_job, mark_task=mark_task, doc=doc, business="classify_label")
+            mark_job=mark_job, mark_task=mark_task, doc=doc, business=f"{nlp_task.name}_label")
 
         return [mark_task]
 

@@ -4,9 +4,9 @@
 import typing
 from flask_restful import Resource, abort
 
-from app.common.common import Common
+from app.common.common import Common, NlpTaskEnum
 from app.common.patch import parse, fields
-from app.service.classify_mark_job_service import ClassifyMarkJobService
+from app.service.classify_mark_job_service import MarkJobService
 
 
 class ClassifyMarkJobListResource(Resource):
@@ -22,7 +22,7 @@ class ClassifyMarkJobListResource(Resource):
             self: Resource,
             args: typing.Dict
     ) -> typing.Tuple[typing.Dict, int]:
-        count, result = ClassifyMarkJobService().get_mark_job_list(args)
+        count, result = MarkJobService().get_mark_job_list_by_nlp_task(args, NlpTaskEnum.classify)
         return {
                    "message": "请求成功",
                    "result": result,
@@ -51,7 +51,7 @@ class ClassifyMarkJobListResource(Resource):
         else:
             args['mark_job_type'] = job_type
 
-        result = ClassifyMarkJobService().create_mark_job(files, args)
+        result = MarkJobService().create_mark_job(files, NlpTaskEnum.classify, args)
 
         return {
                    "message": "创建成功",
