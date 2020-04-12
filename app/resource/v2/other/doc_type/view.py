@@ -141,6 +141,81 @@ class RelationDocTypeItemResource(Resource, CurrentUserMixin):
                }, 204
 
 
+class EntityDocRelationListResource(Resource):
+    @parse({
+        "doc_relation_ids": fields.List(fields.Integer(), missing=[]),
+        "offset": fields.Integer(missing=0),
+        "limit": fields.Integer(missing=10),
+    })
+    def get(self, args: typing.Dict, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        获取所有条款，不分页
+        """
+        session.query(EntityDocType).filter(
+            EntityDocType.doc_type_id == doc_type_id, EntityDocType.status
+        ).first_or_404()
+
+        q = session.query(EntityDocRelation).filter(
+            EntityDocRelation.doc_type_id == doc_type_id,
+            EntityDocRelation.status
+        )
+
+        if args.get('doc_relation_ids'):
+            q = q.filter(EntityDocRelation.doc_relation_id.in_(args['doc_relation_ids']))
+        count = q.count()
+        items = q.offset(args['offset']).limit(args['limit']).all()
+        relation_ids = [item.doc_relation_id for item in items]
+
+        doc_relation_term_items = session.query(EntityDocRelationTerm) \
+            .filter(EntityDocRelationTerm.doc_relation_id.in_(relation_ids)).all()
+        relation_mapping = get_relation_mapping(doc_relation_term_items)
+
+        for item in items:
+            item.doc_term_ids = relation_mapping.get(item.doc_relation_id, [])
+        result = EntityDocRelationSchema(many=True).dump(items)
+        return {
+                   "message": "请求成功",
+                   "result": result,
+                   "count": count,
+               }, 200
+
+    @parse({
+        "doc_relation_name": fields.String(required=True),
+        "doc_term_ids": fields.List(fields.Integer(), required=True)
+    })
+    def post(self, args: typing.Dict, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        创建一个关系
+        """
+        doc_term_ids = args.pop('doc_term_ids')
+        session.query(EntityDocType) \
+            .filter(EntityDocType.doc_type_id == doc_type_id, EntityDocType.status) \
+            .first_or_404()
+
+        session.query(EntityDocTerm) \
+            .filter(EntityDocTerm.doc_term_id.in_(doc_term_ids), EntityDocTerm.status).first_or_404()
+
+        if len(doc_term_ids) != 2:
+            return {
+                       "message": "请检查文档条款是否填写或文档条款是否存在",
+                   }, 400
+
+        item = EntityDocRelation.create(**args, doc_type_id=doc_type_id)
+        item.flush()
+
+        for doc_term_id in doc_term_ids:
+            EntityDocRelationTerm.create(
+                doc_relation_id=item.doc_relation_id, doc_term_id=doc_term_id
+            )
+
+        session.commit()
+        result = EntityDocRelationSchema().dump(item)
+        return {
+                   "message": "创建成功",
+                   "result": result,
+               }, 201
+
+
 class TopDocTypeResource(Resource):
     def patch(self: Resource, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
         """

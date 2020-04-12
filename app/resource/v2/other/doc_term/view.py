@@ -53,6 +53,7 @@ class DocTermListResource(Resource, CurrentUserMixin):
         "doc_term_name": fields.String(required=True),
         "doc_term_color": fields.String(required=True),
         "doc_term_index": fields.Integer(required=True),
+        "doc_term_desc": fields.String(default=""),
         "doc_term_data_type": fields.String(required=True),
     })
     def post(self, args: typing.Dict, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
