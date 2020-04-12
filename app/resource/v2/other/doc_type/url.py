@@ -12,6 +12,9 @@ api.add_resource(view.DocTypeItemResource, '/classify_doc_type/<int:doc_type_id>
                  '/doc_type/<int:doc_type_id>', '/wordseg_doc_type/<int:doc_type_id>')
 api.add_resource(view.RelationDocTypeItemResource, '/entity_doc_type/<int:doc_type_id>')
 api.add_resource(view.EntityDocRelationListResource, '/entity_doc_type/<int:doc_type_id>/entity_doc_relation')
+api.add_resource(view.EntityDocRelationItemResource,
+                 '/entity_doc_type/<int:doc_type_id>/entity_doc_relation/<int:doc_relation_id>')
+api.add_resource(view.EntityDocTermItemResource, '/entity_doc_type/<int:doc_type_id>/entity_doc_term/<int:doc_term_id>')
 
 api.add_resource(view.TopDocTypeResource,
                  '/topping_doc_type/<int:doc_type_id>',

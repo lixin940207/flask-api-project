@@ -36,5 +36,5 @@ def print_app_attr_by_name(name) -> None:
 app.cli.add_command(app_cli)
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=10001)
 
