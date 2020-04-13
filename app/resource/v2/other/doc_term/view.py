@@ -84,7 +84,7 @@ class EntityDocTermItemResource(Resource):
     @parse({
         "doc_term_name": fields.String(),
         "doc_term_color": fields.String(),
-        "doc_term_index": fields.Integer(),
+        "doc_term_index": fields.Integer(allow_none=True, default=1),
         "doc_term_desc": fields.String(allow_none=True),
         "doc_term_data_type": fields.String(),
     })
@@ -93,7 +93,7 @@ class EntityDocTermItemResource(Resource):
         """
         修改一个条款
         """
-        result = DocTermService().update_doc_term(doc_type_id, doc_term_id, )
+        result = DocTermService().update_doc_term(doc_term_id, args)
         return {
                    "message": "更新成功",
                    "result": result,

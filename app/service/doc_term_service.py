@@ -44,8 +44,8 @@ class DocTermService:
         DocTermModel().delete(doc_term_id)
 
     @staticmethod
-    def update_doc_term(doc_type_id, doc_term_id, args):
-        args.update({"doc_type_id": doc_type_id, "doc_term_id": doc_term_id})
-        item = DocTermModel().update(args)
+    def update_doc_term(doc_term_id, args):
+        item = DocTermModel().update(doc_term_id, **args)
+        session.commit()
         result = DocTermSchema().dump(item)
         return result

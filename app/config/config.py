@@ -34,8 +34,8 @@ class SqlalchemyConfigMixin:
     SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://{}:{}@{}:{}/{}'.format(
         os.getenv('MYSQL_USER', 'root'),
         os.getenv('MYSQL_PASSWORD', 'root'),
-        os.getenv('MYSQL_HOST', 'mysql'),
-        os.getenv('MYSQL_PORT', 3306),
+        os.getenv('MYSQL_HOST', '127.0.0.1'),
+        os.getenv('MYSQL_PORT', 43306),
         os.getenv('MYSQL_DATABASE', 'nlp_platform'),
     )
     # 调试SQL语句时使用，慎开

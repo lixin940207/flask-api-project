@@ -60,10 +60,10 @@ class DocTermModel(BaseModel, ABC):
         session.flush()
 
     def update(self, doc_term_id, **kwargs):
-        doc_term = session.query(DocTerm).filter(DocTerm.doc_term_id == doc_term_id)
-        session.query(DocTerm).update(kwargs)
+        q = session.query(DocTerm).filter(DocTerm.doc_term_id == doc_term_id)
+        q.update(kwargs)
         session.flush()
-        return doc_term
+        return q.one()
 
     def bulk_update(self, entity_list):
         for e in entity_list:
