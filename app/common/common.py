@@ -147,3 +147,15 @@ class Common:
         else:
             job_type = ''
         return job_type
+
+    @staticmethod
+    def tuple_list2dict(t):
+        """convert 3 element tuple to a nested dict"""
+        dict = {}
+        for a, b, c in t:
+            if a in dict:
+                if b not in dict[a]:
+                    dict[a][b] = c
+            else:
+                dict[a] = {b: c}
+        return dict

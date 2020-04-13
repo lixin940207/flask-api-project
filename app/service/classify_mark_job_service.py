@@ -13,14 +13,13 @@ from flask_restful import abort
 from pandas.errors import EmptyDataError
 from werkzeug.datastructures import FileStorage
 
-from app.common.export_sync import get_last_export_file, generate_extract_file, generate_classify_file, \
-    generate_wordseg_file
+from app.common.common import Common
+from app.common import export_sync
 from app.common.extension import session
 from app.common.fileset import upload_fileset, FileSet
 from app.common.redis import r
 from app.common.seeds import NlpTaskEnum, StatusEnum
 from app.common.utils.name import get_ext
-from app.common.utils.tuple_list2dict import tuple_list2dict
 from app.config.config import get_config_from_app as _get
 from app.entity import MarkJob, MarkTask, DocType
 from app.entity.base import FileTypeEnum
@@ -260,14 +259,14 @@ class MarkJobService:
 
         all_count = MarkTaskModel().count_mark_task_status(mark_job_ids=[mark_job_id])
         # convert 3 element tuple to a nested dict
-        all_status_dict = tuple_list2dict(all_count)
+        all_status_dict = Common().tuple_list2dict(all_count)
 
         if not (len(all_status_dict[mark_job_id]) == 1 and int(StatusEnum.approved) in all_status_dict[mark_job_id]):
             abort(400, message="有未标注或未审核任务，不能导出")
 
-        export_file_path = os.path.join('upload/export', '{}_job_{}'.format(NlpTaskEnum(nlp_task_id).name, mark_job_id))
+        export_file_path = os.path.join('upload/export', '{}_mark_job_{}'.format(NlpTaskEnum(nlp_task_id).name, mark_job_id))
         # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
-        last_exported_file = get_last_export_file(job=mark_job, export_file_path=export_file_path)
+        last_exported_file = export_sync.get_last_export_file(job=mark_job, export_file_path=export_file_path)
         if last_exported_file:
             return last_exported_file
 
@@ -277,13 +276,13 @@ class MarkJobService:
 
         if nlp_task_id == int(NlpTaskEnum.extract):
             doc_terms = DocTermModel().get_by_filter(limit=99999, doc_type_id=mark_job.doc_type_id)
-            file_path = generate_extract_file(task_and_doc_list=mark_task_and_doc_list,
+            file_path = export_sync.generate_extract_file(task_and_doc_list=mark_task_and_doc_list,
                                               export_fileset=export_fileset, doc_terms=doc_terms, offset=offset)
         elif nlp_task_id == int(NlpTaskEnum.classify):
-            file_path = generate_classify_file(task_and_doc_list=mark_task_and_doc_list,
+            file_path = export_sync.generate_classify_file(task_and_doc_list=mark_task_and_doc_list,
                                                export_fileset=export_fileset)
         elif nlp_task_id == int(NlpTaskEnum.wordseg):
-            file_path = generate_wordseg_file(task_and_doc_list=mark_task_and_doc_list,
+            file_path = export_sync.generate_wordseg_file(task_and_doc_list=mark_task_and_doc_list,
                                               export_fileset=export_fileset)
         else:
             abort(400, message="该任务无法导出")
@@ -303,7 +302,7 @@ class MarkJobService:
         # get all (count, status, mark_job_id) tuple
         all_count = MarkTaskModel().count_mark_task_status(mark_job_ids=[mark_job_id_list])
         # convert to a nested dict
-        all_status_dict = tuple_list2dict(all_count)
+        all_status_dict = Common().tuple_list2dict(all_count)
         for mark_job in mark_job_list:  # 遍历所有的job
             if mark_job.mark_job_status != StatusEnum.success:  # 不成功的job
                 continue
@@ -312,9 +311,9 @@ class MarkJobService:
                 continue
 
             export_file_path = os.path.join('upload/export',
-                                            '{}_job_{}'.format(NlpTaskEnum(nlp_task_id).name, mark_job.mark_job_id))
+                                            '{}_mark_job_{}'.format(NlpTaskEnum(nlp_task_id).name, mark_job.mark_job_id))
             # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
-            last_exported_file = get_last_export_file(job=mark_job, export_file_path=export_file_path)
+            last_exported_file = export_sync.get_last_export_file(job=mark_job, export_file_path=export_file_path)
             if last_exported_file:
                 shutil.copy(last_exported_file, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
                 continue
@@ -322,7 +321,7 @@ class MarkJobService:
             # 重新制作
             export_fileset = FileSet(folder=export_file_path)
             mark_task_and_doc_list = MarkTaskModel().get_mark_task_and_doc_by_mark_job_ids(mark_job_ids=[mark_job.mark_job_id])
-            file_path = generate_classify_file(task_and_doc_list=mark_task_and_doc_list,
+            file_path = export_sync.generate_classify_file(task_and_doc_list=mark_task_and_doc_list,
                                                export_fileset=export_fileset)
             shutil.copy(file_path, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
 

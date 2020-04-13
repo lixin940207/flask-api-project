@@ -95,8 +95,8 @@ class DocTypeModel(BaseModel, ABC):
             q = session.query(DocType.nlp_task_id, func.count(DocType.doc_type_id)) \
                 .join(MarkJob, MarkJob.doc_type_id == DocType.doc_type_id) \
                 .filter(~DocType.is_deleted, ~MarkJob.is_deleted,
-                        or_(func.json_contains(MarkJob.annotator_ids, current_user.user_id),
-                            func.json_contains(MarkJob.annotator_ids, current_user.user_id)))
+                        or_(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)),
+                            func.json_contains(MarkJob.annotator_ids, str(current_user.user_id))))
         count = q.group_by(DocType.nlp_task_id).all()
         return count
 
@@ -107,8 +107,8 @@ class DocTypeModel(BaseModel, ABC):
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
         elif current_user.user_role in [RoleEnum.reviewer.value, RoleEnum.annotator.value]:
-            q = q.filter(or_(func.json_contains(MarkJob.annotator_ids, current_user.user_id),
-                             func.json_contains(MarkJob.reviewer_ids, current_user.user_id)))
+            q = q.filter(or_(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)),
+                             func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id))))
         if mark_job_ids:
             q = q.outerjoin(MarkJob, MarkJob.doc_type_id == DocType.doc_type_id) \
                 .filter(MarkJob.mark_job_id.in_(mark_job_ids))
@@ -123,8 +123,8 @@ class DocTypeModel(BaseModel, ABC):
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
         elif current_user.user_role in [RoleEnum.reviewer.value, RoleEnum.annotator.value]:
-            q = q.filter(or_(func.json_contains(MarkJob.annotator_ids, current_user.user_id),
-                             func.json_contains(MarkJob.reviewer_ids, current_user.user_id)))
+            q = q.filter(or_(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)),
+                             func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id))))
         count = q.count()
         q = q.order_by(DocType.created_time.desc())
         return count, q.all()
