@@ -3,7 +3,8 @@ from sqlalchemy import not_, func
 from typing import List, Tuple, Dict
 
 from app.common.filters import CurrentUser
-from app.common.common import StatusEnum, RoleEnum
+from app.common.common import StatusEnum, RoleEnum, Common
+from app.common.utils.status_mapper import status_str2int_mapper
 from app.entity import DocType, MarkJob, Doc, UserTask
 from app.model.base import BaseModel
 from app.entity.mark_task import MarkTask
@@ -148,3 +149,48 @@ class MarkTaskModel(BaseModel, ABC):
         q = session.query(MarkTask).filter(MarkTask.mark_task_id == _id).one()
         q.mark_task_result = []
         q.mark_task_status = int(StatusEnum.unlabel)
+
+    @staticmethod
+    def get_mark_task_with_doc_and_doc_type(nlp_task_id, current_user: CurrentUser, args):
+        q = session.query(UserTask, MarkTask, DocType, Doc) \
+            .join(MarkTask, MarkTask.mark_task_id == UserTask.mark_task_id) \
+            .join(MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id) \
+            .join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
+            .join(Doc, Doc.doc_id == MarkTask.doc_id) \
+            .filter(
+            DocType.nlp_task_id == nlp_task_id,
+            ~UserTask.is_deleted,
+            ~MarkTask.is_deleted,
+            ~Doc.is_deleted
+        )
+        # TODO
+        # 权限
+        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
+            q = q.filter(MarkTask.group_id.in_(current_user.user_groups))
+        elif current_user.user_role in [RoleEnum.reviewer.value]:
+            q = q.filter(func.json_contains(MarkTask.reviewer_ids, current_user.user_id))
+        elif current_user.user_role in [RoleEnum.annotator.value]:
+            q = q.filter(func.json_contains(MarkTask.annotator_ids, current_user.user_id))
+        if args.get('job_id'):
+            q.filter(MarkTask.mark_task_id == args['job_id'])
+        if args.get('doc_type_id'):
+            q.filter(MarkJob.doc_type_id == args['doc_type_id'])
+        if args['task_state']:
+            q.filter(MarkTask.mark_task_status == status_str2int_mapper().get(args['task_state']))
+        if args['query']:
+            q = q.filter(Doc.doc_raw_name.like(f'%{args["query"]}%'))
+        q = q.group_by(UserTask)
+        count = q.count()
+        processing_count = q.filter(MarkTask.mark_task_status == int(StatusEnum.processing)).count()
+        if args['order_by'] and isinstance(args['order_by'], str):
+            if args['order_by'][1:] == 'task_id':
+                args['order_by'] = args['order_by'][0] + 'mark_task_id'
+            q = Common().order_by_model_fields(q, MarkTask, [args['order_by']])
+        items = []
+        for user_task, mark_task, doc_type, doc in q.offset(args['offset']).limit(args['limit']).all():
+            user_task_list = []
+            mark_task.user_task_list = user_task_list
+            mark_task.doc = doc
+            mark_task.doc_type = doc_type
+            items.append(mark_task)
+        return count, count - processing_count, items
