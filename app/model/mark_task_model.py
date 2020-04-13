@@ -131,12 +131,12 @@ class MarkTaskModel(BaseModel, ABC):
             q = q.filter(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)))
         # get grouped (doc_type_id, mark_job_id, count) list
         all_status = q.group_by(MarkJob.doc_type_id, MarkJob.mark_job_id) \
-            .with_entities(DocType.doc_type_id, MarkJob.mark_job_id, func.count(MarkTask.mark_task_id)).all()
+            .with_entities(MarkJob.doc_type_id, MarkJob.mark_job_id, func.count(MarkTask.mark_task_id)).all()
         # filter >= labeled status
         q = q.filter(MarkTask.mark_task_status >= int(StatusEnum.labeled))
         # get grouped (doc_type_id, mark_job_id, >= labeled count) list
         all_finish_marking_status = q.group_by(MarkJob.doc_type_id, MarkJob.mark_job_id) \
-            .with_entities(DocType.doc_type_id, MarkJob.mark_job_id, func.count(MarkTask.mark_task_id)).all()
+            .with_entities(MarkJob.doc_type_id, MarkJob.mark_job_id, func.count(MarkTask.mark_task_id)).all()
         return all_status, all_finish_marking_status
 
     @staticmethod
