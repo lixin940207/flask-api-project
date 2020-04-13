@@ -33,7 +33,10 @@ class DocTypeService:
         result = []
         # get doc_type list by user
         _, doc_type_list = DocTypeModel().get_by_nlp_task_id_by_user(nlp_task_id=nlp_task_id, current_user=current_user)
-        doc_type_list = [{"doc_type": DocTypeSchema().dump(d)} for d in doc_type_list]
+        for doc_type, terms in doc_type_list:
+            doc_type.doc_terms = [int(t) for t in terms.split(",")]
+        doc_type_list = [d[0] for d in doc_type_list]
+        doc_type_list = [{"doc_type": DocTypeSchema().dump(doc_type)} for doc_type in doc_type_list]
 
         # get all job count and approved job count
         all_status, all_marked_status = MarkTaskModel().count_status_by_user(nlp_task_id=nlp_task_id, current_user=current_user)
@@ -183,4 +186,11 @@ class DocTypeService:
         # session.commit()
         # result = EntityDocTermSchema().dump(item)
         return None
+
+    @staticmethod
+    def create_relation_doc_type(args):
+        item = DocTypeModel().create(**args)
+        session.commit()
+        result = DocTypeSchema().dump(item)
+        return result
 

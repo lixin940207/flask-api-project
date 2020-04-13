@@ -2,9 +2,8 @@ import typing
 from flask_restful import Resource, abort
 from app.common.patch import parse, fields
 from app.common.filters import CurrentUserMixin
-from app.common.common import Common
+from app.common.common import Common, NlpTaskEnum
 from app.service.doc_type_service import DocTypeService
-from app.schema.doc_type_schema import DocTypeSchema
 
 
 class DocTypeListResource(Resource, CurrentUserMixin):
@@ -54,6 +53,23 @@ class DocTypeListResource(Resource, CurrentUserMixin):
             'nlp_task_id': nlp_task_id
         })
         result = DocTypeService().create_doc_type(self.get_current_user(), args)
+        return {
+                   "message": "创建成功",
+                   "result": result,
+               }, 201
+
+
+class RelationDocTypeListResource(Resource, CurrentUserMixin):
+    @parse({
+        "doc_type_name": fields.String(required=True),
+        "doc_type_desc": fields.String(),
+    })
+    def post(self: Resource, args: typing.Dict) -> typing.Tuple[typing.Dict, int]:
+        """
+        创建一个文档类型包括它的条款
+        """
+        args.update({"nlp_task_id": NlpTaskEnum.relation.value})
+        result = DocTypeService.create_relation_doc_type(args)
         return {
                    "message": "创建成功",
                    "result": result,

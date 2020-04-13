@@ -6,7 +6,7 @@ from sqlalchemy import or_
 
 from typing import List, Set
 
-from app.entity import MarkJob, TrainJob, TrainTask
+from app.entity import MarkJob, TrainJob, TrainTask, DocTerm
 from app.model.base import BaseModel
 from app.entity.doc_type import DocType
 from app.common.extension import session
@@ -136,13 +136,16 @@ class DocTypeModel(BaseModel, ABC):
 
     @staticmethod
     def get_by_nlp_task_id_by_user(nlp_task_id, current_user: CurrentUser) -> [DocType]:
-        q = session.query(DocType).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
+        q = session.query(DocType, func.group_concat(DocTerm.doc_term_id.distinct())).\
+            join(DocTerm, DocType.doc_type_id == DocTerm.doc_type_id).\
+            filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
         # 权限filter
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
         elif current_user.user_role in [RoleEnum.reviewer.value, RoleEnum.annotator.value]:
             q = q.filter(or_(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)),
                              func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id))))
+        q = q.group_by(DocTerm.doc_type_id, DocType)
         count = q.count()
         q = q.order_by(DocType.created_time.desc())
         return count, q.all()

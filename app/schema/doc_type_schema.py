@@ -14,6 +14,7 @@ class EntityDocRelationSchema(Schema):
 
 
 class DocTypeSchema(Schema):
+    doc_terms = fields.List(fields.Integer())
     doc_term_list = fields.List(fields.Nested(DocTermSchema))
     doc_relation_list = fields.List(fields.Nested(EntityDocRelationSchema))
     doc_lexicon_list = fields.List(fields.Nested(WordsegDocLexiconSchema), attribute='doc_rules')
