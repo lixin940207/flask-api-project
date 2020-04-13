@@ -6,6 +6,7 @@ import typing
 from app.common.common import StatusEnum, NlpTaskEnum, Common
 from app.common.extension import session
 from app.common.filters import CurrentUser
+from app.common.utils.tuple_list2dict import tuple_list2dict
 from app.model import DocTypeModel, MarkTaskModel
 from app.model.doc_relation_model import DocRelationModel
 from app.model.doc_term_model import DocTermModel
@@ -39,10 +40,9 @@ class DocTypeService:
         all_status, all_marked_status = MarkTaskModel().count_status_by_user(nlp_task_id=nlp_task_id, current_user=current_user)
 
         # calculate marked mark_job count and all mark_job for each doc_type
-        all_status_dict = {_doc_type_id: {_mark_job_id: _count_sum} for _doc_type_id, _mark_job_id, _count_sum in
-                           all_status}
-        all_marked_status_dict = {_doc_type_id: {_mark_job_id: _count_sum} for _doc_type_id, _mark_job_id, _count_sum in
-                                  all_marked_status}
+        all_status_dict = tuple_list2dict(all_status)
+        all_marked_status_dict = tuple_list2dict(all_marked_status)
+
         for doc_type in doc_type_list:
             doc_type_id = doc_type["doc_type"]["doc_type_id"]
             mark_job_count = len(all_status_dict.get(doc_type_id, {}))

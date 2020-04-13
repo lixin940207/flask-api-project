@@ -82,7 +82,7 @@ class MarkTaskModel(BaseModel, ABC):
     @staticmethod
     def count_mark_task_status(mark_job_ids) -> [Tuple[int]]:
         all_count = session.query(
-            func.count(MarkTask.mark_task_status), MarkTask.mark_task_status, MarkTask.mark_job_id) \
+            MarkTask.mark_job_id, MarkTask.mark_task_status, func.count(MarkTask.mark_task_status)) \
             .join(MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id) \
             .filter(MarkJob.mark_job_id.in_(mark_job_ids),
                     ~MarkTask.is_deleted, ~MarkJob.is_deleted) \
