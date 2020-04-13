@@ -5,7 +5,7 @@ from flask_restful import Resource
 
 from app.common.patch import parse, fields
 from app.common.utils.status_mapper import status_str2int_mapper
-from app.schema.evaluate_task_schema import EvaluateTaskSchema
+from app.schema import EvaluateTaskSchema
 from app.service.model_evaluate_service import ModelEvaluateService
 
 

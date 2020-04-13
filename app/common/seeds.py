@@ -77,7 +77,7 @@ class Seeds:
 
     @staticmethod
     def create_doc_term():
-        from app.model.doc_term_model import DocTermModel
+        from app.model import DocTermModel
         if len(DocTermModel().get_all()) == 0:
             DocTermModel().create(app_id=1, created_by=1, doc_term_id=1, doc_term_name="人名", doc_term_alias="nr",
                                   doc_type_id=1)
@@ -324,7 +324,7 @@ class Seeds:
 
     @staticmethod
     def create_evaluate_task():
-        from app.model.evaluate_task_model import EvaluateTaskModel
+        from app.model import EvaluateTaskModel
         if EvaluateTaskModel().is_empty_table():
             EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=1, evaluate_task_name="test",
                                        evaluate_task_status=int(StatusEnum.success), train_task_id=1)

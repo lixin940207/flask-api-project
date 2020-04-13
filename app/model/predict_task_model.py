@@ -85,6 +85,8 @@ class PredictTaskModel(BaseModel, ABC):
         else:
             q = q.order_by(getattr(PredictTask, order_by))
 
+        count = q.count()
+        q = q.offset(offset).limit(limit)
         # assign doc_type, train_list to each trainjob for dumping
         predict_task_list = []
         for predict_task, doc, doc_type in q.all():
@@ -93,8 +95,7 @@ class PredictTaskModel(BaseModel, ABC):
             predict_task.doc = doc
             predict_task_list.append(predict_task)
 
-        count = len(predict_task_list)
-        return count, predict_task_list[offset: offset + limit]
+        return count, predict_task_list
 
     def create(self, **kwargs) -> PredictTask:
         entity = PredictTask(**kwargs)

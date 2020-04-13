@@ -3,15 +3,14 @@
 # create: 2020/3/30-10:58 上午
 import typing
 
-from app.common.common import StatusEnum, NlpTaskEnum, Common
+from app.common.common import Common
 from app.common.extension import session
 from app.common.filters import CurrentUser
 from app.model import DocTypeModel, MarkTaskModel
 from app.model.doc_relation_model import DocRelationModel
 from app.model.doc_term_model import DocTermModel
 from app.model.evaluate_task_model import EvaluateTaskModel
-from app.schema.doc_type_schema import DocTypeSchema, DocTermSchema, EntityDocRelationSchema
-from app.schema.evaluate_task_schema import EvaluateTaskSchema
+from app.schema import DocTypeSchema, EvaluateTaskSchema
 
 
 class DocTypeService:

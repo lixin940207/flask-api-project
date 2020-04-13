@@ -7,8 +7,8 @@
 @IDE: PyCharm 
 """
 from app.common.extension import session
-from app.model.doc_term_model import DocTermModel
-from app.schema.doc_term_schema import DocTermSchema
+from app.model import DocTermModel
+from app.schema import DocTermSchema
 
 
 class DocTermService:

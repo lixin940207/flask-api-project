@@ -24,7 +24,7 @@ from app.config.config import get_config_from_app as _get
 from app.entity import MarkJob, MarkTask
 from app.entity.base import FileTypeEnum
 from app.model import MarkJobModel, MarkTaskModel, UserTaskModel, DocModel, DocTypeModel, DocTermModel
-from app.schema.mark_job_schema import MarkJobSchema
+from app.schema import MarkJobSchema
 
 
 class MarkJobService:

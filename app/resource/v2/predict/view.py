@@ -7,7 +7,7 @@ from app.common.common import Common
 from app.common.filters import CurrentUserMixin
 from app.common.patch import parse, fields
 from app.common.utils.status_mapper import status_str2int_mapper
-from app.schema.predict_job_schema import PredictJobSchema
+from app.schema import PredictJobSchema
 from app.service.predict_service import PredictService
 
 

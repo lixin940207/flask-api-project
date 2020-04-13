@@ -6,7 +6,7 @@ from typing import Dict, Any, Tuple
 
 from app.common.common import StatusEnum, NlpTaskEnum
 from app.common.patch import parse, fields
-from app.schema.custom_algorithm_schema import CustomAlgorithmSchema
+from app.schema import CustomAlgorithmSchema
 from app.service.model_custom_service import ModelCustomService
 
 CUSTOM_MODEL_TYPES = ('extract', 'classify', 'wordseg', 'ner', 'relation')

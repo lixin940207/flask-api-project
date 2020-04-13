@@ -2,8 +2,7 @@ from flask_restful import Resource
 
 from app.common.patch import parse, fields
 from app.common.utils.status_mapper import status_str2int_mapper
-from app.schema.train_task_schema import TrainTaskSchema
-from app.schema.train_term_task_schema import TrainTermTaskSchema
+from app.schema import TrainTaskSchema, TrainTermTaskSchema
 from app.service.model_train_service import ModelTrainService
 
 

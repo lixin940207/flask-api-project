@@ -17,8 +17,7 @@ from app.common.utils.name import get_ext
 from app.entity import PredictJob, PredictTask
 from app.entity.base import FileTypeEnum
 from app.model import DocTypeModel, DocModel, DocTermModel
-from app.model.predict_job_model import PredictJobModel
-from app.model.predict_task_model import PredictTaskModel
+from app.model import PredictJobModel, PredictTaskModel
 
 
 class PredictService:
