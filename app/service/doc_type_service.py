@@ -1,13 +1,16 @@
 # coding=utf-8
 # email:  lixin@datagrand.com
 # create: 2020/3/30-10:58 上午
+import typing
+
 from app.common.common import StatusEnum, NlpTaskEnum, Common
 from app.common.extension import session
 from app.common.filters import CurrentUser
 from app.model import DocTypeModel, MarkTaskModel
+from app.model.doc_relation_model import DocRelationModel
 from app.model.doc_term_model import DocTermModel
 from app.model.evaluate_task_model import EvaluateTaskModel
-from app.schema.doc_type_schema import DocTypeSchema, DocTermSchema
+from app.schema.doc_type_schema import DocTypeSchema, DocTermSchema, EntityDocRelationSchema
 from app.schema.evaluate_task_schema import EvaluateTaskSchema
 
 
@@ -127,3 +130,34 @@ class DocTypeService:
     @staticmethod
     def check_doc_type_name_exists(doc_type_name):
         return DocTypeModel().if_exists_by_name(doc_type_name)
+
+    @staticmethod
+    def get_relation_list(doc_type_id: int, offset: int, limit: int, doc_relation_ids=[]):
+        relations, count = DocRelationModel().get_relation_with_terms(offset=offset, limit=limit, require_count=True,
+                                                                      doc_type_id=doc_type_id,
+                                                                      doc_relation_ids=doc_relation_ids)
+
+        result = [{"doc_relation_name": r[1], "doc_term_ids": [int(i) for i in r[3].split(",")],
+                   "doc_relation_id":r[0]} for r in relations]
+        return result, count
+
+    @staticmethod
+    def create_relation(doc_type_id: int, doc_term_ids: typing.List, doc_relation_name: str):
+        if not DocTypeModel().get_by_id(doc_type_id):
+            raise ValueError(f"DocType {doc_type_id} 不存在")
+        if len(DocTermModel().get_by_filter(doc_term_ids=doc_term_ids)) != 2:
+            raise ValueError(f"DocTerm 不存在或已被删除")
+
+        item = DocTermModel().create_relation(doc_relation_name, doc_term_ids, doc_type_id=doc_type_id)
+        session.commit()
+        return {
+            "doc_relation_name": doc_relation_name,
+            "doc_relation_id": item.doc_relation_id
+        }
+
+    @staticmethod
+    def delete_relation(doc_relation_id):
+        DocTermModel().delete_relation_mapping(doc_relation_id)
+        DocTermModel().delete_relation(doc_relation_id)
+        session.commit()
+

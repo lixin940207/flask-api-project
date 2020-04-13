@@ -141,6 +141,147 @@ class RelationDocTypeItemResource(Resource, CurrentUserMixin):
                }, 204
 
 
+class EntityDocRelationListResource(Resource):
+    @parse({
+        "doc_relation_ids": fields.List(fields.Integer(), missing=[]),
+        "offset": fields.Integer(missing=0),
+        "limit": fields.Integer(missing=10),
+    })
+    def get(self, args: typing.Dict, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        获取所有条款，不分页
+        """
+        result, count = DocTypeService().get_relation_list(doc_type_id, args.get("offset"), args.get("limit"),
+                                                           doc_relation_ids=args.get("doc_relation_ids"))
+        return {
+                   "message": "请求成功",
+                   "result": result,
+                   "count": count,
+               }, 200
+
+    @parse({
+        "doc_relation_name": fields.String(required=True),
+        "doc_term_ids": fields.List(fields.Integer(), required=True)
+    })
+    def post(self, args: typing.Dict, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        创建一个关系
+        """
+        result = DocTypeService().create_relation(doc_type_id, args.get("doc_term_ids"), args.get("doc_relation_name"))
+        return {
+                   "message": "创建成功",
+                   "result": result,
+               }, 201
+
+
+class EntityDocRelationItemResource(Resource):
+    @parse({
+        "doc_relation_name": fields.String(),
+        "doc_term_ids": fields.List(fields.Integer(), required=True)
+    })
+    def patch(self: Resource,
+              args: typing.Dict,
+              doc_type_id: int,
+              doc_relation_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        修改一个条款
+        """
+        doc_term_ids = list(set(args.pop("doc_term_ids", [])))
+        if len(doc_term_ids) != 2:
+            return {
+                       "message": "文档条款不正确，请确保填写了正确的文档条款"
+                   }, 400
+        _, item = session.query(EntityDocType, EntityDocRelation).filter(
+            EntityDocType.doc_type_id == doc_type_id,
+            EntityDocType.status,
+            EntityDocRelation.doc_type_id == EntityDocType.doc_type_id,
+            EntityDocRelation.doc_relation_id == doc_relation_id,
+            EntityDocRelation.status,
+        ).one()
+        doc_relation_term_items = session.query(EntityDocRelationTerm).filter(
+            EntityDocRelationTerm.doc_relation_id == doc_relation_id
+        ).all()
+        for index, doc_relation_term_item in enumerate(doc_relation_term_items):
+            doc_relation_term_item.status = False
+
+            if index <= len(doc_term_ids):
+                doc_relation_term_item.doc_term_id = doc_term_ids[index]
+                doc_relation_term_item.status = True
+
+        item.update(**args)
+        session.commit()
+        result = EntityDocTermSchema().dump(item)
+        return {
+                   "message": "更新成功",
+                   "result": result,
+               }, 201
+
+    def delete(self: Resource, doc_type_id: int, doc_relation_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        删除一个条款
+        """
+        DocTypeService().delete_relation(doc_relation_id)
+        return {
+                   "message": "删除成功",
+               }, 204
+
+
+class EntityDocTermItemResource(Resource):
+    @parse({
+        "doc_term_name": fields.String(),
+        "doc_term_color": fields.String(),
+        "doc_term_index": fields.Integer(),
+        "doc_term_desc": fields.String(allow_none=True),
+        "doc_term_data_type": fields.String(),
+    })
+    def patch(self: Resource, args: typing.Dict, doc_type_id: int, doc_term_id: int) -> typing.Tuple[
+        typing.Dict, int]:
+        """
+        修改一个条款
+        """
+        _, item = session.query(EntityDocType, EntityDocTerm).filter(
+            EntityDocType.doc_type_id == doc_type_id,
+            EntityDocType.status,
+            EntityDocTerm.doc_type_id == EntityDocType.doc_type_id,
+            EntityDocTerm.doc_term_id == doc_term_id,
+            EntityDocTerm.status,
+        ).one()
+        item.update(**args)
+        item.commit()
+        result = EntityDocTermSchema().dump(item)
+        return {
+                   "message": "更新成功",
+                   "result": result,
+               }, 201
+
+    def delete(self: Resource, doc_type_id: int, doc_term_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        删除一个条款
+        """
+        item = session.query(EntityDocRelationTerm).filter(
+            EntityDocRelationTerm.doc_term_id == doc_term_id,
+            EntityDocRelationTerm.status
+        ).first()
+
+        if item:
+            return {
+                       "message": "该条款仍有关联关系，请确保条款没有关联关系后再做清除"
+                   }, 400
+
+        _, item = session.query(EntityDocType, EntityDocTerm).filter(
+            EntityDocType.doc_type_id == doc_type_id,
+            EntityDocType.status,
+            EntityDocTerm.doc_type_id == EntityDocType.doc_type_id,
+            EntityDocTerm.doc_term_id == doc_term_id,
+            EntityDocTerm.status,
+        ).one()
+        item.delete()
+        item.commit()
+        return {
+                   "message": "删除成功",
+               }, 204
+
+
 class TopDocTypeResource(Resource):
     def patch(self: Resource, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
         """
