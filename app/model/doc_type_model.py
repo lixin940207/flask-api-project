@@ -147,5 +147,5 @@ class DocTypeModel(BaseModel, ABC):
                              func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id))))
         q = q.group_by(DocTerm.doc_type_id, DocType)
         count = q.count()
-        q = q.order_by(DocType.created_time.desc())
+        q = q.order_by(DocType.is_favorite.desc(), DocType.created_time.desc())
         return count, q.all()
