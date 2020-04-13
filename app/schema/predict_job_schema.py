@@ -5,7 +5,8 @@ from marshmallow import Schema
 
 from app.common.common import StatusEnum
 from app.common.patch import fields
-from app.schema import DocTypeSchema, PredictTaskSchema
+from app.schema import DocTypeSchema
+from app.schema.predict_task_schema import PredictTaskSchema
 
 
 class PredictJobSchema(Schema):

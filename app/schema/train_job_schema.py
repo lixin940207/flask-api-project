@@ -4,7 +4,9 @@
 from marshmallow import Schema
 
 from app.common.patch import fields
-from app.schema import DocTypeSchema, EvaluateTaskSchema, TrainTaskSchema
+from app.schema.doc_type_schema import DocTypeSchema
+from app.schema.evaluate_task_schema import EvaluateTaskSchema
+from app.schema.train_task_schema import TrainTaskSchema
 
 
 class TrainJobSchema(Schema):  # type: ignore
