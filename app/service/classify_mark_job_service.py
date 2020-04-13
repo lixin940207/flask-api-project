@@ -21,7 +21,7 @@ from app.common.redis import r
 from app.common.seeds import NlpTaskEnum, StatusEnum
 from app.common.utils.name import get_ext
 from app.config.config import get_config_from_app as _get
-from app.entity import MarkJob, MarkTask, DocType
+from app.entity import MarkJob, MarkTask
 from app.entity.base import FileTypeEnum
 from app.model import MarkJobModel, MarkTaskModel, UserTaskModel, DocModel, DocTypeModel, DocTermModel
 from app.schema.mark_job_schema import MarkJobSchema
@@ -108,6 +108,27 @@ class MarkJobService:
         session.commit()
         result = MarkJobSchema().dump(job)
         return result
+
+    def re_pre_label_mark_job(self, mark_job_ids, nlp_task):
+        pipe = r.pipeline()
+        # 通过标注任务获取 doctype id
+        mark_jobs = MarkJobModel().get_by_ids(mark_job_ids)
+        doc_type_ids = set(item.doc_type_id for item in mark_jobs)
+        # 获取其中拥有上线模型的doctype ids
+        online_doc_type_ids = DocTypeModel().get_online_ids_by_ids(doc_type_ids)
+        # 如果重新预标注的doc type在上线模型中没有 则abort
+        if doc_type_ids - online_doc_type_ids:
+            doc_types = DocTypeModel().get_by_ids(doc_type_ids - online_doc_type_ids)
+            abort(400, message='项目:{}，没有上线模型'.format('、'.join(item.doc_type_name for item in doc_types)))
+
+        # 获取所有标注任务所有文件生成的标注任务
+        unlabel_tasks = MarkTaskModel().get_unlabel_tasks_by_mark_job_ids(mark_job_ids)
+
+        # 按标注任务发送重新预标注任务
+        for task in unlabel_tasks:
+            self.push_mark_task_message(task, task, task, business=f"{nlp_task.name}_label")
+
+        pipe.execute()
 
     @staticmethod
     def delete_mark_job(mark_job_id: int):
@@ -216,7 +237,7 @@ class MarkJobService:
         return task_entity_list
 
     @staticmethod
-    def push_mark_task_message(mark_job, mark_task, doc, business):
+    def push_mark_task_message(mark_job, mark_task, doc, business, use_rule=False):
         r.lpush(_get('EXTRACT_TASK_QUEUE_KEY'), json.dumps({
             'files': [
                 {
@@ -227,6 +248,7 @@ class MarkJobService:
                 },
             ],
             'is_multi': False,
+            "use_rule": use_rule,
             'doc_id': doc.doc_id,
             'doc_type': mark_job.doc_type_id,
             'business': business,

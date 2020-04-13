@@ -135,3 +135,18 @@ class ClassifyMarkJobMultiExportResource(Resource):
                    "message": "请求成功",
                    "file_path": file_path
                }, 200
+
+    
+class ClassifyMarkJobRePreLabelResource(Resource):
+    @parse({
+        "mark_job_ids": fields.String(required=True),
+    })
+    def post(
+            self: Resource,
+            args: typing.Dict
+    ) -> typing.Tuple[typing.Dict, int]:
+        mark_job_ids = args['mark_job_ids'].split(',')
+        MarkJobService().re_pre_label_mark_job(mark_job_ids, nlp_task=NlpTaskEnum.classify)
+        return {
+                    "message": "请求成功",
+                }, 200

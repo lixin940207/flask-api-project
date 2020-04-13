@@ -16,6 +16,12 @@ class MarkJobModel(BaseModel, ABC):
     def get_by_id(self, _id):
         return session.query(MarkJob).filter(MarkJob.mark_job_id == _id, ~MarkJob.is_deleted).one()
 
+    def get_by_ids(self, ids):
+        return session.query(MarkJob).filter(MarkJob.mark_job_id.in_(ids), ~MarkJob.is_deleted).all()
+
+    def get_by_mark_job_ids(self, mark_job_ids):
+        return session.query(MarkTask).filter(MarkTask.mark_job_id.in_(mark_job_ids), ~MarkTask.is_deleted).all()
+
     def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
         accept_keys = ["assign_mode", "mark_job_status", "mark_job_type", "doc_type_id"]
