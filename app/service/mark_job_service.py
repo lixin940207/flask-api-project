@@ -315,10 +315,9 @@ class MarkJobService:
         mark_job_list = MarkJobModel().get_by_mark_job_id_list(mark_job_id_list=mark_job_id_list)
 
         # 导出文件夹命名
-        export_dir_path = os.path.join('upload/export',
-                                       'classify_mark_job_{}_{}'.format(','.join([str(id) for id in mark_job_id_list]),
-                                                                        datetime.now().strftime(
-                                                                            "%Y%m%d%H%M%S")))
+        export_dir_path = os.path.join(
+            'upload/export', 'classify_mark_job_{}_{}'.format(','.join([str(job_id) for job_id in mark_job_id_list]),
+                                                              datetime.now().strftime("%Y%m%d%H%M%S")))
         os.mkdir(export_dir_path)
 
         # get all (count, status, mark_job_id) tuple
@@ -329,7 +328,8 @@ class MarkJobService:
             if mark_job.mark_job_status != StatusEnum.success:  # 不成功的job
                 continue
             # 不是所有的任务都未审核完成
-            if len(all_status_dict[mark_job.mark_job_id]) == 1 and int(StatusEnum.approved) in all_status_dict[mark_job.mark_job_id]:
+            if len(all_status_dict[mark_job.mark_job_id]) == 1 and (
+                    int(StatusEnum.approved) in all_status_dict[mark_job.mark_job_id]):
                 continue
 
             export_file_path = os.path.join('upload/export',
@@ -337,7 +337,8 @@ class MarkJobService:
             # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
             last_exported_file = export_sync.get_last_export_file(job=mark_job, export_file_path=export_file_path)
             if last_exported_file:
-                shutil.copy(last_exported_file, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
+                shutil.copy(
+                    last_exported_file, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
                 continue
 
             # 重新制作

@@ -6,7 +6,7 @@ import typing
 from flask_restful import Resource
 
 from app.common.common import StatusEnum, NlpTaskEnum
-from app.service.classify_mark_job_service import MarkJobService
+from app.service.mark_job_service import MarkJobService
 
 
 class WordsegMarkJobExportResource(Resource):
