@@ -117,13 +117,13 @@ class PredictService:
         return predict_job
 
     @staticmethod
-    def export_predict_file(nlp_task_id, predict_job_id, offset):
+    def export_predict_file(nlp_task_id, predict_job_id, offset=50):
         predict_job = PredictJobModel().get_by_id(predict_job_id)
         if predict_job.predict_job_status != StatusEnum.success:
             abort(400, message="有失败或未完成任务，不能导出")
         export_file_path = os.path.join('upload/export', '{}_job_{}'.format(NlpTaskEnum(nlp_task_id).name, predict_job_id))
         # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
-        last_exported_file = get_last_export_file(predict_job=predict_job, export_file_path=export_file_path)
+        last_exported_file = get_last_export_file(job=predict_job, export_file_path=export_file_path)
         if last_exported_file:
             return last_exported_file
 

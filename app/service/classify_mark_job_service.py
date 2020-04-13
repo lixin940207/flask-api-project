@@ -3,14 +3,20 @@
 # @Date: 2020/3/23
 import json
 import math
+import os
+import shutil
+from datetime import datetime
 from typing import List
 
 import pandas as pd
+from flask_restful import abort
 from pandas.errors import EmptyDataError
 from werkzeug.datastructures import FileStorage
 
+from app.common.export_sync import get_last_export_file, generate_extract_file, generate_classify_file, \
+    generate_wordseg_file
 from app.common.extension import session
-from app.common.fileset import upload_fileset
+from app.common.fileset import upload_fileset, FileSet
 from app.common.redis import r
 from app.common.seeds import NlpTaskEnum, StatusEnum
 from app.common.utils.name import get_ext
@@ -243,3 +249,81 @@ class MarkJobService:
             for annotator_id in annotator_ids:
                 for task in task_list:
                     UserTaskModel().create(mark_task_id=task.mark_task_id, annotator_id=annotator_id)
+
+    @staticmethod
+    def export_mark_file(nlp_task_id, mark_job_id, offset=50):
+        mark_job = MarkJobModel().get_by_id(mark_job_id)
+
+        if mark_job.mark_job_status != StatusEnum.success:
+            abort(400, message="有失败或未完成任务，不能导出")
+
+        all_count = MarkTaskModel().count_mark_task_status(mark_job_ids=[mark_job_id])
+        all_status_dict = {_mark_job_id:{_mark_task_status:_count} for _count, _mark_job_id, _mark_task_status in all_count}
+        if len(all_status_dict[mark_job_id]) != all_status_dict[mark_job_id][int(StatusEnum.approved)]:
+            abort(400, message="有未标注或未审核任务，不能导出")
+
+        export_file_path = os.path.join('upload/export', '{}_job_{}'.format(NlpTaskEnum(nlp_task_id).name, mark_job_id))
+        # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
+        last_exported_file = get_last_export_file(job=mark_job, export_file_path=export_file_path)
+        if last_exported_file:
+            return last_exported_file
+
+        # 重新制作
+        export_fileset = FileSet(folder=export_file_path)
+        mark_task_and_doc_list = MarkTaskModel().get_mark_task_and_doc_by_mark_job_ids(mark_job_ids=[mark_job_id])
+
+        if nlp_task_id == int(NlpTaskEnum.extract):
+            doc_terms = DocTermModel().get_by_filter(limit=99999, doc_type_id=mark_job.doc_type_id)
+            file_path = generate_extract_file(predict_task_and_doc_list=mark_task_and_doc_list,
+                                              export_fileset=export_fileset, doc_terms=doc_terms, offset=offset)
+        elif nlp_task_id == int(NlpTaskEnum.classify):
+            file_path = generate_classify_file(predict_task_and_doc_list=mark_task_and_doc_list,
+                                               export_fileset=export_fileset)
+        elif nlp_task_id == int(NlpTaskEnum.wordseg):
+            file_path = generate_wordseg_file(predict_task_and_doc_list=mark_task_and_doc_list,
+                                              export_fileset=export_fileset)
+        else:
+            abort(400, message="该任务无法导出")
+        return file_path
+
+    @staticmethod
+    def export_multi_mark_file(nlp_task_id, mark_job_id_list, offset=50):
+        mark_job_list = MarkJobModel().get_by_mark_job_id_list(mark_job_id_list=mark_job_id_list)
+
+        # 导出文件夹命名
+        export_dir_path = os.path.join('upload/export',
+                                       'classify_mark_job_{}_{}'.format(','.join([str(id) for id in mark_job_id_list]),
+                                                                        datetime.now().strftime(
+                                                                            "%Y%m%d%H%M%S")))
+        os.mkdir(export_dir_path)
+
+        # get all (count, status, mark_job_id) tuple
+        all_count = MarkTaskModel().count_mark_task_status(mark_job_ids=[mark_job_id_list])
+        # convert to a nested dict
+        all_status_dict = {_mark_job_id:{_mark_task_status:_count} for _count, _mark_job_id, _mark_task_status in all_count}
+        for mark_job in mark_job_list:  # 遍历所有的job
+            if mark_job.mark_job_status != StatusEnum.success:  # 不成功的job
+                continue
+            # 不是所有的任务都未审核完成
+            if len(all_status_dict[mark_job.mark_job_id]) != all_status_dict[mark_job.mark_job_id][int(StatusEnum.approved)]:
+                continue
+
+            export_file_path = os.path.join('upload/export',
+                                            '{}_job_{}'.format(NlpTaskEnum(nlp_task_id).name, mark_job.mark_job_id))
+            # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
+            last_exported_file = get_last_export_file(job=mark_job, export_file_path=export_file_path)
+            if last_exported_file:
+                shutil.copy(last_exported_file, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
+                continue
+
+            # 重新制作
+            export_fileset = FileSet(folder=export_file_path)
+            mark_task_and_doc_list = MarkTaskModel().get_mark_task_and_doc_by_mark_job_ids(mark_job_ids=[mark_job.mark_job_id])
+            file_path = generate_classify_file(predict_task_and_doc_list=mark_task_and_doc_list,
+                                               export_fileset=export_fileset)
+            shutil.copy(file_path, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
+
+        if not os.listdir(export_dir_path):
+            abort(400, message="所有的任务都无法导出，请重新选择")
+        shutil.make_archive(export_dir_path, 'zip', export_dir_path)  # 打包
+        return export_dir_path + ".zip"

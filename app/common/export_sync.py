@@ -4,12 +4,12 @@
 import os
 
 
-def get_last_export_file(predict_job, export_file_path):
+def get_last_export_file(job, export_file_path):
     # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
     if os.path.exists(export_file_path) and os.listdir(export_file_path):
         last_file = sorted(os.listdir(export_file_path), reverse=True)[0]
         last_file_time = last_file.split('.')[0]
-        last_updated_time = predict_job.last_updated_time.strftime("%Y%m%d%H%M%S") if predict_job.last_updated_time else ''
+        last_updated_time = job.last_updated_time.strftime("%Y%m%d%H%M%S") if job.last_updated_time else ''
         if (not last_updated_time) or (last_file_time >= last_updated_time):  # 如果距离上次导出之后，job没有改动（一般都没有改动），就直接返回上次导出结果
             return os.path.join(export_file_path, last_file)
     return None
