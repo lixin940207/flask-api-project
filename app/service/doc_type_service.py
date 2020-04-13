@@ -34,7 +34,7 @@ class DocTypeService:
         # get doc_type list by user
         _, doc_type_list = DocTypeModel().get_by_nlp_task_id_by_user(nlp_task_id=nlp_task_id, current_user=current_user)
         for doc_type, terms in doc_type_list:
-            doc_type.doc_terms = [int(t) for t in terms.split(",")]
+            doc_type.doc_terms = [int(t) for t in terms.split(",")] if terms is not None else []
         doc_type_list = [d[0] for d in doc_type_list]
         doc_type_list = [{"doc_type": DocTypeSchema().dump(doc_type)} for doc_type in doc_type_list]
 
