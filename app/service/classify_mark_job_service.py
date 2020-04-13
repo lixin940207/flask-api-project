@@ -13,6 +13,7 @@ from flask_restful import abort
 from pandas.errors import EmptyDataError
 from werkzeug.datastructures import FileStorage
 
+from app.common.common import Common
 from app.common.export_sync import get_last_export_file, generate_extract_file, generate_classify_file, \
     generate_wordseg_file
 from app.common.extension import session
@@ -20,7 +21,6 @@ from app.common.fileset import upload_fileset, FileSet
 from app.common.redis import r
 from app.common.seeds import NlpTaskEnum, StatusEnum
 from app.common.utils.name import get_ext
-from app.common.utils.tuple_list2dict import tuple_list2dict
 from app.config.config import get_config_from_app as _get
 from app.entity import MarkJob, MarkTask, DocType
 from app.entity.base import FileTypeEnum
@@ -260,7 +260,7 @@ class MarkJobService:
 
         all_count = MarkTaskModel().count_mark_task_status(mark_job_ids=[mark_job_id])
         # convert 3 element tuple to a nested dict
-        all_status_dict = tuple_list2dict(all_count)
+        all_status_dict = Common().tuple_list2dict(all_count)
 
         if not (len(all_status_dict[mark_job_id]) == 1 and int(StatusEnum.approved) in all_status_dict[mark_job_id]):
             abort(400, message="有未标注或未审核任务，不能导出")
@@ -303,7 +303,7 @@ class MarkJobService:
         # get all (count, status, mark_job_id) tuple
         all_count = MarkTaskModel().count_mark_task_status(mark_job_ids=[mark_job_id_list])
         # convert to a nested dict
-        all_status_dict = tuple_list2dict(all_count)
+        all_status_dict = Common().tuple_list2dict(all_count)
         for mark_job in mark_job_list:  # 遍历所有的job
             if mark_job.mark_job_status != StatusEnum.success:  # 不成功的job
                 continue
