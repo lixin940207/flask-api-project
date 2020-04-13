@@ -184,3 +184,10 @@ class DocTypeService:
         # result = EntityDocTermSchema().dump(item)
         return None
 
+    @staticmethod
+    def create_relation_doc_type(args):
+        item = DocTypeModel().create(**args)
+        session.commit()
+        result = DocTypeSchema().dump(item)
+        return result
+

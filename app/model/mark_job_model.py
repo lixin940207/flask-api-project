@@ -146,7 +146,7 @@ class MarkJobModel(BaseModel, ABC):
                 .filter(~DocType.is_deleted, ~UserTask.is_deleted, ~MarkTask.is_deleted, ~MarkJob.is_deleted) \
                 .filter(
                 or_(UserTask.annotator_id == current_user.user_id, UserTask.annotator_id == current_user.user_id))
-        all_count = q.group_by(MarkJob.mark_job_status, MarkJob.doc_type_id, DocType.nlp_task_id).all()
+        all_count = q.group_by(MarkJob.mark_job_status, MarkJob.doc_type_id, DocType.nlp_task_id, DocType.doc_type_id).all()
         return all_count
 
     @staticmethod
