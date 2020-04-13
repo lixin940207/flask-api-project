@@ -24,7 +24,11 @@ from app.config.config import get_config_from_app as _get
 from app.entity import MarkJob, MarkTask
 from app.entity.base import FileTypeEnum
 from app.model import MarkJobModel, MarkTaskModel, UserTaskModel, DocModel, DocTypeModel, DocTermModel
-from app.schema import MarkJobSchema
+
+from app.schema.doc_schema import DocSchema
+from app.schema.doc_type_schema import DocTypeSchema
+from app.schema.mark_job_schema import MarkJobSchema
+from app.schema.mark_task_schema import MarkTaskSchema
 
 
 class MarkJobService:
@@ -352,3 +356,22 @@ class MarkJobService:
             abort(400, message="所有的任务都无法导出，请重新选择")
         shutil.make_archive(export_dir_path, 'zip', export_dir_path)  # 打包
         return export_dir_path + ".zip"
+
+    def get_mark_job_data_by_ids(self, mark_job_ids):
+        items = []
+        for mark_job_id in mark_job_ids:
+            doc_type = DocTypeModel().get_by_mark_job_id(mark_job_id)
+
+            result = {
+                "prefix": "",  # TODO: 与MQ确认传参是否适配
+                "doc_type": DocTypeSchema().dump(doc_type),
+                "docs": [],
+                "tasks": [],
+                "mark_job_id": mark_job_id,
+            }
+            data = MarkTaskModel().get_mark_task_and_doc_by_mark_job_ids([mark_job_id])
+
+            for task, doc in data:
+                result['docs'].append(DocSchema().dump(doc))
+                result['tasks'].append(MarkTaskSchema().dump(task))
+            items.append(result)
