@@ -57,7 +57,7 @@ class DocTypeModel(BaseModel, ABC):
         session.flush()
         return entity
 
-    def bulk_create(self, entity_list: dict) -> List[DocType]:
+    def bulk_create(self, entity_list) -> List[DocType]:
         entity_list = [DocType(**entity) for entity in entity_list]
         session.bulk_save_objects(entity_list, return_defaults=True)
         session.flush()

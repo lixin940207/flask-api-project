@@ -108,3 +108,30 @@ class ClassifyMarkJobImportResource(Resource):
             abort(400, message="文件编码错误 请上传utf-8编码文件")
         except KeyError:
             abort(400, message="文件格式不合规 请查看csv文件模版")
+
+
+class ClassifyMarkJobExportResource(Resource):
+    def get(
+            self: Resource,
+            job_id: int
+    ) -> typing.Tuple[typing.Dict, int]:
+        file_path = MarkJobService().export_mark_file(nlp_task_id=int(NlpTaskEnum.classify), mark_job_id=job_id)
+        return {
+                   "message": "请求成功",
+                   "file_path": file_path
+               }, 200
+
+
+class ClassifyMarkJobMultiExportResource(Resource):
+    @parse({
+        "job_ids": fields.List(fields.Integer(), missing=[])
+    })
+    def post(
+            self: Resource,
+            args: typing.Dict
+    ) -> typing.Tuple[typing.Dict, int]:
+        file_path = MarkJobService().export_multi_mark_file(nlp_task_id=int(NlpTaskEnum.classify), mark_job_id_list=args["job_ids"])
+        return {
+                   "message": "请求成功",
+                   "file_path": file_path
+               }, 200

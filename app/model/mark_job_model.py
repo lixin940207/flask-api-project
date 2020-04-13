@@ -20,7 +20,7 @@ class MarkJobModel(BaseModel, ABC):
         # Define allowed filter keys
         accept_keys = ["assign_mode", "mark_job_status", "mark_job_type", "doc_type_id"]
         # Compose query
-        q = session.query(MarkJob).filter(not_(MarkJob.is_deleted))
+        q = session.query(MarkJob).filter(~MarkJob.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():
             if key in accept_keys:
@@ -52,6 +52,12 @@ class MarkJobModel(BaseModel, ABC):
         q = q.order_by(text(f"{'-' if order_by_desc else ''}mark_job.{order_by}"))
         q = q.offset(offset).limit(limit)
         return count, q.all()
+
+    def get_by_mark_job_id_list(self, mark_job_id_list) -> List[MarkJob]:
+        # Compose query
+        q = session.query(MarkJob).filter(~MarkJob.is_deleted,
+                                          MarkJob.mark_job_id.in_(mark_job_id_list))
+        return q.all()
 
     def create(self, **kwargs):
         entity = MarkJob(**kwargs)

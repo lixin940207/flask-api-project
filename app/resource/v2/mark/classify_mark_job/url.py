@@ -9,3 +9,6 @@ api.add_resource(view.ClassifyMarkJobItemResource, '/classify_mark_job/<int:job_
 
 api.add_resource(view.ClassifyMarkJobImportResource, '/labeled_classify')
 api.add_resource(view.ClassifyMarkJobMultiDelete, '/classify_jobs_multi_delete')
+
+api.add_resource(view.ClassifyMarkJobExportResource, '/export_classify_mark_job/<int:job_id>')
+api.add_resource(view.ClassifyMarkJobMultiExportResource, '/export_classify_mark_job')
