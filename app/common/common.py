@@ -159,3 +159,18 @@ class Common:
             else:
                 dict[a] = {b: c}
         return dict
+
+    @staticmethod
+    def order_by_model_fields(q, model, fields):
+        for field in fields:
+            if field[0] in ('+', '-'):
+                flag = field[0]
+                attr_name = field[1:]
+            else:
+                flag = '+'
+                attr_name = field
+            order = {'+': 'asc', '-': 'desc'}[flag]
+            attr = getattr(model, attr_name)
+            condition = getattr(attr, order)()
+            q = q.order_by(condition)
+        return q
