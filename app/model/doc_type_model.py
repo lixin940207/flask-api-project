@@ -137,7 +137,7 @@ class DocTypeModel(BaseModel, ABC):
     @staticmethod
     def get_by_nlp_task_id_by_user(nlp_task_id, current_user: CurrentUser) -> [DocType]:
         q = session.query(DocType, func.group_concat(DocTerm.doc_term_id.distinct())).\
-            join(DocTerm, DocType.doc_type_id == DocTerm.doc_type_id).\
+            outerjoin(DocTerm, DocType.doc_type_id == DocTerm.doc_type_id).\
             filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
         # 权限filter
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
