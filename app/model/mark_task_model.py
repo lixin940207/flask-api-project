@@ -4,7 +4,7 @@ from typing import List, Tuple, Dict
 
 from app.common.filters import CurrentUser
 from app.common.common import StatusEnum, RoleEnum
-from app.entity import DocType, MarkJob, Doc
+from app.entity import DocType, MarkJob, Doc, UserTask
 from app.model.base import BaseModel
 from app.entity.mark_task import MarkTask
 from app.common.extension import session
@@ -20,6 +20,31 @@ class MarkTaskModel(BaseModel, ABC):
 
     def get_by_id(self, _id):
         return session.query(MarkTask).filter(MarkTask.mark_task_id == _id, not_(MarkTask.is_deleted)).one()
+
+    def get_unlabel_tasks_by_mark_job_ids(self, mark_job_ids):
+        """根据mark job获取所有未标注的mark task"""
+        unlabel_tasks = session.query(
+            UserTask.mark_task_id, Doc.doc_id, Doc.doc_unique_name, DocType.doc_type_id, MarkJob.mark_job_type
+        ).join(
+            MarkTask, MarkTask.mark_task_id == UserTask.mark_task_id
+        ).join(
+            Doc, Doc.doc_id == MarkTask.doc_id
+        ).join(
+            MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id
+        ).join(
+            DocType, DocType.doc_type_id == MarkJob.doc_type_id
+        ).filter(
+            MarkJob.mark_job_id.in_(mark_job_ids),
+            UserTask.user_task_status.notin_(
+                [int(x) for x in [StatusEnum.labeled, StatusEnum.approved, StatusEnum.reviewing, StatusEnum.processing]]
+            ),
+            ~UserTask.is_deleted,
+            ~MarkTask.is_deleted,
+            ~Doc.is_deleted,
+            ~MarkJob.is_deleted,
+            ~DocType.is_deleted,
+        ).all()
+        return unlabel_tasks
 
     def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
         # Define allowed filter keys
@@ -82,7 +107,7 @@ class MarkTaskModel(BaseModel, ABC):
     @staticmethod
     def count_mark_task_status(mark_job_ids) -> [Tuple[int]]:
         all_count = session.query(
-            func.count(MarkTask.mark_task_status), MarkTask.mark_task_status, MarkTask.mark_job_id) \
+            MarkTask.mark_job_id, MarkTask.mark_task_status, func.count(MarkTask.mark_task_status)) \
             .join(MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id) \
             .filter(MarkJob.mark_job_id.in_(mark_job_ids),
                     ~MarkTask.is_deleted, ~MarkJob.is_deleted) \
@@ -100,9 +125,9 @@ class MarkTaskModel(BaseModel, ABC):
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
         elif current_user.user_role in [RoleEnum.reviewer.value]:
-            q = q.filter(func.json_contains(MarkJob.reviewer_ids, current_user.user_id))
+            q = q.filter(func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id)))
         elif current_user.user_role in [RoleEnum.annotator.value]:
-            q = q.filter(func.json_contains(MarkJob.annotator_ids, current_user.user_id))
+            q = q.filter(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)))
         # get grouped (doc_type_id, mark_job_id, count) list
         all_status = q.group_by(MarkJob.doc_type_id, MarkJob.mark_job_id) \
             .with_entities(DocType.doc_type_id, MarkJob.mark_job_id, func.count(MarkTask.mark_task_id)).all()

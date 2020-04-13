@@ -1,10 +1,9 @@
 import typing
-from flask_restful import Resource
+from flask_restful import Resource, abort
 from app.common.patch import parse, fields
 from app.common.filters import CurrentUserMixin
-from app.common.common import Common
+from app.common.common import Common, NlpTaskEnum
 from app.service.doc_type_service import DocTypeService
-from app.schema.doc_type_schema import DocTypeSchema
 
 
 class DocTypeListResource(Resource, CurrentUserMixin):
@@ -54,6 +53,23 @@ class DocTypeListResource(Resource, CurrentUserMixin):
             'nlp_task_id': nlp_task_id
         })
         result = DocTypeService().create_doc_type(self.get_current_user(), args)
+        return {
+                   "message": "创建成功",
+                   "result": result,
+               }, 201
+
+
+class RelationDocTypeListResource(Resource, CurrentUserMixin):
+    @parse({
+        "doc_type_name": fields.String(required=True),
+        "doc_type_desc": fields.String(),
+    })
+    def post(self: Resource, args: typing.Dict) -> typing.Tuple[typing.Dict, int]:
+        """
+        创建一个文档类型包括它的条款
+        """
+        args.update({"nlp_task_id": NlpTaskEnum.relation.value})
+        result = DocTypeService.create_relation_doc_type(args)
         return {
                    "message": "创建成功",
                    "result": result,
@@ -136,6 +152,70 @@ class RelationDocTypeItemResource(Resource, CurrentUserMixin):
         删除一个文档类型
         """
         DocTypeService().delete_doc_type(doc_type_id)
+        return {
+                   "message": "删除成功",
+               }, 204
+
+
+class EntityDocRelationListResource(Resource):
+    @parse({
+        "doc_relation_ids": fields.List(fields.Integer(), missing=[]),
+        "offset": fields.Integer(missing=0),
+        "limit": fields.Integer(missing=10),
+    })
+    def get(self, args: typing.Dict, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        获取所有条款，不分页
+        """
+        result, count = DocTypeService().get_relation_list(doc_type_id, args.get("offset"), args.get("limit"),
+                                                           doc_relation_ids=args.get("doc_relation_ids"))
+        return {
+                   "message": "请求成功",
+                   "result": result,
+                   "count": count,
+               }, 200
+
+    @parse({
+        "doc_relation_name": fields.String(required=True),
+        "doc_term_ids": fields.List(fields.Integer(), required=True)
+    })
+    def post(self, args: typing.Dict, doc_type_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        创建一个关系
+        """
+        result = DocTypeService().create_relation(doc_type_id, args.get("doc_term_ids"), args.get("doc_relation_name"))
+        return {
+                   "message": "创建成功",
+                   "result": result,
+               }, 201
+
+
+class EntityDocRelationItemResource(Resource):
+    @parse({
+        "doc_relation_name": fields.String(),
+        "doc_term_ids": fields.List(fields.Integer(), required=True)
+    })
+    def patch(self: Resource,
+              args: typing.Dict,
+              doc_type_id: int,
+              doc_relation_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        修改一个条款
+        """
+        doc_term_ids = list(set(args.pop("doc_term_ids", [])))
+        if len(doc_term_ids) != 2:
+            abort(400, message="文档条款不正确，请确保填写了正确的文档条款")
+        result = DocTypeService().update_relation(doc_type_id, args.get("doc_relation_name"), args.get("doc_term_ids", []))
+        return {
+                   "message": "更新成功",
+                   "result": result,
+               }, 201
+
+    def delete(self: Resource, doc_type_id: int, doc_relation_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        删除一个条款
+        """
+        DocTypeService().delete_relation(doc_relation_id)
         return {
                    "message": "删除成功",
                }, 204

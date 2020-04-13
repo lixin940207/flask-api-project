@@ -6,8 +6,7 @@ import os
 
 from flask_restful import abort
 
-from app.common.export_sync import get_last_export_file, generate_extract_file, generate_classify_file, \
-    generate_wordseg_file
+from app.common import export_sync
 from app.common.extension import session
 from app.config.config import get_config_from_app as _get
 from app.common.common import StatusEnum, NlpTaskEnum
@@ -18,8 +17,7 @@ from app.common.utils.name import get_ext
 from app.entity import PredictJob, PredictTask
 from app.entity.base import FileTypeEnum
 from app.model import DocTypeModel, DocModel, DocTermModel
-from app.model.predict_job_model import PredictJobModel
-from app.model.predict_task_model import PredictTaskModel
+from app.model import PredictJobModel, PredictTaskModel
 
 
 class PredictService:
@@ -117,13 +115,13 @@ class PredictService:
         return predict_job
 
     @staticmethod
-    def export_predict_file(nlp_task_id, predict_job_id, offset):
+    def export_predict_file(nlp_task_id, predict_job_id, offset=50):
         predict_job = PredictJobModel().get_by_id(predict_job_id)
         if predict_job.predict_job_status != StatusEnum.success:
             abort(400, message="有失败或未完成任务，不能导出")
-        export_file_path = os.path.join('upload/export', '{}_job_{}'.format(NlpTaskEnum(nlp_task_id).name, predict_job_id))
+        export_file_path = os.path.join('upload/export', '{}_predict_job_{}'.format(NlpTaskEnum(nlp_task_id).name, predict_job_id))
         # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
-        last_exported_file = get_last_export_file(predict_job=predict_job, export_file_path=export_file_path)
+        last_exported_file = export_sync.get_last_export_file(job=predict_job, export_file_path=export_file_path)
         if last_exported_file:
             return last_exported_file
 
@@ -133,11 +131,11 @@ class PredictService:
 
         if nlp_task_id == int(NlpTaskEnum.extract):
             doc_terms = DocTermModel().get_by_filter(limit=99999, doc_type_id=predict_job.doc_type_id)
-            file_path = generate_extract_file(predict_task_and_doc_list=predict_task_and_doc_list, export_fileset=export_fileset, doc_terms=doc_terms, offset=offset)
+            file_path = export_sync.generate_extract_file(task_and_doc_list=predict_task_and_doc_list, export_fileset=export_fileset, doc_terms=doc_terms, offset=offset)
         elif nlp_task_id == int(NlpTaskEnum.classify):
-            file_path = generate_classify_file(predict_task_and_doc_list=predict_task_and_doc_list, export_fileset=export_fileset)
+            file_path = export_sync.generate_classify_file(task_and_doc_list=predict_task_and_doc_list, export_fileset=export_fileset)
         elif nlp_task_id == int(NlpTaskEnum.wordseg):
-            file_path = generate_wordseg_file(predict_task_and_doc_list=predict_task_and_doc_list, export_fileset=export_fileset)
+            file_path = export_sync.generate_wordseg_file(task_and_doc_list=predict_task_and_doc_list, export_fileset=export_fileset)
         else:
             abort(400, message="该任务无法导出")
         return file_path

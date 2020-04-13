@@ -3,22 +3,28 @@
 # @Date: 2020/3/23
 import json
 import math
+import os
+import shutil
+from datetime import datetime
 from typing import List
 
 import pandas as pd
+from flask_restful import abort
 from pandas.errors import EmptyDataError
 from werkzeug.datastructures import FileStorage
 
+from app.common.common import Common
+from app.common import export_sync
 from app.common.extension import session
-from app.common.fileset import upload_fileset
+from app.common.fileset import upload_fileset, FileSet
 from app.common.redis import r
 from app.common.seeds import NlpTaskEnum, StatusEnum
 from app.common.utils.name import get_ext
 from app.config.config import get_config_from_app as _get
-from app.entity import MarkJob, MarkTask, DocType
+from app.entity import MarkJob, MarkTask
 from app.entity.base import FileTypeEnum
 from app.model import MarkJobModel, MarkTaskModel, UserTaskModel, DocModel, DocTypeModel, DocTermModel
-from app.schema.mark_job_schema import MarkJobSchema
+from app.schema import MarkJobSchema
 
 
 class MarkJobService:
@@ -32,7 +38,7 @@ class MarkJobService:
         mark_job_ids = [mark_job.mark_job_id for mark_job, _ in result]
         status_count = MarkTaskModel().count_mark_task_status(mark_job_ids=mark_job_ids)
         cache = {}
-        for task_status_count, task_status, mark_job_id in status_count:
+        for mark_job_id, task_status, task_status_count in status_count:
             if not cache.get(mark_job_id):
                 cache[mark_job_id] = {'all': 0, 'labeled': 0, 'audited': 0}
 
@@ -102,6 +108,27 @@ class MarkJobService:
         session.commit()
         result = MarkJobSchema().dump(job)
         return result
+
+    def re_pre_label_mark_job(self, mark_job_ids, nlp_task):
+        pipe = r.pipeline()
+        # 通过标注任务获取 doctype id
+        mark_jobs = MarkJobModel().get_by_ids(mark_job_ids)
+        doc_type_ids = set(item.doc_type_id for item in mark_jobs)
+        # 获取其中拥有上线模型的doctype ids
+        online_doc_type_ids = DocTypeModel().get_online_ids_by_ids(doc_type_ids)
+        # 如果重新预标注的doc type在上线模型中没有 则abort
+        if doc_type_ids - online_doc_type_ids:
+            doc_types = DocTypeModel().get_by_ids(doc_type_ids - online_doc_type_ids)
+            abort(400, message='项目:{}，没有上线模型'.format('、'.join(item.doc_type_name for item in doc_types)))
+
+        # 获取所有标注任务所有文件生成的标注任务
+        unlabel_tasks = MarkTaskModel().get_unlabel_tasks_by_mark_job_ids(mark_job_ids)
+
+        # 按标注任务发送重新预标注任务
+        for task in unlabel_tasks:
+            self.push_mark_task_message(task, task, task, business=f"{nlp_task.name}_label")
+
+        pipe.execute()
 
     @staticmethod
     def delete_mark_job(mark_job_id: int):
@@ -210,7 +237,7 @@ class MarkJobService:
         return task_entity_list
 
     @staticmethod
-    def push_mark_task_message(mark_job, mark_task, doc, business):
+    def push_mark_task_message(mark_job, mark_task, doc, business, use_rule=False):
         r.lpush(_get('EXTRACT_TASK_QUEUE_KEY'), json.dumps({
             'files': [
                 {
@@ -221,6 +248,7 @@ class MarkJobService:
                 },
             ],
             'is_multi': False,
+            "use_rule": use_rule,
             'doc_id': doc.doc_id,
             'doc_type': mark_job.doc_type_id,
             'business': business,
@@ -243,3 +271,83 @@ class MarkJobService:
             for annotator_id in annotator_ids:
                 for task in task_list:
                     UserTaskModel().create(mark_task_id=task.mark_task_id, annotator_id=annotator_id)
+
+    @staticmethod
+    def export_mark_file(nlp_task_id, mark_job_id, offset=50):
+        mark_job = MarkJobModel().get_by_id(mark_job_id)
+
+        if mark_job.mark_job_status != StatusEnum.success:
+            abort(400, message="有失败或未完成任务，不能导出")
+
+        all_count = MarkTaskModel().count_mark_task_status(mark_job_ids=[mark_job_id])
+        # convert 3 element tuple to a nested dict
+        all_status_dict = Common().tuple_list2dict(all_count)
+
+        if not (len(all_status_dict[mark_job_id]) == 1 and int(StatusEnum.approved) in all_status_dict[mark_job_id]):
+            abort(400, message="有未标注或未审核任务，不能导出")
+
+        export_file_path = os.path.join('upload/export', '{}_mark_job_{}'.format(NlpTaskEnum(nlp_task_id).name, mark_job_id))
+        # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
+        last_exported_file = export_sync.get_last_export_file(job=mark_job, export_file_path=export_file_path)
+        if last_exported_file:
+            return last_exported_file
+
+        # 重新制作
+        export_fileset = FileSet(folder=export_file_path)
+        mark_task_and_doc_list = MarkTaskModel().get_mark_task_and_doc_by_mark_job_ids(mark_job_ids=[mark_job_id])
+
+        if nlp_task_id == int(NlpTaskEnum.extract):
+            doc_terms = DocTermModel().get_by_filter(limit=99999, doc_type_id=mark_job.doc_type_id)
+            file_path = export_sync.generate_extract_file(task_and_doc_list=mark_task_and_doc_list,
+                                              export_fileset=export_fileset, doc_terms=doc_terms, offset=offset)
+        elif nlp_task_id == int(NlpTaskEnum.classify):
+            file_path = export_sync.generate_classify_file(task_and_doc_list=mark_task_and_doc_list,
+                                               export_fileset=export_fileset)
+        elif nlp_task_id == int(NlpTaskEnum.wordseg):
+            file_path = export_sync.generate_wordseg_file(task_and_doc_list=mark_task_and_doc_list,
+                                              export_fileset=export_fileset)
+        else:
+            abort(400, message="该任务无法导出")
+        return file_path
+
+    @staticmethod
+    def export_multi_mark_file(nlp_task_id, mark_job_id_list):
+        mark_job_list = MarkJobModel().get_by_mark_job_id_list(mark_job_id_list=mark_job_id_list)
+
+        # 导出文件夹命名
+        export_dir_path = os.path.join('upload/export',
+                                       'classify_mark_job_{}_{}'.format(','.join([str(id) for id in mark_job_id_list]),
+                                                                        datetime.now().strftime(
+                                                                            "%Y%m%d%H%M%S")))
+        os.mkdir(export_dir_path)
+
+        # get all (count, status, mark_job_id) tuple
+        all_count = MarkTaskModel().count_mark_task_status(mark_job_ids=[mark_job_id_list])
+        # convert to a nested dict
+        all_status_dict = Common().tuple_list2dict(all_count)
+        for mark_job in mark_job_list:  # 遍历所有的job
+            if mark_job.mark_job_status != StatusEnum.success:  # 不成功的job
+                continue
+            # 不是所有的任务都未审核完成
+            if len(all_status_dict[mark_job.mark_job_id]) == 1 and int(StatusEnum.approved) in all_status_dict[mark_job.mark_job_id]:
+                continue
+
+            export_file_path = os.path.join('upload/export',
+                                            '{}_mark_job_{}'.format(NlpTaskEnum(nlp_task_id).name, mark_job.mark_job_id))
+            # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
+            last_exported_file = export_sync.get_last_export_file(job=mark_job, export_file_path=export_file_path)
+            if last_exported_file:
+                shutil.copy(last_exported_file, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
+                continue
+
+            # 重新制作
+            export_fileset = FileSet(folder=export_file_path)
+            mark_task_and_doc_list = MarkTaskModel().get_mark_task_and_doc_by_mark_job_ids(mark_job_ids=[mark_job.mark_job_id])
+            file_path = export_sync.generate_classify_file(task_and_doc_list=mark_task_and_doc_list,
+                                               export_fileset=export_fileset)
+            shutil.copy(file_path, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
+
+        if not os.listdir(export_dir_path):
+            abort(400, message="所有的任务都无法导出，请重新选择")
+        shutil.make_archive(export_dir_path, 'zip', export_dir_path)  # 打包
+        return export_dir_path + ".zip"

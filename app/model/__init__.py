@@ -12,3 +12,6 @@ from app.model.user_task_model import UserTaskModel
 from app.model.doc_model import DocModel
 from app.model.train_task_model import TrainTaskModel
 from app.model.doc_term_model import DocTermModel
+from app.model.predict_job_model import PredictJobModel
+from app.model.predict_task_model import PredictTaskModel
+from app.model.evaluate_task_model import EvaluateTaskModel

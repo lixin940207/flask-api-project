@@ -149,6 +149,18 @@ class Common:
         return job_type
 
     @staticmethod
+    def tuple_list2dict(t):
+        """convert 3 element tuple to a nested dict"""
+        dict = {}
+        for a, b, c in t:
+            if a in dict:
+                if b not in dict[a]:
+                    dict[a][b] = c
+            else:
+                dict[a] = {b: c}
+        return dict
+
+    @staticmethod
     def order_by_model_fields(q, model, fields):
         for field in fields:
             if field[0] in ('+', '-'):

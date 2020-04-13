@@ -4,13 +4,13 @@
 from abc import ABC
 from sqlalchemy import or_
 
-from typing import List
+from typing import List, Set
 
-from app.entity import MarkJob
+from app.entity import MarkJob, TrainJob, TrainTask, DocTerm
 from app.model.base import BaseModel
 from app.entity.doc_type import DocType
 from app.common.extension import session
-from app.common.common import RoleEnum
+from app.common.common import RoleEnum, StatusEnum
 from sqlalchemy import func
 from app.common.filters import CurrentUser
 
@@ -22,24 +22,44 @@ class DocTypeModel(BaseModel, ABC):
     def get_by_id(self, _id) -> DocType:
         return session.query(DocType).filter(DocType.doc_type_id == _id, ~DocType.is_deleted).one()
 
+    def get_by_ids(self, ids) -> List[DocType]:
+        return session.query(DocType).filter(DocType.doc_type_id.in_(ids), ~DocType.is_deleted).all()
+
     def get_by_id_by_user_group(self, _id, group_id):
         return session.query(DocType).filter(DocType.doc_type_id == _id, DocType.group_id == group_id,
                                              ~DocType.is_deleted).one()
+
+    def get_online_ids_by_ids(self, doc_type_ids) -> Set[int]:
+        """获取拥有上线模型的doctype ids"""
+        online_doc_types = session.query(DocType.doc_type_id).join(
+            TrainJob, DocType.doc_type_id == TrainJob.doc_type_id
+        ).join(
+            TrainTask, TrainTask.train_job_id == TrainJob.train_job_id
+        ).filter(
+            TrainTask.train_status == int(StatusEnum.online),
+            TrainJob.doc_type_id.in_(doc_type_ids),
+            ~TrainJob.is_deleted,
+            ~TrainTask.is_deleted
+        ).all()
+        online_doc_type_ids = set(item.doc_type_id for item in online_doc_types)
+        return online_doc_type_ids
 
     @staticmethod
     def if_exists_by_name(doc_type_name):
         item = session.query(DocType).filter(DocType.doc_type_name == doc_type_name, DocType.status).first()
         return item
 
-    def get_by_filter(self, current_user: CurrentUser, order_by="created_time", order_by_desc=True, limit=10, offset=0,
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0,
                       **kwargs) -> [DocType]:
         # Define allowed filter keys
-        accept_keys = ["doc_type_name", "nlp_task_id", "doc_type_id", "group_id"]
+        accept_keys = ["user_groups", "doc_type_name", "nlp_task_id", "doc_type_id", "group_id"]
         # Compose query
-        q = session.query(DocType).filter(DocType.group_id.in_(current_user.user_groups), ~DocType.is_deleted)
+        q = session.query(DocType).filter(~DocType.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():
-            if key in accept_keys:
+            if key == "user_groups":
+                q = q.filter(DocType.group_id.in_(val))
+            elif key in accept_keys:
                 q = q.filter(getattr(DocType, key) == val)
         # Order by key
         if order_by_desc:
@@ -55,7 +75,7 @@ class DocTypeModel(BaseModel, ABC):
         session.flush()
         return entity
 
-    def bulk_create(self, entity_list: dict) -> List[DocType]:
+    def bulk_create(self, entity_list) -> List[DocType]:
         entity_list = [DocType(**entity) for entity in entity_list]
         session.bulk_save_objects(entity_list, return_defaults=True)
         session.flush()
@@ -93,8 +113,8 @@ class DocTypeModel(BaseModel, ABC):
             q = session.query(DocType.nlp_task_id, func.count(DocType.doc_type_id)) \
                 .join(MarkJob, MarkJob.doc_type_id == DocType.doc_type_id) \
                 .filter(~DocType.is_deleted, ~MarkJob.is_deleted,
-                        or_(func.json_contains(MarkJob.annotator_ids, current_user.user_id),
-                            func.json_contains(MarkJob.annotator_ids, current_user.user_id)))
+                        or_(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)),
+                            func.json_contains(MarkJob.annotator_ids, str(current_user.user_id))))
         count = q.group_by(DocType.nlp_task_id).all()
         return count
 
@@ -105,8 +125,8 @@ class DocTypeModel(BaseModel, ABC):
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
         elif current_user.user_role in [RoleEnum.reviewer.value, RoleEnum.annotator.value]:
-            q = q.filter(or_(func.json_contains(MarkJob.annotator_ids, current_user.user_id),
-                             func.json_contains(MarkJob.reviewer_ids, current_user.user_id)))
+            q = q.filter(or_(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)),
+                             func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id))))
         if mark_job_ids:
             q = q.outerjoin(MarkJob, MarkJob.doc_type_id == DocType.doc_type_id) \
                 .filter(MarkJob.mark_job_id.in_(mark_job_ids))
@@ -116,13 +136,16 @@ class DocTypeModel(BaseModel, ABC):
 
     @staticmethod
     def get_by_nlp_task_id_by_user(nlp_task_id, current_user: CurrentUser) -> [DocType]:
-        q = session.query(DocType).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
+        q = session.query(DocType, func.group_concat(DocTerm.doc_term_id.distinct())).\
+            outerjoin(DocTerm, DocType.doc_type_id == DocTerm.doc_type_id).\
+            filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
         # 权限filter
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
         elif current_user.user_role in [RoleEnum.reviewer.value, RoleEnum.annotator.value]:
-            q = q.filter(or_(func.json_contains(MarkJob.annotator_ids, current_user.user_id),
-                             func.json_contains(MarkJob.reviewer_ids, current_user.user_id)))
+            q = q.filter(or_(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)),
+                             func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id))))
+        q = q.group_by(DocTerm.doc_type_id, DocType)
         count = q.count()
-        q = q.order_by(DocType.created_time.desc())
+        q = q.order_by(DocType.is_favorite.desc(), DocType.created_time.desc())
         return count, q.all()

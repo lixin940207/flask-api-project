@@ -9,7 +9,7 @@
 from abc import ABC
 from typing import List
 from app.model.base import BaseModel
-from app.entity import DocTerm, DocType
+from app.entity import DocTerm, DocType, RelationM2mTerm, DocRelation
 from app.common.extension import session
 
 
@@ -27,7 +27,9 @@ class DocTermModel(BaseModel, ABC):
         q = session.query(DocTerm).filter(~DocTerm.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():
-            if key in accept_keys:
+            if key == "doc_term_ids":
+                q = q.filter(DocTerm.doc_term_id.in_(val))
+            elif key in accept_keys:
                 q = q.filter(getattr(DocTerm, key) == val)
         # Order by key
         if order_by_desc:
@@ -57,9 +59,11 @@ class DocTermModel(BaseModel, ABC):
         session.query(DocTerm).filter(DocTerm.doc_term_id.in_(_id_list)).update({DocTerm.is_deleted: True})
         session.flush()
 
-    def update(self, entity):
-        session.query(DocTerm).update(entity)
+    def update(self, doc_term_id, **kwargs):
+        q = session.query(DocTerm).filter(DocTerm.doc_term_id == doc_term_id)
+        q.update(kwargs)
         session.flush()
+        return q.one()
 
     def bulk_update(self, entity_list):
         for e in entity_list:
@@ -82,3 +86,42 @@ class DocTermModel(BaseModel, ABC):
         count = q.count()
         items = q.offset(offset).limit(limit).all()
         return items, count
+
+    @staticmethod
+    def create_relation(doc_relation_name, doc_term_ids, doc_type_id) -> RelationM2mTerm:
+        new_doc_relation = DocRelation(doc_relation_name=doc_relation_name, doc_type_id=doc_type_id)
+        session.add(new_doc_relation)
+        session.flush()
+        new_entities = []
+        for doc_term_id in doc_term_ids:
+            new_entities.append(RelationM2mTerm(doc_relation_id=new_doc_relation.doc_relation_id,
+                                                doc_term_id=doc_term_id))
+
+        session.bulk_save_objects(new_entities, return_defaults=True)
+        session.flush()
+        return new_doc_relation
+
+    @staticmethod
+    def delete_relation_mapping(doc_relation_id):
+        # 删除关系表
+        session.query(RelationM2mTerm).filter(
+            ~RelationM2mTerm.is_deleted,
+            RelationM2mTerm.doc_relation_id == doc_relation_id,
+        ).update({RelationM2mTerm.is_deleted: 1}, synchronize_session='fetch')
+        session.commit()
+
+    @staticmethod
+    def delete_relation(doc_relation_id):
+        session.query(DocRelation).filter(
+            DocRelation.doc_relation_id == doc_relation_id,
+            ~DocRelation.is_deleted,
+        ).update({DocRelation.is_deleted: 1}, synchronize_session='fetch')
+        session.commit()
+
+    @staticmethod
+    def check_term_in_relation(doc_term_id):
+        count = session.query(RelationM2mTerm).filter(
+            ~RelationM2mTerm.is_deleted,
+            RelationM2mTerm.doc_term_id == doc_term_id
+        ).count()
+        return count > 0    # return True when exists

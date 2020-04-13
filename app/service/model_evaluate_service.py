@@ -9,7 +9,7 @@ from app.common.common import NlpTaskEnum, StatusEnum
 from app.entity import EvaluateTask, TrainTask, DocType
 from app.model import TrainTaskModel, TrainJobModel, DocTypeModel
 from app.model.evaluate_task_model import EvaluateTaskModel
-from app.schema.doc_type_schema import DocTypeSchema
+from app.schema import DocTypeSchema
 from app.service.model_service import generate_classify_data
 
 

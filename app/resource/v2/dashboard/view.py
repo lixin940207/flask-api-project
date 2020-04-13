@@ -3,12 +3,10 @@
 # @Date: 2020/3/18
 from flask import g
 from flask_restful import Resource
-from app.model.doc_type_model import DocTypeModel
-from app.common.extension import session
-from app.entity.doc_type import DocType
+from app.model import DocTypeModel
 from app.common.filters import CurrentUserMixin
 from app.service.dashboard_service import DashboardService
-from app.common.common import NlpTaskEnum, RoleEnum
+from app.common.common import NlpTaskEnum
 from flask import jsonify
 
 

@@ -49,27 +49,27 @@ class Seeds:
         from app.model import DocTypeModel
         if len(DocTypeModel().get_all()) == 0:
             doc_types = [
-                DocType(app_id=1, created_by=1, doc_type_id=1, doc_type_name="测试抽取项目1",
+                dict(app_id=1, created_by=1, doc_type_id=1, doc_type_name="测试抽取项目1",
                         nlp_task_id=int(NlpTaskEnum.extract)),
-                DocType(app_id=1, created_by=1, doc_type_id=2, doc_type_name="测试抽取项目2",
+                dict(app_id=1, created_by=1, doc_type_id=2, doc_type_name="测试抽取项目2",
                         nlp_task_id=int(NlpTaskEnum.extract)),
-                DocType(app_id=1, created_by=1, doc_type_id=3, doc_type_name="测试抽取项目3",
+                dict(app_id=1, created_by=1, doc_type_id=3, doc_type_name="测试抽取项目3",
                         nlp_task_id=int(NlpTaskEnum.extract)),
-                DocType(app_id=1, created_by=1, doc_type_id=4, doc_type_name="测试抽取项目4",
+                dict(app_id=1, created_by=1, doc_type_id=4, doc_type_name="测试抽取项目4",
                         nlp_task_id=int(NlpTaskEnum.extract)),
-                DocType(app_id=1, created_by=1, doc_type_id=5, doc_type_name="测试分类项目1",
+                dict(app_id=1, created_by=1, doc_type_id=5, doc_type_name="测试分类项目1",
                         nlp_task_id=int(NlpTaskEnum.classify)),
-                DocType(app_id=1, created_by=1, doc_type_id=6, doc_type_name="测试分类项目2",
+                dict(app_id=1, created_by=1, doc_type_id=6, doc_type_name="测试分类项目2",
                         nlp_task_id=int(NlpTaskEnum.classify)),
-                DocType(app_id=1, created_by=1, doc_type_id=7, doc_type_name="测试分类项目3",
+                dict(app_id=1, created_by=1, doc_type_id=7, doc_type_name="测试分类项目3",
                         nlp_task_id=int(NlpTaskEnum.classify)),
-                DocType(app_id=1, created_by=1, doc_type_id=8, doc_type_name="测试关系项目1",
+                dict(app_id=1, created_by=1, doc_type_id=8, doc_type_name="测试关系项目1",
                         nlp_task_id=int(NlpTaskEnum.relation)),
-                DocType(app_id=1, created_by=1, doc_type_id=9, doc_type_name="测试关系项目2",
+                dict(app_id=1, created_by=1, doc_type_id=9, doc_type_name="测试关系项目2",
                         nlp_task_id=int(NlpTaskEnum.relation)),
-                DocType(app_id=1, created_by=1, doc_type_id=10, doc_type_name="测试分词项目1",
+                dict(app_id=1, created_by=1, doc_type_id=10, doc_type_name="测试分词项目1",
                         nlp_task_id=int(NlpTaskEnum.wordseg)),
-                DocType(app_id=1, created_by=1, doc_type_id=11, doc_type_name="测试分词项目2",
+                dict(app_id=1, created_by=1, doc_type_id=11, doc_type_name="测试分词项目2",
                         nlp_task_id=int(NlpTaskEnum.wordseg)),
             ]
             DocTypeModel().bulk_create(doc_types)
@@ -77,7 +77,7 @@ class Seeds:
 
     @staticmethod
     def create_doc_term():
-        from app.model.doc_term_model import DocTermModel
+        from app.model import DocTermModel
         if len(DocTermModel().get_all()) == 0:
             DocTermModel().create(app_id=1, created_by=1, doc_term_id=1, doc_term_name="人名", doc_term_alias="nr",
                                   doc_type_id=1)
@@ -108,7 +108,7 @@ class Seeds:
                 MarkJob(app_id=1, created_by=1, mark_job_name="标注任务7", doc_type_id=4, mark_job_id=7,
                         mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
                 MarkJob(app_id=1, created_by=1, mark_job_name="标注任务8", doc_type_id=5, mark_job_id=8,
-                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.labeling)),
+                        mark_job_type="e_doc", mark_job_status=int(StatusEnum.success)),
                 MarkJob(app_id=1, created_by=1, mark_job_name="标注任务9", doc_type_id=5, mark_job_id=9,
                         mark_job_type="e_doc", mark_job_status=int(StatusEnum.approved)),
                 MarkJob(app_id=1, created_by=1, mark_job_name="标注任务10", doc_type_id=6, mark_job_id=10,
@@ -324,7 +324,7 @@ class Seeds:
 
     @staticmethod
     def create_evaluate_task():
-        from app.model.evaluate_task_model import EvaluateTaskModel
+        from app.model import EvaluateTaskModel
         if EvaluateTaskModel().is_empty_table():
             EvaluateTaskModel().create(app_id=1, created_by=1, evaluate_task_id=1, evaluate_task_name="test",
                                        evaluate_task_status=int(StatusEnum.success), train_task_id=1)

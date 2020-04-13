@@ -6,10 +6,7 @@ from flask_restful import Resource, abort
 from app.common.common import NlpTaskEnum, Common
 from app.common.patch import parse, fields
 from app.common.filters import CurrentUserMixin
-from app.schema.doc_type_schema import DocTypeSchema
-from app.schema.evaluate_task_schema import EvaluateTaskSchema
-from app.schema.train_job_schema import TrainJobSchema
-from app.schema.train_task_schema import TrainTaskSchema
+from app.schema import DocTypeSchema, EvaluateTaskSchema, TrainJobSchema, TrainTaskSchema
 from app.service.doc_type_service import DocTypeService
 from app.service.model_service import ModelService
 

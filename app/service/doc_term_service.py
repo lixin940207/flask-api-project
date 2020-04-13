@@ -7,8 +7,8 @@
 @IDE: PyCharm 
 """
 from app.common.extension import session
-from app.model.doc_term_model import DocTermModel
-from app.schema.doc_term_schema import DocTermSchema
+from app.model import DocTermModel
+from app.schema import DocTermSchema
 
 
 class DocTermService:
@@ -31,6 +31,21 @@ class DocTermService:
     @staticmethod
     def create_doc_term(args, doc_type_id):
         item = DocTermModel().create(**args, doc_type_id=doc_type_id)
+        session.commit()
+        result = DocTermSchema().dump(item)
+        return result
+
+    @staticmethod
+    def check_term_in_relation(doc_term_id):
+        return DocTermModel().check_term_in_relation(doc_term_id)
+
+    @staticmethod
+    def remove_doc_term(doc_term_id):
+        DocTermModel().delete(doc_term_id)
+
+    @staticmethod
+    def update_doc_term(doc_term_id, args):
+        item = DocTermModel().update(doc_term_id, **args)
         session.commit()
         result = DocTermSchema().dump(item)
         return result
