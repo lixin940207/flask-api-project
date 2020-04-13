@@ -3,11 +3,8 @@
 # create: 2020/3/25-3:54 下午
 from marshmallow import Schema
 
-from app.common.common import StatusEnum
 from app.common.patch import fields
-from app.schema.doc_type_schema import DocTypeSchema
-from app.schema.evaluate_task_schema import EvaluateTaskSchema
-from app.schema.train_task_schema import TrainTaskSchema
+from app.schema import DocTypeSchema, EvaluateTaskSchema, TrainTaskSchema
 
 
 class TrainJobSchema(Schema):  # type: ignore

@@ -4,7 +4,7 @@
 
 from flask_marshmallow import Schema
 from app.common.patch import fields
-from app.schema.doc_type_schema import DocTypeSchema
+from app.schema import DocTypeSchema
 
 
 class MarkJobSchema(Schema):

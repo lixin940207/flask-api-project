@@ -3,7 +3,7 @@
 # create: 2020/3/25-3:51 下午
 from flask_marshmallow import Schema
 from app.common.patch import fields
-from app.schema.doc_term_schema import DocTermSchema, WordsegDocLexiconSchema
+from app.schema import DocTermSchema, WordsegDocLexiconSchema
 
 
 class EntityDocRelationSchema(Schema):

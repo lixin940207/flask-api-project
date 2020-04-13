@@ -5,7 +5,7 @@ from flask_marshmallow import Schema
 
 from app.common.common import StatusEnum
 from app.common.patch import fields
-from app.schema.train_term_task_schema import TrainTermTaskSchema
+from app.schema import TrainTermTaskSchema
 
 
 class TrainTaskSchema(Schema):  # type: ignore

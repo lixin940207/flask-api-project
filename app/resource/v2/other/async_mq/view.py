@@ -10,7 +10,7 @@ from flask_restful import Resource
 from app.common.log import logger
 from app.common.patch import parse, fields
 from app.common.utils.status_mapper import status_str2int_mapper
-from app.schema.predict_task_schema import PredictTaskSchema
+from app.schema import PredictTaskSchema
 from app.service.predict_service import PredictService
 
 

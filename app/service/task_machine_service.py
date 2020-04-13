@@ -7,8 +7,7 @@ from app.common.common import StatusEnum
 from app.common.extension import session
 from app.common.filters import CurrentUser
 from app.entity import PredictTask
-from app.model.predict_job_model import PredictJobModel
-from app.model.predict_task_model import PredictTaskModel
+from app.model import PredictJobModel, PredictTaskModel
 
 
 class TaskMachineService:
