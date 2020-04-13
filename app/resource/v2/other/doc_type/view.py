@@ -1,5 +1,5 @@
 import typing
-from flask_restful import Resource
+from flask_restful import Resource, abort
 from app.common.patch import parse, fields
 from app.common.filters import CurrentUserMixin
 from app.common.common import Common
@@ -188,29 +188,8 @@ class EntityDocRelationItemResource(Resource):
         """
         doc_term_ids = list(set(args.pop("doc_term_ids", [])))
         if len(doc_term_ids) != 2:
-            return {
-                       "message": "文档条款不正确，请确保填写了正确的文档条款"
-                   }, 400
-        _, item = session.query(EntityDocType, EntityDocRelation).filter(
-            EntityDocType.doc_type_id == doc_type_id,
-            EntityDocType.status,
-            EntityDocRelation.doc_type_id == EntityDocType.doc_type_id,
-            EntityDocRelation.doc_relation_id == doc_relation_id,
-            EntityDocRelation.status,
-        ).one()
-        doc_relation_term_items = session.query(EntityDocRelationTerm).filter(
-            EntityDocRelationTerm.doc_relation_id == doc_relation_id
-        ).all()
-        for index, doc_relation_term_item in enumerate(doc_relation_term_items):
-            doc_relation_term_item.status = False
-
-            if index <= len(doc_term_ids):
-                doc_relation_term_item.doc_term_id = doc_term_ids[index]
-                doc_relation_term_item.status = True
-
-        item.update(**args)
-        session.commit()
-        result = EntityDocTermSchema().dump(item)
+            abort(400, message="文档条款不正确，请确保填写了正确的文档条款")
+        result = DocTypeService().update_relation(doc_type_id, args.get("doc_relation_name"), args.get("doc_term_ids", []))
         return {
                    "message": "更新成功",
                    "result": result,
@@ -221,62 +200,6 @@ class EntityDocRelationItemResource(Resource):
         删除一个条款
         """
         DocTypeService().delete_relation(doc_relation_id)
-        return {
-                   "message": "删除成功",
-               }, 204
-
-
-class EntityDocTermItemResource(Resource):
-    @parse({
-        "doc_term_name": fields.String(),
-        "doc_term_color": fields.String(),
-        "doc_term_index": fields.Integer(),
-        "doc_term_desc": fields.String(allow_none=True),
-        "doc_term_data_type": fields.String(),
-    })
-    def patch(self: Resource, args: typing.Dict, doc_type_id: int, doc_term_id: int) -> typing.Tuple[
-        typing.Dict, int]:
-        """
-        修改一个条款
-        """
-        _, item = session.query(EntityDocType, EntityDocTerm).filter(
-            EntityDocType.doc_type_id == doc_type_id,
-            EntityDocType.status,
-            EntityDocTerm.doc_type_id == EntityDocType.doc_type_id,
-            EntityDocTerm.doc_term_id == doc_term_id,
-            EntityDocTerm.status,
-        ).one()
-        item.update(**args)
-        item.commit()
-        result = EntityDocTermSchema().dump(item)
-        return {
-                   "message": "更新成功",
-                   "result": result,
-               }, 201
-
-    def delete(self: Resource, doc_type_id: int, doc_term_id: int) -> typing.Tuple[typing.Dict, int]:
-        """
-        删除一个条款
-        """
-        item = session.query(EntityDocRelationTerm).filter(
-            EntityDocRelationTerm.doc_term_id == doc_term_id,
-            EntityDocRelationTerm.status
-        ).first()
-
-        if item:
-            return {
-                       "message": "该条款仍有关联关系，请确保条款没有关联关系后再做清除"
-                   }, 400
-
-        _, item = session.query(EntityDocType, EntityDocTerm).filter(
-            EntityDocType.doc_type_id == doc_type_id,
-            EntityDocType.status,
-            EntityDocTerm.doc_type_id == EntityDocType.doc_type_id,
-            EntityDocTerm.doc_term_id == doc_term_id,
-            EntityDocTerm.status,
-        ).one()
-        item.delete()
-        item.commit()
         return {
                    "message": "删除成功",
                }, 204

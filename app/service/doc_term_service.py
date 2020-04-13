@@ -34,3 +34,18 @@ class DocTermService:
         session.commit()
         result = DocTermSchema().dump(item)
         return result
+
+    @staticmethod
+    def check_term_in_relation(doc_term_id):
+        return DocTermModel().check_term_in_relation(doc_term_id)
+
+    @staticmethod
+    def remove_doc_term(doc_term_id):
+        DocTermModel().delete(doc_term_id)
+
+    @staticmethod
+    def update_doc_term(doc_type_id, doc_term_id, args):
+        args.update({"doc_type_id": doc_type_id, "doc_term_id": doc_term_id})
+        item = DocTermModel().update(args)
+        result = DocTermSchema().dump(item)
+        return result

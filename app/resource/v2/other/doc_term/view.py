@@ -1,6 +1,7 @@
 import typing
-from flask_restful import Resource
+from flask_restful import Resource, abort
 
+from app.common.extension import session
 from app.common.common import Common
 from app.common.patch import parse, fields
 from app.common.filters import CurrentUserMixin
@@ -77,3 +78,36 @@ class ListWordsegDocTermResource(Resource, CurrentUserMixin):
                    "message": "请求成功",
                    "result": result
                }, 200
+
+
+class EntityDocTermItemResource(Resource):
+    @parse({
+        "doc_term_name": fields.String(),
+        "doc_term_color": fields.String(),
+        "doc_term_index": fields.Integer(),
+        "doc_term_desc": fields.String(allow_none=True),
+        "doc_term_data_type": fields.String(),
+    })
+    def patch(self: Resource, args: typing.Dict, doc_type_id: int, doc_term_id: int) -> typing.Tuple[
+        typing.Dict, int]:
+        """
+        修改一个条款
+        """
+        result = DocTermService().update_doc_term(doc_type_id, doc_term_id, )
+        return {
+                   "message": "更新成功",
+                   "result": result,
+               }, 201
+
+    def delete(self: Resource, doc_type_id: int, doc_term_id: int) -> typing.Tuple[typing.Dict, int]:
+        """
+        删除一个条款
+        """
+        if DocTermService().check_term_in_relation(doc_term_id):
+            abort(400, message="该条款仍有关联关系，请确保条款没有关联关系后再做清除")
+
+        DocTermService().remove_doc_term(doc_term_id)
+        session.commit()
+        return {
+                   "message": "删除成功",
+               }, 204
