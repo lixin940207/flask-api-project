@@ -45,7 +45,6 @@ class Seeds:
 
     @staticmethod
     def create_doc_type():
-        from app.entity import DocType
         from app.model import DocTypeModel
         if len(DocTypeModel().get_all()) == 0:
             doc_types = [
