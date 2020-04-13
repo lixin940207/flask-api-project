@@ -161,3 +161,27 @@ class DocTypeService:
         DocTermModel().delete_relation(doc_relation_id)
         session.commit()
 
+    @staticmethod
+    def update_relation(doc_type_id, doc_relation_name, doc_term_ids):
+        # _, item = session.query(EntityDocType, EntityDocRelation).filter(
+        #     EntityDocType.doc_type_id == doc_type_id,
+        #     EntityDocType.status,
+        #     EntityDocRelation.doc_type_id == EntityDocType.doc_type_id,
+        #     EntityDocRelation.doc_relation_id == doc_relation_id,
+        #     EntityDocRelation.status,
+        # ).one()
+        # doc_relation_term_items = session.query(EntityDocRelationTerm).filter(
+        #     EntityDocRelationTerm.doc_relation_id == doc_relation_id
+        # ).all()
+        # for index, doc_relation_term_item in enumerate(doc_relation_term_items):
+        #     doc_relation_term_item.status = False
+        #
+        #     if index <= len(doc_term_ids):
+        #         doc_relation_term_item.doc_term_id = doc_term_ids[index]
+        #         doc_relation_term_item.status = True
+        #
+        # item.update(**args)
+        # session.commit()
+        # result = EntityDocTermSchema().dump(item)
+        return None
+

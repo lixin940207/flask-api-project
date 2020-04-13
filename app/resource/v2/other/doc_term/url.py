@@ -15,3 +15,4 @@ api.add_resource(view.DocTermListResource, "/doc_type/<int:doc_type_id>/doc_term
                  "/wordseg_doc_type/<int:doc_type_id>/wordseg_doc_term",
                  "/entity_doc_type/<int:doc_type_id>/entity_doc_term")
 api.add_resource(view.ListWordsegDocTermResource, '/wordseg_doc_terms')
+api.add_resource(view.EntityDocTermItemResource, '/entity_doc_type/<int:doc_type_id>/entity_doc_term/<int:doc_term_id>')

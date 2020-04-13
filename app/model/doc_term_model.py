@@ -59,9 +59,11 @@ class DocTermModel(BaseModel, ABC):
         session.query(DocTerm).filter(DocTerm.doc_term_id.in_(_id_list)).update({DocTerm.is_deleted: True})
         session.flush()
 
-    def update(self, entity):
-        session.query(DocTerm).update(entity)
+    def update(self, doc_term_id, **kwargs):
+        doc_term = session.query(DocTerm).filter(DocTerm.doc_term_id == doc_term_id)
+        session.query(DocTerm).update(kwargs)
         session.flush()
+        return doc_term
 
     def bulk_update(self, entity_list):
         for e in entity_list:
@@ -115,3 +117,11 @@ class DocTermModel(BaseModel, ABC):
             ~DocRelation.is_deleted,
         ).update({DocRelation.is_deleted: 1}, synchronize_session='fetch')
         session.commit()
+
+    @staticmethod
+    def check_term_in_relation(doc_term_id):
+        count = session.query(RelationM2mTerm).filter(
+            ~RelationM2mTerm.is_deleted,
+            RelationM2mTerm.doc_term_id == doc_term_id
+        ).count()
+        return count > 0    # return True when exists
