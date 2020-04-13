@@ -31,15 +31,17 @@ class DocTypeModel(BaseModel, ABC):
         item = session.query(DocType).filter(DocType.doc_type_name == doc_type_name, DocType.status).first()
         return item
 
-    def get_by_filter(self, current_user: CurrentUser, order_by="created_time", order_by_desc=True, limit=10, offset=0,
+    def get_by_filter(self, order_by="created_time", order_by_desc=True, limit=10, offset=0,
                       **kwargs) -> [DocType]:
         # Define allowed filter keys
-        accept_keys = ["doc_type_name", "nlp_task_id", "doc_type_id", "group_id"]
+        accept_keys = ["user_groups", "doc_type_name", "nlp_task_id", "doc_type_id", "group_id"]
         # Compose query
-        q = session.query(DocType).filter(DocType.group_id.in_(current_user.user_groups), ~DocType.is_deleted)
+        q = session.query(DocType).filter(~DocType.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():
-            if key in accept_keys:
+            if key == "user_groups":
+                q = q.filter(DocType.group_id.in_(val))
+            elif key in accept_keys:
                 q = q.filter(getattr(DocType, key) == val)
         # Order by key
         if order_by_desc:

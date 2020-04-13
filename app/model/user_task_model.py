@@ -2,6 +2,7 @@ from abc import ABC
 
 from sqlalchemy import not_
 
+from app.common.common import StatusEnum
 from app.model.base import BaseModel
 from app.entity import UserTask
 from app.common.extension import session
@@ -58,8 +59,17 @@ class UserTaskModel(BaseModel, ABC):
     def bulk_delete_by_filter(self, **kwargs):
         raise NotImplemented("no bulk_delete_by_filter")
 
-    def update(self, entity):
+    def update(self, entity, **kwargs):
         pass
 
     def bulk_update(self, entity_list):
         session.bulk_update_mappings(UserTask, entity_list)
+
+    @staticmethod
+    def update_status_to_unlabel_by_manual_task_id(mark_task_id):
+        session.query(UserTask).filter(
+            UserTask.mark_task_id == mark_task_id,
+            ~UserTask.is_deleted
+        ).update({UserTask.user_task_status: int(StatusEnum.unlabel)}, synchronize_session='fetch')
+        session.flush()
+

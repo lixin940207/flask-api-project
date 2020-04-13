@@ -2,7 +2,6 @@ from abc import ABC
 
 from sqlalchemy import not_, func, or_, text
 from typing import List
-
 from app.common.filters import CurrentUser
 from app.model.base import BaseModel
 from app.entity import MarkJob, DocType, UserTask, MarkTask
@@ -82,8 +81,11 @@ class MarkJobModel(BaseModel, ABC):
     def bulk_delete_by_filter(self, **kwargs):
         raise NotImplemented("no bulk_delete_by_filter")
 
-    def update(self, entity):
-        raise NotImplemented("no update")
+    def update(self, _id, **kwargs):
+        entity = session.query(MarkJob).filter(MarkJob.mark_job_id == _id)
+        entity.update(kwargs)
+        session.flush()
+        return entity.one()
 
     def bulk_update(self, entity_list):
         raise NotImplemented("no bulk_update")
@@ -140,3 +142,24 @@ class MarkJobModel(BaseModel, ABC):
                 or_(UserTask.annotator_id == current_user.user_id, UserTask.annotator_id == current_user.user_id))
         all_count = q.group_by(MarkJob.mark_job_status, MarkJob.doc_type_id, DocType.nlp_task_id).all()
         return all_count
+
+    @staticmethod
+    def check_mark_job_status(mark_job_id):
+        q = session.query(MarkTask).filter(
+            MarkTask.mark_job_id == mark_job_id,
+            ~MarkTask.is_deleted
+        ).all()
+        states = [item.mark_task_status for item in q]
+        if int(StatusEnum.init) in states:
+            mark_job_status = int(StatusEnum.processing)
+        elif int(StatusEnum.fail) in states:
+            mark_job_status = int(StatusEnum.fail)
+        elif int(StatusEnum.processing) in states:
+            mark_job_status = int(StatusEnum.processing)
+        elif int(StatusEnum.labeling) in states or int(StatusEnum.unlabel) in states:
+            mark_job_status = int(StatusEnum.labeling)
+        elif int(StatusEnum.labeled) in states:
+            mark_job_status = int(StatusEnum.reviewing)
+        else:
+            mark_job_status = int(StatusEnum.approved)
+        return mark_job_status
