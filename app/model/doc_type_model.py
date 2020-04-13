@@ -4,13 +4,13 @@
 from abc import ABC
 from sqlalchemy import or_
 
-from typing import List
+from typing import List, Set
 
-from app.entity import MarkJob
+from app.entity import MarkJob, TrainJob, TrainTask
 from app.model.base import BaseModel
 from app.entity.doc_type import DocType
 from app.common.extension import session
-from app.common.common import RoleEnum
+from app.common.common import RoleEnum, StatusEnum
 from sqlalchemy import func
 from app.common.filters import CurrentUser
 
@@ -22,9 +22,27 @@ class DocTypeModel(BaseModel, ABC):
     def get_by_id(self, _id) -> DocType:
         return session.query(DocType).filter(DocType.doc_type_id == _id, ~DocType.is_deleted).one()
 
+    def get_by_ids(self, ids) -> List[DocType]:
+        return session.query(DocType).filter(DocType.doc_type_id.in_(ids), ~DocType.is_deleted).all()
+
     def get_by_id_by_user_group(self, _id, group_id):
         return session.query(DocType).filter(DocType.doc_type_id == _id, DocType.group_id == group_id,
                                              ~DocType.is_deleted).one()
+
+    def get_online_ids_by_ids(self, doc_type_ids) -> Set[int]:
+        """获取拥有上线模型的doctype ids"""
+        online_doc_types = session.query(DocType.doc_type_id).join(
+            TrainJob, DocType.doc_type_id == TrainJob.doc_type_id
+        ).join(
+            TrainTask, TrainTask.train_job_id == TrainJob.train_job_id
+        ).filter(
+            TrainTask.train_status == int(StatusEnum.online),
+            TrainJob.doc_type_id.in_(doc_type_ids),
+            ~TrainJob.is_deleted,
+            ~TrainTask.is_deleted
+        ).all()
+        online_doc_type_ids = set(item.doc_type_id for item in online_doc_types)
+        return online_doc_type_ids
 
     @staticmethod
     def if_exists_by_name(doc_type_name):
