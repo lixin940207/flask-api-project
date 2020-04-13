@@ -258,8 +258,8 @@ class MarkJobService:
             abort(400, message="有失败或未完成任务，不能导出")
 
         all_count = MarkTaskModel().count_mark_task_status(mark_job_ids=[mark_job_id])
-        all_status_dict = {_mark_job_id:{_mark_task_status:_count} for _count, _mark_job_id, _mark_task_status in all_count}
-        if len(all_status_dict[mark_job_id]) != all_status_dict[mark_job_id][int(StatusEnum.approved)]:
+        all_status_dict = {_mark_job_id: {_mark_task_status: _count} for _count, _mark_job_id, _mark_task_status in all_count}
+        if not (len(all_status_dict[mark_job_id]) == 1 and int(StatusEnum.approved) in all_status_dict[mark_job_id]):
             abort(400, message="有未标注或未审核任务，不能导出")
 
         export_file_path = os.path.join('upload/export', '{}_job_{}'.format(NlpTaskEnum(nlp_task_id).name, mark_job_id))
@@ -274,20 +274,20 @@ class MarkJobService:
 
         if nlp_task_id == int(NlpTaskEnum.extract):
             doc_terms = DocTermModel().get_by_filter(limit=99999, doc_type_id=mark_job.doc_type_id)
-            file_path = generate_extract_file(predict_task_and_doc_list=mark_task_and_doc_list,
+            file_path = generate_extract_file(task_and_doc_list=mark_task_and_doc_list,
                                               export_fileset=export_fileset, doc_terms=doc_terms, offset=offset)
         elif nlp_task_id == int(NlpTaskEnum.classify):
-            file_path = generate_classify_file(predict_task_and_doc_list=mark_task_and_doc_list,
+            file_path = generate_classify_file(task_and_doc_list=mark_task_and_doc_list,
                                                export_fileset=export_fileset)
         elif nlp_task_id == int(NlpTaskEnum.wordseg):
-            file_path = generate_wordseg_file(predict_task_and_doc_list=mark_task_and_doc_list,
+            file_path = generate_wordseg_file(task_and_doc_list=mark_task_and_doc_list,
                                               export_fileset=export_fileset)
         else:
             abort(400, message="该任务无法导出")
         return file_path
 
     @staticmethod
-    def export_multi_mark_file(nlp_task_id, mark_job_id_list, offset=50):
+    def export_multi_mark_file(nlp_task_id, mark_job_id_list):
         mark_job_list = MarkJobModel().get_by_mark_job_id_list(mark_job_id_list=mark_job_id_list)
 
         # 导出文件夹命名
@@ -305,7 +305,7 @@ class MarkJobService:
             if mark_job.mark_job_status != StatusEnum.success:  # 不成功的job
                 continue
             # 不是所有的任务都未审核完成
-            if len(all_status_dict[mark_job.mark_job_id]) != all_status_dict[mark_job.mark_job_id][int(StatusEnum.approved)]:
+            if len(all_status_dict[mark_job.mark_job_id]) == 1 and int(StatusEnum.approved) in all_status_dict[mark_job.mark_job_id]:
                 continue
 
             export_file_path = os.path.join('upload/export',
@@ -319,7 +319,7 @@ class MarkJobService:
             # 重新制作
             export_fileset = FileSet(folder=export_file_path)
             mark_task_and_doc_list = MarkTaskModel().get_mark_task_and_doc_by_mark_job_ids(mark_job_ids=[mark_job.mark_job_id])
-            file_path = generate_classify_file(predict_task_and_doc_list=mark_task_and_doc_list,
+            file_path = generate_classify_file(task_and_doc_list=mark_task_and_doc_list,
                                                export_fileset=export_fileset)
             shutil.copy(file_path, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
 

@@ -15,13 +15,13 @@ def get_last_export_file(job, export_file_path):
     return None
 
 
-def generate_extract_file(predict_task_and_doc_list, export_fileset, doc_terms, offset=50):
+def generate_extract_file(task_and_doc_list, export_fileset, doc_terms, offset=50):
     results = []
-    for task, doc in predict_task_and_doc_list:
+    for task, doc in task_and_doc_list:
         results.append([doc.doc_raw_name, '', '', '', ''])
         with open(os.path.join('upload', doc.doc_unique_name), 'r') as f:
             content = f.read()
-        task_results = task.task_result
+        task_results = getattr(task, "predict_task_result", None) or getattr(task, "mark_task_result", None)
         for idx, entity in enumerate(task_results):
             row = ["",
                     doc_terms[int(entity['doc_term_id'])],
@@ -35,19 +35,20 @@ def generate_extract_file(predict_task_and_doc_list, export_fileset, doc_terms, 
     return csv_path
 
 
-def generate_classify_file(predict_task_and_doc_list, export_fileset):
+def generate_classify_file(task_and_doc_list, export_fileset):
     results = []
-    for task, doc in predict_task_and_doc_list:
-        row = [doc.doc_raw_name, task.predict_task_result[0]['label_name'] if task.predict_task_result else '']
+    for task, doc in task_and_doc_list:
+        task_result = getattr(task, "predict_task_result", None) or getattr(task, "mark_task_result", None)
+        row = [doc.doc_raw_name, task_result[0]['label_name'] if task_result else '']
         results.append(row)
     csv_path = export_fileset.export_to_csv(results=results, header=['content', 'result'])
     return csv_path
 
 
-def generate_wordseg_file(predict_task_and_doc_list, export_fileset):
+def generate_wordseg_file(task_and_doc_list, export_fileset):
     results = []
-    for task, _ in predict_task_and_doc_list:
-        task_results = task.task_result
+    for task, _ in task_and_doc_list:
+        task_results = getattr(task, "predict_task_result", None) or getattr(task, "mark_task_result", None)
         tagged_content = ''
         for entity in task_results:
             tagged_content += '{}/{}  '.format(entity[0], entity[1])

@@ -133,11 +133,11 @@ class PredictService:
 
         if nlp_task_id == int(NlpTaskEnum.extract):
             doc_terms = DocTermModel().get_by_filter(limit=99999, doc_type_id=predict_job.doc_type_id)
-            file_path = generate_extract_file(predict_task_and_doc_list=predict_task_and_doc_list, export_fileset=export_fileset, doc_terms=doc_terms, offset=offset)
+            file_path = generate_extract_file(task_and_doc_list=predict_task_and_doc_list, export_fileset=export_fileset, doc_terms=doc_terms, offset=offset)
         elif nlp_task_id == int(NlpTaskEnum.classify):
-            file_path = generate_classify_file(predict_task_and_doc_list=predict_task_and_doc_list, export_fileset=export_fileset)
+            file_path = generate_classify_file(task_and_doc_list=predict_task_and_doc_list, export_fileset=export_fileset)
         elif nlp_task_id == int(NlpTaskEnum.wordseg):
-            file_path = generate_wordseg_file(predict_task_and_doc_list=predict_task_and_doc_list, export_fileset=export_fileset)
+            file_path = generate_wordseg_file(task_and_doc_list=predict_task_and_doc_list, export_fileset=export_fileset)
         else:
             abort(400, message="该任务无法导出")
         return file_path
