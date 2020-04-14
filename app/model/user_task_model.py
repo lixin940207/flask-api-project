@@ -25,7 +25,7 @@ class UserTaskModel(BaseModel, ABC):
         # Define allowed filter keys
         accept_keys = ["mark_task_id", "annotator_id", "user_task_status"]
         # Compose query
-        q = session.query(UserTask).filter(not_(UserTask.is_deleted))
+        q = session.query(UserTask).filter(~UserTask.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():
             if key in accept_keys:

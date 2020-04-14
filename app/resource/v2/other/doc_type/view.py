@@ -283,3 +283,33 @@ class CheckDocTypeItemResource(Resource):
                        "existed": bool(item)
                    },
                }, 200
+
+
+class WordsegDocLexiconListResource(Resource):
+    @parse({
+        "offset": fields.Integer(missing=0),
+        "limit": fields.Integer(missing=10),
+    })
+    def get(self, args, doc_type_id):
+        """
+        规则列表
+        """
+        result, count = DocTypeService().get_wordseg_lexicon(doc_type_id, args.get("offset"), args.get("limit"))
+        return {
+                   "message": "请求成功",
+                   "result": result,
+                   "count": count,
+               }, 200
+
+    @parse({
+        "seg_type": fields.String(required=True),
+        "word": fields.String(required=True),
+        "state": fields.Integer(required=True)
+    })
+    def post(self, args, doc_type_id):
+        result = DocTypeService().create_wordseg_lexicon(doc_type_id=doc_type_id, **args)
+
+        return {
+                   "message": "创建成功",
+                   "result": result,
+               }, 201
