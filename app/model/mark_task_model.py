@@ -290,5 +290,5 @@ class MarkTaskModel(BaseModel, ABC):
             "color": term_color_mapping.get(item['doc_term_id'], '#ddd'),
             "word": item['value'],
             "annotation": term_name_mapping.get(item['doc_term_id'], '')
-        } for item in item.task_result]
+        } for item in item.mark_task_result]
         return doc.doc_unique_name, doc.doc_raw_name, labels
