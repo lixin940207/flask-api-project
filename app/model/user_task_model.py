@@ -92,11 +92,11 @@ class UserTaskModel(BaseModel, ABC):
         # TODO
         # 权限
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
-            q = q.filter(UserTask.group_id.in_(current_user.user_groups))
+            q = q.filter(DocType.group_id.in_(current_user.user_groups))
         elif current_user.user_role in [RoleEnum.reviewer.value]:
-            q = q.filter(func.json_contains(UserTask.reviewer_ids, current_user.user_id))
+            q = q.filter(func.json_contains(MarkJob.reviewer_ids, current_user.user_id))
         elif current_user.user_role in [RoleEnum.annotator.value]:
-            q = q.filter(func.json_contains(UserTask.annotator_ids, current_user.user_id))
+            q = q.filter(func.json_contains(MarkJob.annotator_ids, current_user.user_id))
         if args.get('job_id'):
             q.filter(MarkTask.mark_task_id == args['job_id'])
         if args.get('doc_type_id'):
