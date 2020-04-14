@@ -208,3 +208,21 @@ class DocTypeService:
         result = WordsegDocLexiconSchema().dump(item)
         return result
 
+    @staticmethod
+    def get_wordseg_lexicon_item(doc_lexicon_id):
+        doc_lexicon = WordsegLexiconModel().get_by_id(doc_lexicon_id)
+        session.commit()
+        result = WordsegDocLexiconSchema().dump(doc_lexicon)
+        return result
+
+    @staticmethod
+    def delete_wordseg_lexicon_by_id(doc_lexicon_id):
+        WordsegLexiconModel().delete(doc_lexicon_id)
+        session.commit()
+
+    @staticmethod
+    def update_wordseg_lexicon(doc_lexicon_id, args):
+        item = WordsegLexiconModel().update(doc_lexicon_id, **args)
+        session.commit()
+        result = WordsegDocLexiconSchema().dump(item)
+        return result
