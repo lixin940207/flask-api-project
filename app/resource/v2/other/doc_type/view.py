@@ -61,6 +61,29 @@ class DocTypeListResource(Resource, CurrentUserMixin):
 
 class RelationDocTypeListResource(Resource, CurrentUserMixin):
     @parse({
+        "offset": fields.Integer(missing=0),
+        "limit": fields.Integer(missing=10),
+        "mark_job_ids": fields.List(fields.Integer(), missing=[]),
+        "is_online": fields.Integer()
+    })
+    def get(self: Resource, args: typing.Dict) -> typing.Tuple[typing.Dict, int]:
+        """
+        获取所有文档条款
+        :param args:
+        :return:
+        """
+        nlp_task_id = Common().get_nlp_task_id_by_route()
+        args.update({
+            'nlp_task_id': nlp_task_id
+        })
+        result, count = DocTypeService().get_doc_type(self.get_current_user(), args)
+        return {
+                   "message": "请求成功",
+                   "result": result,
+                   "count": count,
+               }, 200
+
+    @parse({
         "doc_type_name": fields.String(required=True),
         "doc_type_desc": fields.String(),
     })
