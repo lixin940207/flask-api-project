@@ -136,3 +136,38 @@ class UserTaskModel(BaseModel, ABC):
         user_task.doc = doc
         user_task.doc_type = doc_type
         return user_task
+
+    @staticmethod
+    def get_preview_and_next_user_task_id(current_user, nlp_task_id, task_id, args):
+        q = session.query(UserTask.user_task_id) \
+            .join(MarkTask, MarkTask.mark_task_id == UserTask.mark_task_id) \
+            .join(MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id) \
+            .join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
+            .filter(
+            DocType.nlp_task_id == nlp_task_id,
+            UserTask.user_task_status != int(StatusEnum.processing),
+            ~MarkTask.is_deleted,
+            ~UserTask.is_deleted,
+        )
+
+        if args.get('job_id'):
+            q = q.filter(MarkJob.mark_job_id == args['job_id'])
+        if args.get("task_state"):
+            q = q.filter(UserTask.user_task_status == args.get("task_state"))
+        if args.get("query"):
+            q = q.filter(Doc.doc_raw_name.contains(args.get("query")))
+
+        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
+            q = q.filter(DocType.group_id.in_(current_user.user_groups))
+        elif current_user.user_role in [RoleEnum.reviewer.value]:
+            q = q.filter(func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id)))
+        elif current_user.user_role in [RoleEnum.annotator.value]:
+            q = q.filter(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)))
+
+        q1 = Common().order_by_model_fields(q.filter(UserTask.user_task_id < task_id), UserTask, ['-user_task_id'])
+        q2 = Common().order_by_model_fields(q.filter(UserTask.user_task_id > task_id), UserTask, ['+user_task_id'])
+
+        next_task_id = q1.limit(1).first()
+        preview_task_id = q2.limit(1).first()
+        return preview_task_id[0] if preview_task_id else None, next_task_id[0] if next_task_id else None
+

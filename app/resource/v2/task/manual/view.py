@@ -47,7 +47,8 @@ class TaskListResource(Resource, CurrentUserMixin):
                                                              "audited", "unlabel"))
     })
     def get(self: Resource, args: typing.Dict):
-        count, processed, result = ManualTaskService().get_user_task_or_mark_task_result_by_role(self.get_current_user(), args)
+        count, processed, result = ManualTaskService().get_user_task_or_mark_task_result_by_role(
+            self.get_current_user(), args)
         return {
                    "message": "请求成功",
                    "result": result,
@@ -84,6 +85,30 @@ class TaskItemResource(Resource, CurrentUserMixin):
                    "message": "更新成功",
                    "result": result,
                }, 201
+
+
+class TaskItemNextResource(Resource, CurrentUserMixin):
+
+    @parse({
+        "job_id": fields.Integer(),
+        "job_type": fields.String(required=True,
+                                  validate=lambda x: x in ('mark', 'classify_mark', 'relation_mark', 'wordseg_mark')),
+        "task_state": fields.String(missing="",
+                                    validate=lambda x: x in (
+                                            "", "processing", "failed", "success", "unaudit", "audited",
+                                            "unlabel")),
+        "query": fields.String(missing=""),
+    })
+    def get(self: Resource, args: typing.Dict, task_id: int) -> typing.Tuple[typing.Dict, int]:
+        pass
+        preview_task_id, next_task_id = ManualTaskService().get_preview_and_next_task_id(self.get_current_user(),
+                                                                                         task_id, args)
+
+        return {
+                   "message": "请求成功",
+                   "next_id": next_task_id,
+                   "prev_id": preview_task_id
+               }, 200
 
 
 class AssessTaskItemPdfPrintResource(Resource):

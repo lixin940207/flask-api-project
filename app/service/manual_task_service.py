@@ -6,7 +6,7 @@
 @Email: guochuanxiang@datagrand.com
 @IDE: PyCharm 
 """
-from app.common.common import NlpTaskEnum, StatusEnum, RoleEnum
+from app.common.common import NlpTaskEnum, RoleEnum
 from app.common.filters import CurrentUser
 from app.model import MarkTaskModel, MarkJobModel, UserTaskModel
 from app.common.extension import session
@@ -88,3 +88,12 @@ class ManualTaskService:
             schema = MarkTaskSchema
         result = schema().dump(item)
         return result
+
+    @staticmethod
+    def get_preview_and_next_task_id(current_user: CurrentUser, task_id, args):
+        nlp_task_id = nlp_task_mapper.get(args['job_type'])
+        if current_user.user_role in [RoleEnum.annotator.value]:
+            preview_task_id, next_task_id = UserTaskModel().get_preview_and_next_user_task_id(current_user, nlp_task_id, task_id, args)
+        else:
+            preview_task_id, next_task_id = MarkTaskModel().get_preview_and_next_mark_task_id(current_user, nlp_task_id, task_id, args)
+        return preview_task_id, next_task_id
