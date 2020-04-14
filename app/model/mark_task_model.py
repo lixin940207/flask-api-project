@@ -1,6 +1,7 @@
 from abc import ABC
+
 from sqlalchemy import not_, func
-from typing import List, Tuple, Dict
+from typing import List, Tuple
 
 from app.common.filters import CurrentUser
 from app.common.common import StatusEnum, RoleEnum, Common
@@ -149,7 +150,7 @@ class MarkTaskModel(BaseModel, ABC):
         return q.mark_job_id
 
     @staticmethod
-    def update_status_to_unlabel_by_manual_task_id(_id):
+    def update_status_to_unlabel_by_mark_task_id(_id):
         q = session.query(MarkTask).filter(MarkTask.mark_task_id == _id).one()
         q.mark_task_result = []
         q.mark_task_status = int(StatusEnum.unlabel)
@@ -220,7 +221,7 @@ class MarkTaskModel(BaseModel, ABC):
 
     @staticmethod
     def _get_user_task_map(mark_task_ids, select_keys):  # tuple):
-        """select_keys必须包含manual_task_id"""
+        """select_keys必须包含mark_task_id"""
         user_tasks = session.query(select_keys).filter(UserTask.mark_task_id.in_(mark_task_ids)).all()
         user_task_map = {}
         for user_task in user_tasks:
@@ -230,3 +231,37 @@ class MarkTaskModel(BaseModel, ABC):
             else:
                 user_task_map[mark_task_id_key] = [user_task]
         return user_task_map
+    
+    @staticmethod
+    def get_preview_and_next_mark_task_id(current_user, nlp_task_id, task_id, args):
+        q = session.query(MarkTask.mark_task_id) \
+            .join(UserTask, UserTask.mark_task_id == MarkTask.mark_task_id) \
+            .join(MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id) \
+            .join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
+            .filter(
+            DocType.nlp_task_id == nlp_task_id,
+            MarkTask.mark_task_status != int(StatusEnum.processing),
+            ~MarkTask.is_deleted,
+            ~UserTask.is_deleted,
+        )
+
+        if args.get('job_id'):
+            q = q.filter(MarkJob.mark_job_id == args['job_id'])
+        if args.get("task_state"):
+            q = q.filter(MarkTask.mark_task_status == args.get("task_state"))
+        if args.get("query"):
+            q = q.filter(Doc.doc_raw_name.contains(args.get("query")))
+
+        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
+            q = q.filter(DocType.group_id.in_(current_user.user_groups))
+        elif current_user.user_role in [RoleEnum.reviewer.value]:
+            q = q.filter(func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id)))
+        elif current_user.user_role in [RoleEnum.annotator.value]:
+            q = q.filter(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)))
+
+        q1 = Common().order_by_model_fields(q.filter(MarkTask.mark_task_id < task_id), MarkTask, ['-mark_task_id'])
+        q2 = Common().order_by_model_fields(q.filter(MarkTask.mark_task_id > task_id), MarkTask, ['+mark_task_id'])
+
+        next_task_id = q1.limit(1).first()
+        preview_task_id = q2.limit(1).first()
+        return preview_task_id[0] if preview_task_id else None, next_task_id[0] if next_task_id else None
