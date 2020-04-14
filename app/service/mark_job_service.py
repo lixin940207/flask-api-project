@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import List
 
 import pandas as pd
+from flask import g
 from flask_restful import abort
 from pandas.errors import EmptyDataError
 from werkzeug.datastructures import FileStorage
@@ -251,6 +252,7 @@ class MarkJobService:
             'doc_type': mark_job.doc_type_id,
             'business': business,
             'task_id': mark_task.mark_task_id,
+            'app_id': g.app_id
         }))
 
     @staticmethod
