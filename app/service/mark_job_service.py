@@ -163,7 +163,7 @@ class MarkJobService:
         doc_list = [dict(doc_raw_name=csv_doc.doc_raw_name, doc_unique_name=d) for d in doc_name_list]
         doc_list = DocModel().bulk_create(doc_list)
 
-        # bulk create predict tasks
+        # bulk create mark tasks
         task_list = []
         for i in range(len(doc_list)):
             task_list.append(dict(doc_id=doc_list[i].doc_id, mark_job_id=mark_job.mark_job_id))
@@ -375,3 +375,30 @@ class MarkJobService:
                 result['docs'].append(DocSchema().dump(doc))
                 result['tasks'].append(MarkTaskSchema().dump(task))
             items.append(result)
+
+    @staticmethod
+    def update_mark_task_and_user_task_by_mark_task_id(mark_task_id, args):
+        # update mark task
+        mark_task = MarkTaskModel().update(mark_task_id, **args)
+        # update user task list
+        user_task_list = UserTaskModel().get_by_filter(limit=99999, mark_task_id=mark_task_id)
+        user_update_params = {"user_task_status": mark_task.mark_task_status, "user_task_result": mark_task.mark_task_result}
+        user_task_list = UserTaskModel().bulk_update([user_task.user_task_id for user_task in user_task_list], **user_update_params)
+
+        session.commit()
+        return mark_task, user_task_list
+
+    @staticmethod
+    def update_mark_job_status_by_mark_task(mark_task: MarkTask):
+        # 更新这个task对应的job的状态，如果其下所有的task都成功，则修改job状态成功；如果其下有一个任务失败，则修改job状态失败
+        mark_task_list = MarkTaskModel().get_by_filter(limit=99999, mark_job_id=mark_task.mark_job_id)
+        states = [mark_task.mark_task_status for mark_task in mark_task_list]
+        if int(StatusEnum.fail) in states:  # 有一个失败，则整个job失败
+            new_job_status = int(StatusEnum.fail)
+        elif int(StatusEnum.processing) in states:  # 没有失败但是有处理中，则整个job处理中
+            new_job_status = int(StatusEnum.processing)
+        else:
+            new_job_status = int(StatusEnum.success)
+        MarkJobModel().update(mark_task.mark_job_id, mark_job_status=new_job_status,
+                                                              updated_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        session.commit()
