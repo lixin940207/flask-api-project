@@ -10,7 +10,8 @@ from app.model import DocTypeModel, MarkTaskModel
 from app.model.doc_relation_model import DocRelationModel
 from app.model.doc_term_model import DocTermModel
 from app.model.evaluate_task_model import EvaluateTaskModel
-from app.schema import DocTypeSchema, EvaluateTaskSchema
+from app.model.wordseg_lexicon_model import WordsegLexiconModel
+from app.schema import DocTypeSchema, EvaluateTaskSchema, WordsegDocLexiconSchema
 
 
 class DocTypeService:
@@ -191,5 +192,18 @@ class DocTypeService:
         item = DocTypeModel().create(**args)
         session.commit()
         result = DocTypeSchema().dump(item)
+        return result
+
+    @staticmethod
+    def get_wordseg_lexicon(doc_type_id, offset, limit):
+        items, count = WordsegLexiconModel().get_by_filter(doc_type_id=doc_type_id, offset=offset, limit=limit)
+        result = WordsegDocLexiconSchema(many=True).dump(items)
+        return result
+
+    @staticmethod
+    def create_wordseg_lexicon(doc_type_id, kwargs):
+        kwargs.update({"doc_type_id": doc_type_id})
+        item = WordsegLexiconModel().create(**kwargs)
+        result = WordsegDocLexiconSchema().dump(item)
         return result
 
