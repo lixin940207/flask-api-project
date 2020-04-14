@@ -165,9 +165,10 @@ class MarkJobService:
         task_list = MarkTaskModel().bulk_create(task_list)
 
         # push redis
+        business = self.get_business_by_nlp_task(nlp_task)
         for i in range(len(doc_list)):
             self.push_mark_task_message(
-                mark_job=mark_job, mark_task=task_list[i], doc=doc_list[i], business=f"{nlp_task.name}_label")
+                mark_job=mark_job, mark_task=task_list[i], doc=doc_list[i], business=business)
 
         return task_list
 
@@ -175,8 +176,9 @@ class MarkJobService:
         doc_unique_name, doc_relative_path = upload_fileset.save_file(f.filename, f.stream.read())
         doc = DocModel().create(doc_raw_name=f.filename, doc_unique_name=doc_unique_name)
         mark_task = MarkTaskModel().create(doc_id=doc.doc_id, mark_job_id=mark_job.mark_job_id)
+        business = self.get_business_by_nlp_task(nlp_task)
         self.push_mark_task_message(
-            mark_job=mark_job, mark_task=mark_task, doc=doc, business=f"{nlp_task.name}_label")
+            mark_job=mark_job, mark_task=mark_task, doc=doc, business=business)
 
         return [mark_task]
 
@@ -410,3 +412,7 @@ class MarkJobService:
         MarkJobModel().update(mark_task.mark_job_id, mark_job_status=new_job_status,
                                                               updated_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         session.commit()
+
+    @staticmethod
+    def get_business_by_nlp_task(nlp_task) -> str:
+        return f"{nlp_task.name}_label" if nlp_task != nlp_task.extract else "label"
