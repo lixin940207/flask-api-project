@@ -70,9 +70,9 @@ class TrainTaskModel(BaseModel, ABC):
 
     def bulk_update(self, _id_list, **kwargs):
         entity_list = session.query(TrainTask).filter(TrainTask.train_task_id.in_(_id_list))
-        entity_list.update(**kwargs)
+        entity_list.update(kwargs, synchronize_session="fetch")
         session.flush()
-        return entity_list
+        return entity_list.all()
 
     @staticmethod
     def get_online_model_info_by_doc_type_id(doc_type_id, current_user: CurrentUser, order_by="created_time", order_by_desc=True):

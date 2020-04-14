@@ -31,10 +31,10 @@ class UserTaskModel(BaseModel, ABC):
             if key in accept_keys:
                 q = q.filter(getattr(UserTask, key) == val)
         # Order by key
-        q = q.order_by(order_by)
-        # Descending order
         if order_by_desc:
-            q = q.desc()
+            q = q.order_by(getattr(UserTask, order_by).desc())
+        else:
+            q = q.order_by(getattr(UserTask, order_by))
         q = q.offset(offset).limit(limit)
         return q.all()
 
@@ -69,7 +69,7 @@ class UserTaskModel(BaseModel, ABC):
 
     def bulk_update(self, _id_list, **kwargs):
         entity_list = session.query(UserTask).filter(UserTask.user_task_id.in_(_id_list))
-        entity_list.update(**kwargs)
+        entity_list.update(kwargs, synchronize_session="fetch")
         session.flush()
         return entity_list.all()
 

@@ -36,10 +36,10 @@ class DocRelationModel(BaseModel, ABC):
         if require_count:
             count = q.count()
         # Order by key
-        q = q.order_by(order_by)
-        # Descending order
         if order_by_desc:
-            q = q.desc()
+            q = q.order_by(getattr(DocRelation, order_by).desc())
+        else:
+            q = q.order_by(getattr(DocRelation, order_by))
         q = q.offset(offset).limit(limit)
         return q.all(), count
 
