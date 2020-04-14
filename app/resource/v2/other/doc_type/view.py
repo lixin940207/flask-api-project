@@ -307,7 +307,9 @@ class WordsegDocLexiconListResource(Resource):
         "state": fields.Integer(required=True)
     })
     def post(self, args, doc_type_id):
-        result = DocTypeService().create_wordseg_lexicon(doc_type_id=doc_type_id, **args)
+        args.update({"doc_type_id": doc_type_id})
+        args.update({"is_active": args.pop("state")})
+        result = DocTypeService().create_wordseg_lexicon(args)
 
         return {
                    "message": "创建成功",

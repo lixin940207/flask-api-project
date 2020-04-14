@@ -202,9 +202,9 @@ class DocTypeService:
         return result, count
 
     @staticmethod
-    def create_wordseg_lexicon(doc_type_id, kwargs):
-        kwargs.update({"doc_type_id": doc_type_id})
+    def create_wordseg_lexicon(kwargs):
         item = WordsegLexiconModel().create(**kwargs)
+        session.commit()
         result = WordsegDocLexiconSchema().dump(item)
         return result
 
