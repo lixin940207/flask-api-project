@@ -32,3 +32,5 @@ api.add_resource(view.CancelTopDocTypeResource,
 
 # api.add_resource(view.CheckDocTypeItemResource, '/check_doc_type')
 api.add_resource(view.WordsegDocLexiconListResource, '/wordseg_doc_type/<int:doc_type_id>/wordseg_doc_lexicon')
+api.add_resource(view.WordsegDocLexiconItemResource,
+                 '/wordseg_doc_type/<int:doc_type_id>/wordseg_doc_lexicon/<int:doc_lexicon_id>')

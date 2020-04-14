@@ -12,7 +12,7 @@ class WordsegLexiconModel(BaseModel, ABC):
         pass
 
     def get_by_id(self, _id):
-        pass
+        return session.query(WordsegDocLexicon).filter(WordsegDocLexicon.doc_type_id == _id, ~WordsegDocLexicon.is_deleted).one()
 
     def get_by_filter(self, search=None, order_by="created_time", order_by_desc=True, limit=10, offset=0, require_count=False
                       , **kwargs):
@@ -43,7 +43,8 @@ class WordsegLexiconModel(BaseModel, ABC):
         pass
 
     def delete(self, _id):
-        pass
+        session.query(WordsegDocLexicon).filter(WordsegDocLexicon.doc_type_id == _id).update({WordsegDocLexicon.is_deleted: True})
+        session.flush()
 
     def bulk_delete(self, _id_list):
         pass
@@ -51,8 +52,11 @@ class WordsegLexiconModel(BaseModel, ABC):
     def bulk_delete_by_filter(self, **kwargs):
         pass
 
-    def update(self, entity):
-        pass
+    def update(self, _id, **kwargs):
+        entity = session.query(WordsegDocLexicon).filter(WordsegDocLexicon.wordseg_lexicon_id == _id)
+        entity.update(kwargs)
+        session.flush()
+        return entity.one()
 
     def bulk_update(self, entity_list):
         pass

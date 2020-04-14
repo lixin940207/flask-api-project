@@ -307,9 +307,38 @@ class WordsegDocLexiconListResource(Resource):
         "state": fields.Integer(required=True)
     })
     def post(self, args, doc_type_id):
-        result = DocTypeService().create_wordseg_lexicon(doc_type_id=doc_type_id, **args)
+        args.update({"doc_type_id": doc_type_id})
+        args.update({"is_active": args.pop("state")})
+        result = DocTypeService().create_wordseg_lexicon(args)
 
         return {
                    "message": "创建成功",
                    "result": result,
                }, 201
+
+
+class WordsegDocLexiconItemResource(Resource):
+    def get(self, doc_type_id, doc_lexicon_id):
+        result = DocTypeService().get_wordseg_lexicon_item(doc_lexicon_id)
+        return {
+                   "message": "请求成功",
+                   "result": result,
+               }, 200
+
+    @parse({
+        "seg_type": fields.String(required=True),
+        "word": fields.String(required=True),
+        "state": fields.Integer(required=True)
+    })
+    def put(self, args, doc_type_id, doc_lexicon_id):
+        result = DocTypeService().update_wordseg_lexicon(doc_lexicon_id, args)
+        return {
+                   "message": "更新成功",
+                   "result": result,
+               }, 200
+
+    def delete(self, doc_type_id, doc_lexicon_id):
+        DocTypeService().delete_wordseg_lexicon_by_id(doc_lexicon_id)
+        return {
+                   "message": "删除成功",
+               }, 204
