@@ -136,18 +136,12 @@ class MarkJobService:
 
     @staticmethod
     def delete_mark_job(mark_job_id: int):
-        session.query(MarkJob).filter(MarkJob.mark_job_id == mark_job_id).update({MarkJob.is_deleted: True})
-        session.query(MarkTask).filter(MarkTask.mark_job_id == mark_job_id).update({MarkTask.is_deleted: True})
+        MarkJobModel().delete(mark_job_id)
         session.commit()
 
     @staticmethod
     def delete_mark_jobs(mark_job_ids: List[int]):
-        session.query(MarkJob).filter(
-            MarkJob.mark_job_id.in_(mark_job_ids)
-        ).update({MarkJob.is_deleted: True}, synchronize_session='fetch')
-        session.query(MarkTask).filter(
-            MarkTask.mark_job_id.in_(mark_job_ids)
-        ).update({MarkTask.is_deleted: True}, synchronize_session='fetch')
+        MarkJobModel().bulk_delete(mark_job_ids)
         session.commit()
 
     def upload_batch_files(self, f: FileStorage, mark_job: MarkJob, nlp_task) -> List[MarkTask]:
