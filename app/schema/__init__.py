@@ -12,3 +12,5 @@ from app.schema.predict_task_schema import PredictTaskSchema
 from app.schema.train_job_schema import TrainJobSchema
 from app.schema.train_task_schema import TrainTaskSchema
 from app.schema.train_term_task_schema import TrainTermTaskSchema
+from app.schema.user_task_schema import UserTaskSchema
+from app.schema.mark_task_schema import MarkTaskSchema

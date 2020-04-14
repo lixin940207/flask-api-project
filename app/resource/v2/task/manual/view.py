@@ -31,7 +31,7 @@ class RejectManualTaskResource(Resource):
                }, 201
 
 
-class UserTaskListResource(Resource, CurrentUserMixin):
+class TaskListResource(Resource, CurrentUserMixin):
     @parse({
         "query": fields.String(missing=''),
         "offset": fields.Integer(missing=0),
@@ -47,7 +47,7 @@ class UserTaskListResource(Resource, CurrentUserMixin):
                                                              "audited", "unlabel"))
     })
     def get(self: Resource, args: typing.Dict):
-        count, processed, result = ManualTaskService().get_user_task_result(self.get_current_user(), args)
+        count, processed, result = ManualTaskService().get_user_task_or_mark_task_result_by_role(self.get_current_user(), args)
         return {
                    "message": "请求成功",
                    "result": result,
