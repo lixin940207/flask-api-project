@@ -43,7 +43,7 @@ class WordsegLexiconModel(BaseModel, ABC):
         pass
 
     def delete(self, _id):
-        session.query(WordsegDocLexicon).filter(WordsegDocLexicon.doc_type_id == _id).update({WordsegDocLexicon.is_deleted: True})
+        session.query(WordsegDocLexicon).filter(WordsegDocLexicon.wordseg_lexicon_id == _id).update({WordsegDocLexicon.is_deleted: True})
         session.flush()
 
     def bulk_delete(self, _id_list):
