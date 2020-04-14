@@ -10,6 +10,7 @@ import typing
 
 from flask_restful import Resource
 
+from app.common.export import PDFAnnotationExport
 from app.common.filters import CurrentUserMixin
 from app.common.patch import parse, fields
 from app.service.manual_task_service import ManualTaskService
@@ -118,4 +119,9 @@ class AssessTaskItemPdfPrintResource(Resource):
         :param task_id:
         :return:
         """
-        pass
+        doc_unique_name, doc_raw_name, labels = ManualTaskService().export_pdf(task_id)
+        return PDFAnnotationExport(
+            folder='upload',
+            unique_name=doc_unique_name,
+            file_name=doc_raw_name
+        ).export_with_annotation(labels)

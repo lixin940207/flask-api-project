@@ -97,3 +97,8 @@ class ManualTaskService:
         else:
             preview_task_id, next_task_id = MarkTaskModel().get_preview_and_next_mark_task_id(current_user, nlp_task_id, task_id, args)
         return preview_task_id, next_task_id
+
+    @staticmethod
+    def export_pdf(task_id):
+        doc_unique_name, doc_raw_name, labels = MarkTaskModel().get_doc_and_lable(task_id)
+        return doc_unique_name, doc_raw_name, labels
