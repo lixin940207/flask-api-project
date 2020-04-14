@@ -166,9 +166,9 @@ class MarkTaskModel(BaseModel, ABC):
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
         elif current_user.user_role in [RoleEnum.reviewer.value]:
-            q = q.filter(func.json_contains(MarkJob.reviewer_ids, current_user.user_id))
+            q = q.filter(func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id)))
         elif current_user.user_role in [RoleEnum.annotator.value]:
-            q = q.filter(func.json_contains(MarkJob.annotator_ids, current_user.user_id))
+            q = q.filter(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)))
         if args.get('job_id'):
             q.filter(MarkTask.mark_task_id == args['job_id'])
         if args.get('doc_type_id'):
@@ -187,7 +187,7 @@ class MarkTaskModel(BaseModel, ABC):
         items = []
         results = q.offset(args['offset']).limit(args['limit']).all()
         mark_task_ids = [mark_task.mark_task_id for mark_task, _, _ in results]
-        user_task_map = self.get_user_task_map(mark_task_ids, select_keys=(UserTask.annotator_id, UserTask.mark_task_id))
+        user_task_map = self.get_user_task_map(mark_task_ids, select_keys=(UserTask))   #.annotator_id, UserTask.mark_task_id))
         for mark_task, doc_type, doc in q.offset(args['offset']).limit(args['limit']).all():
             user_task_list = user_task_map[str(mark_task.mark_task_id)]
             mark_task.user_task_list = user_task_list
@@ -197,9 +197,9 @@ class MarkTaskModel(BaseModel, ABC):
         return count, count - processing_count, items
 
     @staticmethod
-    def get_user_task_map(mark_task_ids, select_keys: tuple):
+    def get_user_task_map(mark_task_ids, select_keys):  # tuple):
         """select_keys必须包含manual_task_id"""
-        user_tasks = session.query(*select_keys).filter(UserTask.mark_task_id.in_(mark_task_ids)).all()
+        user_tasks = session.query(select_keys).filter(UserTask.mark_task_id.in_(mark_task_ids)).all()
         user_task_map = {}
         for user_task in user_tasks:
             mark_task_id_key = str(user_task.mark_task_id)

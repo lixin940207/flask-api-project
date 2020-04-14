@@ -11,8 +11,6 @@ from app.schema.doc_schema import DocSchema
 
 class MarkTaskSchema(Schema):  # type: ignore
     task_id = fields.Integer(attribute="mark_task_id")
-    mark_job_id = fields.Integer()
-    doc_id = fields.Integer()
     doc = fields.Nested(DocSchema)
     doc_type = fields.Nested({
         "doc_type_id": fields.Integer(),
