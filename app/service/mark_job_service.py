@@ -351,14 +351,13 @@ class MarkJobService:
         shutil.make_archive(export_dir_path, 'zip', export_dir_path)  # 打包
         return export_dir_path + ".zip"
 
-    def get_mark_job_data_by_ids(self, mark_job_ids):
+    def get_mark_job_data_by_ids(self, mark_job_ids, args, doc_type_key="doc_type"):
         items = []
         for mark_job_id in mark_job_ids:
             doc_type = DocTypeModel().get_by_mark_job_id(mark_job_id)
-
             result = {
                 "prefix": "",  # TODO: 与MQ确认传参是否适配
-                "doc_type": DocTypeSchema().dump(doc_type),
+                doc_type_key: DocTypeSchema().dump(doc_type),
                 "docs": [],
                 "tasks": [],
                 "mark_job_id": mark_job_id,
@@ -366,6 +365,19 @@ class MarkJobService:
             data = MarkTaskModel().get_mark_task_and_doc_by_mark_job_ids([mark_job_id])
 
             for task, doc in data:
-                result['docs'].append(DocSchema().dump(doc))
-                result['tasks'].append(MarkTaskSchema().dump(task))
+                # 抽取逻辑
+                if args.get('doc_term_ids'):
+                    if isinstance(task.task_result, list) \
+                            and Common.check_doc_term_include(task.task_result, 'doc_term_id', args['doc_term_ids']):
+                        result['docs'].append(DocSchema().dump(doc))
+                        result['tasks'].append(MarkTaskSchema().dump(task))
+                # 实体关系逻辑
+                if args.get('doc_relation_ids'):
+                    if isinstance(task.task_result, list) and Common.check_doc_relation_include(
+                            task.task_result, 'relation_id', args['doc_relation_ids']):
+                        result['docs'].append(DocSchema().dump(doc))
+                        result['tasks'].append(MarkTaskSchema().dump(task))
+                else:
+                    result['docs'].append(DocSchema().dump(doc))
+                    result['tasks'].append(MarkTaskSchema().dump(task))
             items.append(result)
