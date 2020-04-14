@@ -2,11 +2,13 @@ from abc import ABC
 
 from sqlalchemy import not_, func
 from typing import List, Tuple
+from flask_restful import abort
+
 
 from app.common.filters import CurrentUser
 from app.common.common import StatusEnum, RoleEnum, Common
 from app.common.utils.status_mapper import status_str2int_mapper
-from app.entity import DocType, MarkJob, Doc, UserTask
+from app.entity import DocType, MarkJob, Doc, UserTask, DocTerm
 from app.model.base import BaseModel
 from app.entity.mark_task import MarkTask
 from app.common.extension import session
@@ -265,3 +267,28 @@ class MarkTaskModel(BaseModel, ABC):
         next_task_id = q1.limit(1).first()
         preview_task_id = q2.limit(1).first()
         return preview_task_id[0] if preview_task_id else None, next_task_id[0] if next_task_id else None
+
+    @staticmethod
+    def get_doc_and_lable(task_id):
+        item, doc_type_id, doc = session.query(MarkTask, MarkJob.doc_type_id, Doc) \
+            .join(MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id) \
+            .join(Doc, Doc.doc_id == MarkTask.doc_id) \
+            .filter(MarkTask.mark_task_id == task_id, ~MarkTask.is_deleted).one()
+
+        if item.mark_task_status not in (int(StatusEnum.success), int(StatusEnum.approved)):
+            abort(400, message="审核未完成，不能进行导出操作")
+
+        doc_terms = session.query(DocTerm).filter(
+            DocTerm.doc_type_id == doc_type_id,
+            ~DocTerm.is_deleted
+        )
+        term_color_mapping = {doc_term.doc_term_id: doc_term.doc_term_color for doc_term in doc_terms}
+        term_name_mapping = {doc_term.doc_term_id: doc_term.doc_term_name for doc_term in doc_terms}
+
+        labels = [{
+            "index": item["index"],
+            "color": term_color_mapping.get(item['doc_term_id'], '#ddd'),
+            "word": item['value'],
+            "annotation": term_name_mapping.get(item['doc_term_id'], '')
+        } for item in item.task_result]
+        return doc.doc_unique_name, doc.doc_raw_name, labels
