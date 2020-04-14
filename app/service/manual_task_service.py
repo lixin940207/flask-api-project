@@ -81,6 +81,7 @@ class ManualTaskService:
                 del args['task_state']
             item = MarkTaskModel().update(task_id, **args)
             schema = MarkTaskSchema
+        session.commit()
         result = schema().dump(item)
         return result
 
