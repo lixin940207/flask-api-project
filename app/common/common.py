@@ -174,3 +174,19 @@ class Common:
             condition = getattr(attr, order)()
             q = q.order_by(condition)
         return q
+
+    @staticmethod
+    def check_doc_term_include(s_list, key, d_list):
+        for s in s_list:
+            for d in d_list:
+                if isinstance(s, dict) and s.get(key) == d:
+                    return True
+        return False
+
+    @staticmethod
+    def check_doc_relation_include(s_list, key, d_list):
+        for s in s_list:
+            for d in d_list:
+                if isinstance(s, dict) and s.get(key) == d:
+                    return True
+        return False

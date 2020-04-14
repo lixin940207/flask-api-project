@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import List
 
 import pandas as pd
+from flask import g
 from flask_restful import abort
 from pandas.errors import EmptyDataError
 from werkzeug.datastructures import FileStorage
@@ -136,18 +137,12 @@ class MarkJobService:
 
     @staticmethod
     def delete_mark_job(mark_job_id: int):
-        session.query(MarkJob).filter(MarkJob.mark_job_id == mark_job_id).update({MarkJob.is_deleted: True})
-        session.query(MarkTask).filter(MarkTask.mark_job_id == mark_job_id).update({MarkTask.is_deleted: True})
+        MarkJobModel().delete(mark_job_id)
         session.commit()
 
     @staticmethod
     def delete_mark_jobs(mark_job_ids: List[int]):
-        session.query(MarkJob).filter(
-            MarkJob.mark_job_id.in_(mark_job_ids)
-        ).update({MarkJob.is_deleted: True}, synchronize_session='fetch')
-        session.query(MarkTask).filter(
-            MarkTask.mark_job_id.in_(mark_job_ids)
-        ).update({MarkTask.is_deleted: True}, synchronize_session='fetch')
+        MarkJobModel().bulk_delete(mark_job_ids)
         session.commit()
 
     def upload_batch_files(self, f: FileStorage, mark_job: MarkJob, nlp_task) -> List[MarkTask]:
@@ -257,6 +252,7 @@ class MarkJobService:
             'doc_type': mark_job.doc_type_id,
             'business': business,
             'task_id': mark_task.mark_task_id,
+            'app_id': g.app_id
         }))
 
     @staticmethod
@@ -357,14 +353,13 @@ class MarkJobService:
         shutil.make_archive(export_dir_path, 'zip', export_dir_path)  # 打包
         return export_dir_path + ".zip"
 
-    def get_mark_job_data_by_ids(self, mark_job_ids):
+    def get_mark_job_data_by_ids(self, mark_job_ids, args, doc_type_key="doc_type"):
         items = []
         for mark_job_id in mark_job_ids:
             doc_type = DocTypeModel().get_by_mark_job_id(mark_job_id)
-
             result = {
                 "prefix": "",  # TODO: 与MQ确认传参是否适配
-                "doc_type": DocTypeSchema().dump(doc_type),
+                doc_type_key: DocTypeSchema().dump(doc_type),
                 "docs": [],
                 "tasks": [],
                 "mark_job_id": mark_job_id,
@@ -372,8 +367,21 @@ class MarkJobService:
             data = MarkTaskModel().get_mark_task_and_doc_by_mark_job_ids([mark_job_id])
 
             for task, doc in data:
-                result['docs'].append(DocSchema().dump(doc))
-                result['tasks'].append(MarkTaskSchema().dump(task))
+                # 抽取逻辑
+                if args.get('doc_term_ids'):
+                    if isinstance(task.task_result, list) \
+                            and Common.check_doc_term_include(task.task_result, 'doc_term_id', args['doc_term_ids']):
+                        result['docs'].append(DocSchema().dump(doc))
+                        result['tasks'].append(MarkTaskSchema().dump(task))
+                # 实体关系逻辑
+                if args.get('doc_relation_ids'):
+                    if isinstance(task.task_result, list) and Common.check_doc_relation_include(
+                            task.task_result, 'relation_id', args['doc_relation_ids']):
+                        result['docs'].append(DocSchema().dump(doc))
+                        result['tasks'].append(MarkTaskSchema().dump(task))
+                else:
+                    result['docs'].append(DocSchema().dump(doc))
+                    result['tasks'].append(MarkTaskSchema().dump(task))
             items.append(result)
 
     @staticmethod
