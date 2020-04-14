@@ -292,3 +292,11 @@ class MarkTaskModel(BaseModel, ABC):
             "annotation": term_name_mapping.get(item['doc_term_id'], '')
         } for item in item.mark_task_result]
         return doc.doc_unique_name, doc.doc_raw_name, labels
+
+    @staticmethod
+    def update_status_to_unlabel_by_manual_task_id(mark_task_id):
+        session.query(MarkTask).filter(
+            MarkTask.mark_task_id == mark_task_id,
+            ~MarkTask.is_deleted
+        ).update({MarkTask.mark_task_status: int(StatusEnum.unlabel)}, synchronize_session='fetch')
+        session.flush()
