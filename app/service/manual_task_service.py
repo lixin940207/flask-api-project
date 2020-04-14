@@ -60,3 +60,31 @@ class ManualTaskService:
         else:
             result = schema(many=True, exclude=('task_result',)).dump(items)
         return count, processed, result
+
+    @staticmethod
+    def update_mark_task_or_user_task_status(current_user: CurrentUser, task_id, args):
+        if current_user.user_role in [RoleEnum.annotator.value]:
+            item = UserTaskModel().update(task_id, **args)
+            schema = UserTaskSchema
+        else:
+            item = MarkTaskModel().update(task_id, **args)
+            schema = MarkTaskSchema
+        result = schema().dump(item)
+        return result
+
+    @staticmethod
+    def get_mark_task_or_user_task(current_user: CurrentUser, task_id: int):
+        """
+
+        :param current_user:
+        :param task_id: 如果是标注员则为user task id 如果是审核员员则为mark task id
+        :return:
+        """
+        if current_user.user_role in [RoleEnum.annotator.value]:
+            item = UserTaskModel().get_user_task_with_doc_and_user_task_list_by_id(task_id)
+            schema = UserTaskSchema
+        else:
+            item = MarkTaskModel().get_mark_task_with_doc_and_user_task_list_by_id(task_id)
+            schema = MarkTaskSchema
+        result = schema().dump(item)
+        return result

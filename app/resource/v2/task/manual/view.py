@@ -56,6 +56,36 @@ class TaskListResource(Resource, CurrentUserMixin):
                }, 200
 
 
+class TaskItemResource(Resource, CurrentUserMixin):
+    def get(
+            self: Resource,
+            task_id: int
+    ) -> typing.Tuple[typing.Dict, int]:
+        result = ManualTaskService().get_mark_task_or_user_task(self.get_current_user(), task_id)
+        return {
+                   "message": "请求成功",
+                   "result": result
+               }, 200
+
+    @parse({
+        "task_state": fields.String(),
+        "task_result": fields.Raw(),
+    })
+    def patch(
+            self: Resource,
+            args: typing.Dict,
+            task_id: int
+    ) -> typing.Tuple[typing.Dict, int]:
+        """
+        仅仅作为标注员保存自己的标注数据
+        """
+        result = ManualTaskService().update_mark_task_or_user_task_status(self.get_current_user(), task_id, args)
+        return {
+                   "message": "更新成功",
+                   "result": result,
+               }, 201
+
+
 class AssessTaskItemPdfPrintResource(Resource):
     def post(self, task_id: int):
         """

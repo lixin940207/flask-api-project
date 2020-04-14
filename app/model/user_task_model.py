@@ -2,7 +2,6 @@ from abc import ABC
 
 from sqlalchemy import not_, func
 
-
 from app.common.common import StatusEnum, RoleEnum, Common
 from app.common.filters import CurrentUser
 from app.common.utils.status_mapper import status_str2int_mapper
@@ -62,8 +61,11 @@ class UserTaskModel(BaseModel, ABC):
     def bulk_delete_by_filter(self, **kwargs):
         raise NotImplemented("no bulk_delete_by_filter")
 
-    def update(self, entity, **kwargs):
-        pass
+    def update(self, _id, **kwargs) -> UserTask:
+        entity = session.query(UserTask).filter(UserTask.user_task_id == _id)
+        entity.update(kwargs)
+        session.flush()
+        return entity.one()
 
     def bulk_update(self, entity_list):
         session.bulk_update_mappings(UserTask, entity_list)
@@ -118,3 +120,19 @@ class UserTaskModel(BaseModel, ABC):
             user_task.doc_type = doc_type
             items.append(user_task)
         return count, count - processing_count, items
+
+    @staticmethod
+    def get_user_task_with_doc_and_user_task_list_by_id(task_id):
+        user_task, mark_task, doc, doc_type = session.query(UserTask, MarkTask, Doc, DocType) \
+            .join(MarkTask, MarkTask.mark_task_id == UserTask.mark_task_id) \
+            .join(MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id) \
+            .join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
+            .join(Doc, Doc.doc_id == MarkTask.doc_id) \
+            .filter(
+            UserTask.user_task_id == task_id,
+            ~UserTask.is_deleted,
+            ~Doc.is_deleted
+        ).one()
+        user_task.doc = doc
+        user_task.doc_type = doc_type
+        return user_task

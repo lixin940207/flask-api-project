@@ -100,8 +100,11 @@ class MarkTaskModel(BaseModel, ABC):
     def bulk_delete_by_filter(self, **kwargs):
         raise NotImplemented("no bulk_delete_by_filter")
 
-    def update(self, entity):
-        pass
+    def update(self, _id, **kwargs) -> MarkTask:
+        entity = session.query(MarkTask).filter(MarkTask.mark_task_id == _id)
+        entity.update(kwargs)
+        session.flush()
+        return entity.one()
 
     def bulk_update(self, entity_list):
         session.bulk_update_mappings(MarkTask, entity_list)
@@ -187,7 +190,7 @@ class MarkTaskModel(BaseModel, ABC):
         items = []
         results = q.offset(args['offset']).limit(args['limit']).all()
         mark_task_ids = [mark_task.mark_task_id for mark_task, _, _ in results]
-        user_task_map = self.get_user_task_map(mark_task_ids, select_keys=(UserTask))   #.annotator_id, UserTask.mark_task_id))
+        user_task_map = self._get_user_task_map(mark_task_ids, select_keys=(UserTask))   #.annotator_id, UserTask.mark_task_id))
         for mark_task, doc_type, doc in q.offset(args['offset']).limit(args['limit']).all():
             user_task_list = user_task_map[str(mark_task.mark_task_id)]
             mark_task.user_task_list = user_task_list
@@ -197,7 +200,26 @@ class MarkTaskModel(BaseModel, ABC):
         return count, count - processing_count, items
 
     @staticmethod
-    def get_user_task_map(mark_task_ids, select_keys):  # tuple):
+    def get_mark_task_with_doc_and_user_task_list_by_id(task_id):
+        mark_task, doc, doc_type = session.query(MarkTask, Doc, DocType) \
+            .join(Doc, Doc.doc_id == MarkTask.doc_id) \
+            .join(MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id) \
+            .join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
+            .filter(
+            MarkTask.mark_task_id == task_id,
+            ~MarkTask.is_deleted,
+            ~Doc.is_deleted
+        ).one()
+        mark_task.doc = doc
+        mark_task.doc_type = doc_type
+        mark_task.user_task_list = session.query(UserTask).filter(
+            UserTask.mark_task_id == task_id,
+            ~UserTask.is_deleted
+        ).all()
+        return mark_task
+
+    @staticmethod
+    def _get_user_task_map(mark_task_ids, select_keys):  # tuple):
         """select_keys必须包含manual_task_id"""
         user_tasks = session.query(select_keys).filter(UserTask.mark_task_id.in_(mark_task_ids)).all()
         user_task_map = {}
