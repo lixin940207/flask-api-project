@@ -7,7 +7,7 @@ from flask_restful import Resource, abort
 from app.common.common import Common, NlpTaskEnum
 from app.common.patch import parse, fields
 from app.common.utils.name import get_ext
-from app.service.classify_mark_job_service import MarkJobService
+from app.service.mark_job_service import MarkJobService
 
 
 class ClassifyMarkJobListResource(Resource):
@@ -130,7 +130,8 @@ class ClassifyMarkJobMultiExportResource(Resource):
             self: Resource,
             args: typing.Dict
     ) -> typing.Tuple[typing.Dict, int]:
-        file_path = MarkJobService().export_multi_mark_file(nlp_task_id=int(NlpTaskEnum.classify), mark_job_id_list=args["job_ids"])
+        file_path = MarkJobService().export_multi_mark_file(
+            nlp_task_id=int(NlpTaskEnum.classify), mark_job_id_list=args["job_ids"])
         return {
                    "message": "请求成功",
                    "file_path": file_path

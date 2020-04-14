@@ -63,7 +63,8 @@ class MarkTaskModel(BaseModel, ABC):
         q = q.offset(offset).limit(limit)
         return q.all()
 
-    def get_mark_task_and_doc_by_mark_job_ids(self, mark_job_ids):
+    def get_mark_task_and_doc_by_mark_job_ids(self, mark_job_ids) -> List[Tuple[MarkTask, Doc]]:
+        """获取已审核数据"""
         q = session.query(MarkTask, Doc) \
             .join(Doc, Doc.doc_id == MarkTask.doc_id) \
             .join(MarkJob, MarkTask.mark_job_id == MarkJob.mark_job_id) \

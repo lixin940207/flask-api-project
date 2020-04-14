@@ -118,6 +118,14 @@ class DocTypeModel(BaseModel, ABC):
         count = q.group_by(DocType.nlp_task_id).all()
         return count
 
+    def get_by_mark_job_id(self, mark_job_id):
+        doc_type = session.query(DocType).join(
+            MarkJob, DocType.doc_type_id == MarkJob.doc_type_id
+        ).filter(
+            MarkJob.mark_job_id == mark_job_id
+        ).first()
+        return doc_type
+
     @staticmethod
     def get_by_mark_job_ids(mark_job_ids, nlp_task_id, current_user: CurrentUser, limit=10, offset=0) -> (int, List):
         q = session.query(DocType).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
