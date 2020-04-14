@@ -270,16 +270,17 @@ class MarkTaskModel(BaseModel, ABC):
 
     @staticmethod
     def get_doc_and_lable(task_id):
-        item, doc = session.query(MarkTask, Doc) \
+        item, doc_type_id, doc = session.query(MarkTask, MarkJob.doc_type_id, Doc) \
+            .join(MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id) \
             .join(Doc, Doc.doc_id == MarkTask.doc_id) \
             .filter(MarkTask.mark_task_id == task_id, ~MarkTask.is_deleted).one()
 
-        if item.mark_task_status not in (int(StatusEnum.success), int(StatusEnum.audited)):
+        if item.mark_task_status not in (int(StatusEnum.success), int(StatusEnum.approved)):
             abort(400, message="审核未完成，不能进行导出操作")
 
         doc_terms = session.query(DocTerm).filter(
-            DocTerm.doc_type_id == item.doc_type_id,
-            DocTerm.status
+            DocTerm.doc_type_id == doc_type_id,
+            ~DocTerm.is_deleted
         )
         term_color_mapping = {doc_term.doc_term_id: doc_term.doc_term_color for doc_term in doc_terms}
         term_name_mapping = {doc_term.doc_term_id: doc_term.doc_term_name for doc_term in doc_terms}
