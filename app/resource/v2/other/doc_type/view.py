@@ -331,6 +331,7 @@ class WordsegDocLexiconItemResource(Resource):
         "state": fields.Integer(required=True)
     })
     def put(self, args, doc_type_id, doc_lexicon_id):
+        args.update({"is_active": args.pop("state")})
         result = DocTypeService().update_wordseg_lexicon(doc_lexicon_id, args)
         return {
                    "message": "更新成功",
