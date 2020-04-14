@@ -174,11 +174,11 @@ class MarkTaskModel(BaseModel, ABC):
         elif current_user.user_role in [RoleEnum.annotator.value]:
             q = q.filter(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)))
         if args.get('job_id'):
-            q.filter(MarkTask.mark_job_id == args['job_id'])
+            q = q.filter(MarkTask.mark_job_id == args['job_id'])
         if args.get('doc_type_id'):
-            q.filter(MarkJob.doc_type_id == args['doc_type_id'])
+            q = q.filter(MarkJob.doc_type_id == args['doc_type_id'])
         if args['task_state']:
-            q.filter(MarkTask.mark_task_status == status_str2int_mapper().get(args['task_state']))
+            q = q.filter(MarkTask.mark_task_status == status_str2int_mapper().get(args['task_state']))
         if args['query']:
             q = q.filter(Doc.doc_raw_name.like(f'%{args["query"]}%'))
         q = q.group_by(MarkTask)
