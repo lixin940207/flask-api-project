@@ -8,7 +8,7 @@ from app.common.patch import fields
 from app.schema.doc_schema import DocSchema
 
 
-class UserTaskSchema(Schema):  # type: ignore
+class UserTaskSchema(Schema):
     doc = fields.Nested(DocSchema)
     doc_type = fields.Nested({
         "doc_type_id": fields.Integer(),

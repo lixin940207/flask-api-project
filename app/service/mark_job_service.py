@@ -24,7 +24,11 @@ from app.config.config import get_config_from_app as _get
 from app.entity import MarkJob, MarkTask
 from app.entity.base import FileTypeEnum
 from app.model import MarkJobModel, MarkTaskModel, UserTaskModel, DocModel, DocTypeModel, DocTermModel
-from app.schema import MarkJobSchema
+
+from app.schema.doc_schema import DocSchema
+from app.schema.doc_type_schema import DocTypeSchema
+from app.schema.mark_job_schema import MarkJobSchema
+from app.schema.mark_task_schema import MarkTaskSchema
 
 
 class MarkJobService:
@@ -315,10 +319,9 @@ class MarkJobService:
         mark_job_list = MarkJobModel().get_by_mark_job_id_list(mark_job_id_list=mark_job_id_list)
 
         # 导出文件夹命名
-        export_dir_path = os.path.join('upload/export',
-                                       'classify_mark_job_{}_{}'.format(','.join([str(id) for id in mark_job_id_list]),
-                                                                        datetime.now().strftime(
-                                                                            "%Y%m%d%H%M%S")))
+        export_dir_path = os.path.join(
+            'upload/export', 'classify_mark_job_{}_{}'.format(','.join([str(job_id) for job_id in mark_job_id_list]),
+                                                              datetime.now().strftime("%Y%m%d%H%M%S")))
         os.mkdir(export_dir_path)
 
         # get all (count, status, mark_job_id) tuple
@@ -329,7 +332,8 @@ class MarkJobService:
             if mark_job.mark_job_status != StatusEnum.success:  # 不成功的job
                 continue
             # 不是所有的任务都未审核完成
-            if len(all_status_dict[mark_job.mark_job_id]) == 1 and int(StatusEnum.approved) in all_status_dict[mark_job.mark_job_id]:
+            if len(all_status_dict[mark_job.mark_job_id]) == 1 and (
+                    int(StatusEnum.approved) in all_status_dict[mark_job.mark_job_id]):
                 continue
 
             export_file_path = os.path.join('upload/export',
@@ -337,7 +341,8 @@ class MarkJobService:
             # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
             last_exported_file = export_sync.get_last_export_file(job=mark_job, export_file_path=export_file_path)
             if last_exported_file:
-                shutil.copy(last_exported_file, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
+                shutil.copy(
+                    last_exported_file, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
                 continue
 
             # 重新制作
@@ -351,3 +356,22 @@ class MarkJobService:
             abort(400, message="所有的任务都无法导出，请重新选择")
         shutil.make_archive(export_dir_path, 'zip', export_dir_path)  # 打包
         return export_dir_path + ".zip"
+
+    def get_mark_job_data_by_ids(self, mark_job_ids):
+        items = []
+        for mark_job_id in mark_job_ids:
+            doc_type = DocTypeModel().get_by_mark_job_id(mark_job_id)
+
+            result = {
+                "prefix": "",  # TODO: 与MQ确认传参是否适配
+                "doc_type": DocTypeSchema().dump(doc_type),
+                "docs": [],
+                "tasks": [],
+                "mark_job_id": mark_job_id,
+            }
+            data = MarkTaskModel().get_mark_task_and_doc_by_mark_job_ids([mark_job_id])
+
+            for task, doc in data:
+                result['docs'].append(DocSchema().dump(doc))
+                result['tasks'].append(MarkTaskSchema().dump(task))
+            items.append(result)
