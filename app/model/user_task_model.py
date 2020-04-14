@@ -67,8 +67,11 @@ class UserTaskModel(BaseModel, ABC):
         session.flush()
         return entity.one()
 
-    def bulk_update(self, entity_list):
-        session.bulk_update_mappings(UserTask, entity_list)
+    def bulk_update(self, _id_list, **kwargs):
+        entity_list = session.query(UserTask).filter(UserTask.user_task_id.in_(_id_list))
+        entity_list.update(**kwargs)
+        session.flush()
+        return entity_list.all()
 
     @staticmethod
     def update_status_to_unlabel_by_manual_task_id(mark_task_id):
