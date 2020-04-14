@@ -100,7 +100,7 @@ class UserTaskModel(BaseModel, ABC):
         elif current_user.user_role in [RoleEnum.annotator.value]:
             q = q.filter(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)))
         if args.get('job_id'):
-            q.filter(MarkTask.mark_task_id == args['job_id'])
+            q.filter(MarkTask.mark_job_id == args['job_id'])
         if args.get('doc_type_id'):
             q.filter(MarkJob.doc_type_id == args['doc_type_id'])
         if args['task_state']:
