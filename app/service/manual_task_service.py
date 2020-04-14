@@ -67,12 +67,18 @@ class ManualTaskService:
             if args.get('task_result'):
                 args['user_task_result'] = args.get('task_result')
                 del args['task_result']
+            if args.get('task_state'):
+                args['user_task_status'] = args.get('task_state')
+                del args['task_state']
             item = UserTaskModel().update(task_id, **args)
             schema = UserTaskSchema
         else:
             if args.get('task_result'):
                 args['mark_task_result'] = args.get('task_result')
                 del args['task_result']
+            if args.get('task_state'):
+                args['mark_task_status'] = args.get('task_state')
+                del args['task_state']
             item = MarkTaskModel().update(task_id, **args)
             schema = MarkTaskSchema
         result = schema().dump(item)
