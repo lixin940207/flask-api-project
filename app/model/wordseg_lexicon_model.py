@@ -2,8 +2,6 @@
 # @Author: Jiasheng Gu
 # @Date: 2020/4/14
 from abc import ABC
-from sqlalchemy import not_
-from app.common.common import StatusEnum
 from app.entity.wordseg_lexicon import WordsegDocLexicon
 from app.model.base import BaseModel
 from app.common.extension import session

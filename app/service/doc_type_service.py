@@ -196,9 +196,10 @@ class DocTypeService:
 
     @staticmethod
     def get_wordseg_lexicon(doc_type_id, offset, limit):
-        items, count = WordsegLexiconModel().get_by_filter(doc_type_id=doc_type_id, offset=offset, limit=limit)
+        items, count = WordsegLexiconModel().get_by_filter(doc_type_id=doc_type_id, offset=offset, limit=limit,
+                                                           require_count=True)
         result = WordsegDocLexiconSchema(many=True).dump(items)
-        return result
+        return result, count
 
     @staticmethod
     def create_wordseg_lexicon(doc_type_id, kwargs):
