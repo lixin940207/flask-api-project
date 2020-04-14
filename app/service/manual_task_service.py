@@ -64,9 +64,15 @@ class ManualTaskService:
     @staticmethod
     def update_mark_task_or_user_task_status(current_user: CurrentUser, task_id, args):
         if current_user.user_role in [RoleEnum.annotator.value]:
+            if args.get('task_result'):
+                args['user_task_result'] = args.get('task_result')
+                del args['task_result']
             item = UserTaskModel().update(task_id, **args)
             schema = UserTaskSchema
         else:
+            if args.get('task_result'):
+                args['mark_task_result'] = args.get('task_result')
+                del args['task_result']
             item = MarkTaskModel().update(task_id, **args)
             schema = MarkTaskSchema
         result = schema().dump(item)
