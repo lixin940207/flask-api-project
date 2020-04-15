@@ -23,12 +23,12 @@ class DocTypeService:
         return doc_type
 
     @staticmethod
-    def get_by_id_by_user_group(doc_type_id, group_id):
+    def get_by_id_and_user_group(doc_type_id, group_id):
         doc_type = DocTypeModel().get_by_id_by_user_group(_id=doc_type_id, group_id=group_id)
         return doc_type
 
     @staticmethod
-    def get_doc_type_info_by_nlp_task_by_user(nlp_task_id, current_user):
+    def get_doc_type_info_by_nlp_task_by_user(nlp_task_id, current_user: CurrentUser):
         """
         获取管理大厅首页的doc_type信息
         """

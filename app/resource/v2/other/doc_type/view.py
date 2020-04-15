@@ -49,7 +49,7 @@ class DocTypeListResource(Resource, CurrentUserMixin):
         创建一个文档类型包括它的条款
         """
         args.update({'nlp_task_id': Common().get_nlp_task_id_by_route()})
-        args.update({"group_id": self.get_current_user().group_id})
+        args.update({"group_id": self.get_current_user().user_groups[0]})
         result = DocTypeService().create_doc_type(self.get_current_user(), args)
         return {
                    "message": "创建成功",

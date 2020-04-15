@@ -29,7 +29,7 @@ class DocTypeSchema(Schema):
 
 
 class ClassifyDocRuleSchema(Schema):  # type: ignore
-    id = fields.Integer()
+    id = fields.Integer(attribute="classify_rule_id")
     rule_type = fields.String()
     rule_content = fields.Dict()
     doc_term_id = fields.Integer()
