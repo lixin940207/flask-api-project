@@ -10,7 +10,7 @@ from app.config.config import get_config_from_app as _get
 from app.common.extension import session
 from app.common.fileset import upload_fileset
 from app.common.common import NlpTaskEnum, StatusEnum
-from app.model import DocTermModel
+from app.model import DocTermModel, EvaluateTaskModel
 from app.model.mark_task_model import MarkTaskModel
 from app.model.doc_type_model import DocTypeModel
 from app.model.custom_algorithm_model import CustomAlgorithmModel
@@ -27,23 +27,11 @@ class ModelService:
     def get_train_job_list_by_nlp_task_id(nlp_task_id, doc_type_id, search, offset, limit, current_user: CurrentUser):
         # if exists doc_type_id, get train jobs of this doc_type_id
         if doc_type_id:
-            count, multi_tables = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
+            count, train_job_list = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
                                                                      limit=limit, current_user=current_user, doc_type_id=doc_type_id)
         else:  # else get all
-            count, multi_tables = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
+            count, train_job_list = TrainJobModel().get_by_nlp_task_id(nlp_task_id=nlp_task_id, search=search, offset=offset,
                                                                      limit=limit, current_user=current_user)
-        # assign doc_type, train_list to each trainjob for dumping
-        train_job_list = []
-        job_id_list = []
-        for train_task, train_job, doc_type in multi_tables:
-            # assign train_task, doc_type to train_job
-            if train_task.train_job_id not in job_id_list:
-                job_id_list.append(train_task.train_job_id)
-                train_job.doc_type = doc_type
-                train_job.train_list = [train_task]
-                train_job_list.append(train_job)
-            else:
-                train_job_list[job_id_list.index(train_task.train_job_id)].train_list.append(train_task)
         return count, train_job_list
 
     @staticmethod
@@ -167,6 +155,9 @@ class ModelService:
     @staticmethod
     def get_train_job_by_id(_id):
         train_job = TrainJobModel().get_by_id(_id)
+        train_job.train_list = TrainTaskModel().get_by_filter(limit=99999, train_job_id=train_job.train_job_id)
+        _, model_evaluate_list = EvaluateTaskModel().get_by_train_job_id(train_job_id=train_job.train_job_id)
+        train_job.model_evaluate = model_evaluate_list[0]
         return train_job
 
     @staticmethod
