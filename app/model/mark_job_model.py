@@ -138,17 +138,20 @@ class MarkJobModel(BaseModel, ABC):
     def count_mark_job_by_nlp_task(current_user: CurrentUser):
         q = session.query(func.count(MarkJob.mark_job_status), DocType.nlp_task_id, DocType.doc_type_id,
                           MarkJob.mark_job_status)
-        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
+        if current_user.user_role in [RoleEnum.admin.value]:
             q = q.join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
-                .filter(DocType.group_id.in_(current_user.user_groups)).filter(~DocType.is_deleted)
+                .filter(~DocType.is_deleted)
+        elif current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
+            q = q.join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
+                .filter(DocType.group_id.in_(current_user.user_groups), ~DocType.is_deleted)
         elif current_user.user_role in [RoleEnum.reviewer.value, RoleEnum.annotator.value]:
             q = q.join(MarkTask, MarkTask.mark_job_id == MarkJob.mark_job_id) \
                 .join(UserTask, UserTask.mark_task_id == MarkTask.mark_task_id) \
                 .join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
-                .filter(~DocType.is_deleted, ~UserTask.is_deleted, ~MarkTask.is_deleted, ~MarkJob.is_deleted) \
-                .filter(
-                or_(UserTask.annotator_id == current_user.user_id, UserTask.annotator_id == current_user.user_id))
-        all_count = q.group_by(MarkJob.mark_job_status, MarkJob.doc_type_id, DocType.nlp_task_id, DocType.doc_type_id).all()
+                .filter(~DocType.is_deleted, ~UserTask.is_deleted, ~MarkTask.is_deleted, ~MarkJob.is_deleted,
+                        or_(UserTask.annotator_id == current_user.user_id, UserTask.annotator_id == current_user.user_id))
+        all_count = q.group_by(MarkJob.mark_job_status, MarkJob.doc_type_id, DocType.nlp_task_id, DocType.doc_type_id).\
+            all()
         return all_count
 
     @staticmethod
