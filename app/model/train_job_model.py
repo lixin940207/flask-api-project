@@ -51,8 +51,8 @@ class TrainJobModel(BaseModel, ABC):
         accept_keys = ["train_job_status", "doc_type_id"]
         # Compose query, select 3 tables related to a train job
         q = session.query(TrainTask, TrainJob, DocType) \
-            .join(TrainTask, TrainTask.train_job_id == TrainJob.train_job_id) \
-            .join(DocType, DocType.doc_type_id == TrainJob.doc_type_id) \
+            .outerjoin(TrainJob, TrainTask.train_job_id == TrainJob.train_job_id) \
+            .outerjoin(DocType, DocType.doc_type_id == TrainJob.doc_type_id) \
             .filter(DocType.nlp_task_id == nlp_task_id,
                     ~DocType.is_deleted,
                     ~TrainJob.is_deleted,
