@@ -83,7 +83,7 @@ class ModelService:
                 only=("custom_id_name", "custom_ip", "custom_port")).dump(
                 custom_item)
         else:
-            custom = None
+            custom = {}
 
         # push to redis
         push_train_task_to_redis(nlp_task, doc_type, train_task.train_task_id, model_version, train_config,
