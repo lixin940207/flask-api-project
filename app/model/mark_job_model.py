@@ -1,5 +1,6 @@
 from abc import ABC
 
+from flask import g
 from sqlalchemy import not_, func, or_, text
 from typing import List
 from app.common.filters import CurrentUser
@@ -40,13 +41,21 @@ class MarkJobModel(BaseModel, ABC):
         return q.all()
 
     def get_by_nlp_task_id(
-            self, nlp_task_id, search, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
+            self, nlp_task_id, search, order_by="created_time",
+            order_by_desc=True, limit=10, offset=0, user_role=None, **kwargs):
         # Define allowed filter keys
         accept_keys = ["assign_mode", "mark_job_status", "mark_job_type", "doc_type_id"]
         # Compose query
         q = session.query(MarkJob, DocType).join(
             DocType, MarkJob.doc_type_id == DocType.doc_type_id
         ).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~MarkJob.is_deleted)
+        # Role
+        if user_role == "管理员":
+            q = q.filter(DocType.group_id.in_(g.user_groups))
+        elif user_role == "审核员":
+            q = q.filter(func.json_contains(MarkJob.reviewer_ids, str(g.user_id)))
+        elif user_role == "标注员":
+            q = q.filter(func.json_contains(MarkJob.annotator_ids, str(g.user_id)))
         # Filter conditions
         for key, val in kwargs.items():
             if key in accept_keys and val is not None:

@@ -4,6 +4,8 @@
 import typing
 import time
 
+from flask_restful import abort
+
 from app.common.common import Common
 from app.common.extension import session
 from app.common.filters import CurrentUser
@@ -78,7 +80,10 @@ class DocTypeService:
     def create_doc_type(current_user: CurrentUser, args):
         doc_term_list = args.pop('doc_term_list')
         if 'group_id' not in args or args['group_id'] < 1:
-            args['group_id'] = current_user.user_groups[0]
+            if current_user.user_groups:
+                args['group_id'] = current_user.user_groups[0]
+            else:
+                abort(403, message="当前角色禁止创建项目，请切换角色操作")
         doc_type = DocTypeModel().create(**args)
         for item in doc_term_list:
             item.update({'doc_type_id': doc_type.doc_type_id})

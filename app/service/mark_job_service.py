@@ -18,6 +18,7 @@ from app.common.common import Common
 from app.common import export_sync
 from app.common.extension import session
 from app.common.fileset import upload_fileset, FileSet
+from app.common.filters import CurrentUserMixin
 from app.common.redis import r
 from app.common.seeds import NlpTaskEnum, StatusEnum
 from app.common.utils.name import get_ext
@@ -32,12 +33,12 @@ from app.schema.mark_job_schema import MarkJobSchema
 from app.schema.mark_task_schema import MarkTaskSchema
 
 
-class MarkJobService:
-    @staticmethod
-    def get_mark_job_list_by_nlp_task(args, nlp_task: NlpTaskEnum):
+class MarkJobService(CurrentUserMixin):
+    def get_mark_job_list_by_nlp_task(self, args, nlp_task: NlpTaskEnum):
+        user_role = self.get_current_role()
         nlp_task_id = int(nlp_task)
         count, result = MarkJobModel().get_by_nlp_task_id(
-            nlp_task_id=nlp_task_id, doc_type_id=args['doc_type_id'],
+            nlp_task_id=nlp_task_id, doc_type_id=args['doc_type_id'], user_role=user_role,
             search=args['query'], limit=args['limit'], offset=args['offset'])
 
         mark_job_ids = [mark_job.mark_job_id for mark_job, _ in result]
@@ -371,8 +372,8 @@ class MarkJobService:
             for task, doc in data:
                 # 抽取逻辑
                 if args.get('doc_term_ids'):
-                    if isinstance(task.task_result, list) \
-                            and Common.check_doc_term_include(task.task_result, 'doc_term_id', args['doc_term_ids']):
+                    if isinstance(task.mark_task_result, list) \
+                            and Common.check_doc_term_include(task.mark_task_result, 'doc_term_id', args['doc_term_ids']):
                         result['docs'].append(DocSchema().dump(doc))
                         result['tasks'].append(MarkTaskSchema().dump(task))
                 # 实体关系逻辑
@@ -385,6 +386,7 @@ class MarkJobService:
                     result['docs'].append(DocSchema().dump(doc))
                     result['tasks'].append(MarkTaskSchema().dump(task))
             items.append(result)
+        return items
 
     @staticmethod
     def update_mark_task_and_user_task_by_mark_task_id(mark_task_id, args):

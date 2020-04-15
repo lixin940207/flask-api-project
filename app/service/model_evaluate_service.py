@@ -7,7 +7,7 @@ from app.common.extension import session
 from app.config.config import get_config_from_app as _get
 from app.common.common import NlpTaskEnum, StatusEnum
 from app.entity import EvaluateTask, TrainTask, DocType
-from app.model import TrainTaskModel, TrainJobModel, DocTypeModel
+from app.model import TrainTaskModel, TrainJobModel, DocTypeModel, DocTermModel
 from app.model.evaluate_task_model import EvaluateTaskModel
 from app.schema import DocTypeSchema
 from app.service.model_service import generate_classify_data
@@ -33,6 +33,9 @@ class ModelEvaluateService:
         # get correspondent train_job, doc_type, train_task, nlp_task by train_job_id
         train_job = TrainJobModel().get_by_id(train_job_id)
         doc_type = DocTypeModel().get_by_id(train_job.doc_type_id)
+        doc_term_list = DocTermModel().get_by_filter(limit=99999, doc_type_id=doc_type.doc_type_id)
+        doc_type.doc_term_list = doc_term_list
+
         nlp_task = NlpTaskEnum(doc_type.nlp_task_id)
         _, train_task_list = TrainTaskModel().get_by_filter(train_job_id=train_job_id)
         train_task = train_task_list[0]

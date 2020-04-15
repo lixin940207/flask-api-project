@@ -10,6 +10,7 @@ from app.config.config import get_config_from_app as _get
 from app.common.extension import session
 from app.common.fileset import upload_fileset
 from app.common.common import NlpTaskEnum, StatusEnum
+from app.model import DocTermModel
 from app.model.mark_task_model import MarkTaskModel
 from app.model.doc_type_model import DocTypeModel
 from app.model.custom_algorithm_model import CustomAlgorithmModel
@@ -17,7 +18,7 @@ from app.model.train_job_model import TrainJobModel
 from app.model.train_m2m_mark_model import TrainM2mMarkbModel
 from app.model.train_task_model import TrainTaskModel
 from app.model.train_term_task_model import TrainTermTaskModel
-from app.schema import CustomAlgorithmSchema, DocTypeSchema
+from app.schema import CustomAlgorithmSchema, DocTypeSchema, DocTermSchema
 from app.common.utils.time import get_now_with_format
 
 
@@ -61,7 +62,8 @@ class ModelService:
             train_job_name=train_job_name,
             train_job_desc=train_job_desc,
             doc_type_id=doc_type_id,
-            train_job_status=int(StatusEnum.processing)
+            train_job_status=int(StatusEnum.training),
+            preprocess={}
         )
         # create TrainM2mMark table
         train_m2m_mark_list = [{"train_job_id": train_job.train_job_id, "mark_job_id": _id} for _id in mark_job_ids]
@@ -73,9 +75,16 @@ class ModelService:
             train_model_name=train_job_name,
             train_model_desc=train_job_desc,
             train_config=train_config,
-            train_status=int(StatusEnum.processing),
+            train_status=int(StatusEnum.training),
             model_version=model_version
         )
+        # bulk create train term
+        doc_term_list = DocTermModel().get_by_filter(limit=99999, doc_type_id=doc_type_id)
+        TrainTermTaskModel().bulk_create([dict(train_task_id=train_task.train_task_id,
+                                               doc_term_id=doc_term.doc_term_id,
+                                               train_term_status=int(StatusEnum.training)) for doc_term in doc_term_list])
+        # assign doc term list to doc type
+        doc_type.doc_term_list = doc_term_list
 
         if custom_id:
             custom_item = CustomAlgorithmModel().get_by_id(custom_id)
@@ -83,7 +92,7 @@ class ModelService:
                 only=("custom_id_name", "custom_ip", "custom_port")).dump(
                 custom_item)
         else:
-            custom = None
+            custom = {}
 
         # push to redis
         push_train_task_to_redis(nlp_task, doc_type, train_task.train_task_id, model_version, train_config,
@@ -106,6 +115,8 @@ class ModelService:
         # generate model version by nlp task
         model_version = generate_model_version_by_nlp_task(doc_type_id, mark_job_ids, nlp_task)
 
+        preprocess_type = {"split_by_sentence": train_config[0].get("train_type", "") in ["ner", "wordseg"]}
+
         # 为model_train_config补充model_version字段，供后台服务处理
         for config in train_config:
             config['version'] = model_version
@@ -115,7 +126,8 @@ class ModelService:
             train_job_name=train_job_name,
             train_job_desc=train_job_desc,
             doc_type_id=doc_type_id,
-            train_job_status=int(StatusEnum.processing)
+            train_job_status=int(StatusEnum.training),
+            preprocess=preprocess_type
         )
         # bulk create TrainM2mMark table
         train_m2m_mark_list = [{"train_job_id": train_job.train_job_id, "mark_job_id": _id} for _id in mark_job_ids]
@@ -126,7 +138,7 @@ class ModelService:
             train_model_name=train_job_name,
             train_model_desc=train_job_desc,
             train_config=train_config,
-            train_status=int(StatusEnum.processing),
+            train_status=int(StatusEnum.training),
             model_version=model_version
         )
         if nlp_task in [NlpTaskEnum.extract, NlpTaskEnum.relation]:
@@ -136,7 +148,7 @@ class ModelService:
                 train_term_task_list.append({
                     "train_task_id": train_task.train_task_id,
                     "doc_term_id": field_config["field_id"],
-                    "train_term_status": int(StatusEnum.processing)
+                    "train_term_status": int(StatusEnum.training)
                 })
             TrainTermTaskModel().bulk_create(train_term_task_list)
 
