@@ -18,7 +18,7 @@ class WordsegMarkJobListResource(Resource):
         "query": fields.String(missing=''),
         "offset": fields.Integer(missing=0),
         "limit": fields.Integer(missing=10),
-        "doc_type_id": fields.Integer(),
+        "doc_type_id": fields.Integer(missing=None),
         'order_by': fields.String(missing='-created_time'),
     })
     def get(

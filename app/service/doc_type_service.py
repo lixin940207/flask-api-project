@@ -10,7 +10,8 @@ from app.model import DocTypeModel, MarkTaskModel
 from app.model.doc_relation_model import DocRelationModel
 from app.model.doc_term_model import DocTermModel
 from app.model.evaluate_task_model import EvaluateTaskModel
-from app.schema import DocTypeSchema, EvaluateTaskSchema
+from app.model.wordseg_lexicon_model import WordsegLexiconModel
+from app.schema import DocTypeSchema, EvaluateTaskSchema, WordsegDocLexiconSchema
 
 
 class DocTypeService:
@@ -193,3 +194,35 @@ class DocTypeService:
         result = DocTypeSchema().dump(item)
         return result
 
+    @staticmethod
+    def get_wordseg_lexicon(doc_type_id, offset, limit):
+        items, count = WordsegLexiconModel().get_by_filter(doc_type_id=doc_type_id, offset=offset, limit=limit,
+                                                           require_count=True)
+        result = WordsegDocLexiconSchema(many=True).dump(items)
+        return result, count
+
+    @staticmethod
+    def create_wordseg_lexicon(kwargs):
+        item = WordsegLexiconModel().create(**kwargs)
+        session.commit()
+        result = WordsegDocLexiconSchema().dump(item)
+        return result
+
+    @staticmethod
+    def get_wordseg_lexicon_item(doc_lexicon_id):
+        doc_lexicon = WordsegLexiconModel().get_by_id(doc_lexicon_id)
+        session.commit()
+        result = WordsegDocLexiconSchema().dump(doc_lexicon)
+        return result
+
+    @staticmethod
+    def delete_wordseg_lexicon_by_id(doc_lexicon_id):
+        WordsegLexiconModel().delete(doc_lexicon_id)
+        session.commit()
+
+    @staticmethod
+    def update_wordseg_lexicon(doc_lexicon_id, args):
+        item = WordsegLexiconModel().update(doc_lexicon_id, **args)
+        session.commit()
+        result = WordsegDocLexiconSchema().dump(item)
+        return result

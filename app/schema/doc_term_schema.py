@@ -10,7 +10,7 @@ class WordsegDocLexiconSchema(Schema):
     seg_type = fields.String()
     word = fields.String()
     doc_type_id = fields.Integer()
-    state = fields.String(attribute="is_active")
+    state = fields.Integer(attribute="is_active")
 
 
 class DocTermSchema(Schema):
