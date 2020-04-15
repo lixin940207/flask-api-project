@@ -51,7 +51,7 @@ class MarkJobModel(BaseModel, ABC):
         ).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~MarkJob.is_deleted)
         # Role
         if user_role == "管理员":
-            q = q.filter(DocType.group_id == g.user_group_id)
+            q = q.filter(DocType.group_id.in_(g.user_groups))
         elif user_role == "审核员":
             q = q.filter(func.json_contains(MarkJob.reviewer_ids, str(g.user_id)))
         elif user_role == "标注员":
