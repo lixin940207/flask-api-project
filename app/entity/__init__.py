@@ -17,3 +17,4 @@ from app.entity.train_m2m_mark import TrainM2mMark
 from app.entity.train_task import TrainTask
 from app.entity.train_term_task import TrainTermTask
 from app.entity.user_task import UserTask
+from app.entity.classify_doc_rule import ClassifyDocRule
