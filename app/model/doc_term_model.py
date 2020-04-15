@@ -9,7 +9,7 @@
 from abc import ABC
 from typing import List
 from app.model.base import BaseModel
-from app.entity import DocTerm, DocType, RelationM2mTerm, DocRelation
+from app.entity import DocTerm, DocType, RelationM2mTerm, DocRelation, ClassifyDocRule
 from app.common.extension import session
 
 
@@ -125,3 +125,27 @@ class DocTermModel(BaseModel, ABC):
             RelationM2mTerm.doc_term_id == doc_term_id
         ).count()
         return count > 0    # return True when exists
+
+    @staticmethod
+    def get_classify_doc_rule(doc_type_id, offset, limit):
+        doc_terms = session.query(DocTerm.doc_term_id).filter(
+            DocTerm.doc_type_id == doc_type_id, ~DocTerm.is_deleted).all()
+
+        q = session.query(ClassifyDocRule).filter(ClassifyDocRule.doc_term_id.in_(doc_terms),
+                                                  ~ClassifyDocRule.is_deleted)
+        count = q.count()
+        items = q.offset(offset).limit(limit).all()
+        return count, items
+
+    @staticmethod
+    def check_exists_rule(doc_term_id):
+        return session.query(ClassifyDocRule)\
+                   .filter(ClassifyDocRule.doc_term_id == doc_term_id, ~ClassifyDocRule.is_deleted)\
+                   .count() > 0
+
+    @staticmethod
+    def create_classify_rule(**kwargs):
+        entity = ClassifyDocRule(**kwargs)
+        session.add(entity)
+        session.flush()
+        return entity
