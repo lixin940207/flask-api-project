@@ -8,6 +8,10 @@ from . import view
 api.add_resource(view.ModelListResource, '', '/entity_model', '/wordseg_model')
 api.add_resource(view.ClassifyModelListResource, '/classify_model')
 
+# single model resource
+api.add_resource(view.ModelItemResource, '/<int:model_id>', '/classify_model/<int:model_id>', '/entity_model/<int:model_id>', '/wordseg_model/<int:model_id>')
+
+
 # 首页的 doc_type_info resources
 api.add_resource(view.DocTypeInfoListResource, '/doc_type_info', '/classify_doc_type_info', '/entity_doc_type_info', '/wordseg_doc_type_info')
 
