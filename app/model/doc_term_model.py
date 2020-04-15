@@ -8,6 +8,9 @@
 """
 from abc import ABC
 from typing import List
+
+import typing
+
 from app.model.base import BaseModel
 from app.entity import DocTerm, DocType, RelationM2mTerm, DocRelation, ClassifyDocRule
 from app.common.extension import session
@@ -131,11 +134,11 @@ class DocTermModel(BaseModel, ABC):
         doc_terms = session.query(DocTerm.doc_term_id).filter(
             DocTerm.doc_type_id == doc_type_id, ~DocTerm.is_deleted).all()
 
-        q = session.query(ClassifyDocRule).filter(ClassifyDocRule.doc_term_id.in_(doc_terms),
+        q = session.query(ClassifyDocRule).filter(ClassifyDocRule.doc_term_id.in_([dt[0] for dt in doc_terms]),
                                                   ~ClassifyDocRule.is_deleted)
         count = q.count()
         items = q.offset(offset).limit(limit).all()
-        return count, items
+        return items, count
 
     @staticmethod
     def check_exists_rule(doc_term_id):
