@@ -46,7 +46,8 @@ class ExtractJobListResource(Resource, CurrentUserMixin):
         "extract_job_desc": fields.String(missing=""),
         "doc_type_id": fields.Integer(required=True),
         "files": fields.List(fields.File(), required=True),
-        "task_type": fields.String(required=True, validate=lambda x: x in ['machine', 'manual'])
+        "task_type": fields.String(required=True, validate=lambda x: x in ['machine', 'manual']),
+        "use_rule": fields.Integer(missing=0)
     }, locations=('form', 'files'))
     def post(
             self: Resource,
@@ -56,7 +57,8 @@ class ExtractJobListResource(Resource, CurrentUserMixin):
                                                                          predict_job_name=args["extract_job_name"],
                                                                          predict_job_desc=args["extract_job_desc"],
                                                                          predict_job_type=args["extract_job_type"],
-                                                                         files=args["files"])
+                                                                         files=args["files"],
+                                                                         use_rule=args["use_rule"])
         result = PredictJobSchema().dump(predict_job)
         return {
                    "message": "创建成功",
