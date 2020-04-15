@@ -97,7 +97,7 @@ class PredictService:
                 task_list = PredictTaskModel().bulk_create(task_list)
                 # push redis
                 for i in range(len(doc_list)):
-                    push_predict_task_to_redis(predict_job=predict_job, predict_task=task_list[i], doc=doc_list[i])
+                    push_predict_task_to_redis(pipe=pipe, predict_job=predict_job, predict_task=task_list[i], doc=doc_list[i])
 
             elif get_ext(f.filename) in ['txt', 'docx', 'doc', 'pdf']: # 单文件处理
                 doc_unique_name, doc_relative_path = upload_fileset.save_file(f.filename, f.stream.read())
@@ -106,7 +106,7 @@ class PredictService:
                 predict_task = PredictTaskModel().create(doc_id=doc.doc_id,
                                                          predict_job_id=predict_job.predict_job_id,
                                                          predict_task_status=int(StatusEnum.processing))
-                push_predict_task_to_redis(predict_job=predict_job, predict_task=predict_task, doc=doc)
+                push_predict_task_to_redis(pipe=pipe, predict_job=predict_job, predict_task=predict_task, doc=doc)
             else:
                 abort(400, message="文件类型出错")
 
@@ -142,8 +142,8 @@ class PredictService:
 
 
 
-def push_predict_task_to_redis(predict_job, predict_task, doc):
-    r.lpush(_get('EXTRACT_TASK_QUEUE_KEY'), json.dumps({
+def push_predict_task_to_redis(pipe, predict_job, predict_task, doc):
+    pipe.lpush(_get('EXTRACT_TASK_QUEUE_KEY'), json.dumps({
         'files': [
             {
                 'file_name': doc.doc_unique_name,
