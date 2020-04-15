@@ -235,7 +235,7 @@ class ClassifyDocRuleListResource(Resource):
             except Exception:
                 pass
         # TODO 查询优化
-        result, timestamp, count = DocTermService().get_classify_doc_rule(doc_type_id, args.get("offset"),
+        result, count, timestamp = DocTermService().get_classify_doc_rule(doc_type_id, args.get("offset"),
                                                                           args.get("limit"))
         data = {
             "message": "请求成功",
@@ -255,7 +255,7 @@ class ClassifyDocRuleListResource(Resource):
     })
     def post(self, args, doc_type_id):
         try:
-            result = DocTermService().create_new_rule(doc_type_id, args)
+            result = DocTermService().create_new_rule(args)
             DocTermService().update_rule_to_redis(doc_type_id)
             r.delete(f'classify:rule:{doc_type_id}')
             return {
