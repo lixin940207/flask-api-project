@@ -43,11 +43,16 @@ class EvaluateTaskModel(BaseModel, ABC):
         return q.all()
 
     @staticmethod
-    def get_by_train_job_id(train_job_id, order_by="created_time", order_by_desc=True, limit=10, offset=0):
+    def get_by_train_job_id(train_job_id, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
+        accept_keys = ["train_task_id", "evaluate_task_status"]
         # Compose query
         q = session.query(EvaluateTask)\
             .join(TrainTask, TrainTask.train_task_id == EvaluateTask.train_task_id)\
             .filter(TrainTask.train_job_id == train_job_id, ~EvaluateTask.is_deleted, ~TrainTask.is_deleted)
+        # Filter conditions
+        for key, val in kwargs.items():
+            if key in accept_keys:
+                q = q.filter(getattr(EvaluateTask, key) == val)
         # count
         count = q.count()
         # Order by key

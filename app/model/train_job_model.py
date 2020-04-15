@@ -4,9 +4,10 @@
 from abc import ABC
 from sqlalchemy import distinct
 
-from app.common.common import RoleEnum
+from app.common.common import RoleEnum, StatusEnum
 from app.common.filters import CurrentUser
 from app.entity import TrainTask, EvaluateTask
+from app.model.evaluate_task_model import EvaluateTaskModel
 from app.model.base import BaseModel
 from app.entity.train_job import TrainJob
 from app.entity.doc_type import DocType
@@ -50,15 +51,13 @@ class TrainJobModel(BaseModel, ABC):
         # Define allowed filter keys
         accept_keys = ["train_job_status", "doc_type_id"]
         # Compose query, select 3 tables related to a train job
-        q = session.query(TrainTask, EvaluateTask, TrainJob, DocType) \
-            .outerjoin(EvaluateTask, EvaluateTask.train_task_id == TrainTask.train_task_id)\
+        q = session.query(TrainTask, TrainJob, DocType) \
             .outerjoin(TrainJob, TrainTask.train_job_id == TrainJob.train_job_id) \
             .outerjoin(DocType, DocType.doc_type_id == TrainJob.doc_type_id) \
             .filter(DocType.nlp_task_id == nlp_task_id,
                     ~DocType.is_deleted,
                     ~TrainJob.is_deleted,
-                    ~TrainTask.is_deleted,
-                    ~EvaluateTask.is_deleted)
+                    ~TrainTask.is_deleted)
         # auth
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
@@ -76,12 +75,13 @@ class TrainJobModel(BaseModel, ABC):
 
         train_job_list = []
         job_id_list = []
-        for train_task, evaluate_task, train_job, doc_type in q.all():
+        for train_task, train_job, doc_type in q.all():
             # assign train_task, doc_type to train_job
             if train_task.train_job_id not in job_id_list:
                 job_id_list.append(train_task.train_job_id)
                 train_job.doc_type = doc_type
-                train_job.model_evaluate = evaluate_task
+                _, model_evaluate_list = EvaluateTaskModel().get_by_train_job_id(train_job_id=train_job.train_job_id, evaluate_task_status=int(StatusEnum.success))
+                train_job.model_evaluate = model_evaluate_list[0]
                 train_job.train_list = [train_task]
                 train_job_list.append(train_job)
             else:

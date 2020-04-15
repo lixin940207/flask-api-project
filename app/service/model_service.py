@@ -155,8 +155,8 @@ class ModelService:
     @staticmethod
     def get_train_job_by_id(_id):
         train_job = TrainJobModel().get_by_id(_id)
-        train_job.train_list = TrainTaskModel().get_by_filter(limit=99999, train_job_id=train_job.train_job_id)
-        _, model_evaluate_list = EvaluateTaskModel().get_by_train_job_id(train_job_id=train_job.train_job_id)
+        _, train_job.train_list = TrainTaskModel().get_by_filter(limit=99999, train_job_id=train_job.train_job_id)
+        _, model_evaluate_list = EvaluateTaskModel().get_by_train_job_id(train_job_id=train_job.train_job_id, evaluate_task_status=int(StatusEnum.success))
         train_job.model_evaluate = model_evaluate_list[0]
         return train_job
 
