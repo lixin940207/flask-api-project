@@ -385,6 +385,7 @@ class MarkJobService:
                     result['docs'].append(DocSchema().dump(doc))
                     result['tasks'].append(MarkTaskSchema().dump(task))
             items.append(result)
+        return items
 
     @staticmethod
     def update_mark_task_and_user_task_by_mark_task_id(mark_task_id, args):
