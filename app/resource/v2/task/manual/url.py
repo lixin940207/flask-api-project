@@ -11,3 +11,8 @@ from . import view
 
 api.add_resource(view.ManualTaskItemResource, '/manual/<int:task_id>')
 api.add_resource(view.RejectManualTaskResource, '/reject_manual_task/<int:task_id>')
+api.add_resource(view.TaskListResource, '/assess_task', '/label_task')
+api.add_resource(view.LabelTaskItemResource, '/label_task/<int:task_id>')
+api.add_resource(view.AssessTaskItemResource, '/assess_task/<int:task_id>')
+api.add_resource(view.TaskItemNextResource, '/label_task/next/<int:task_id>', '/assess_task/next/<int:task_id>')
+api.add_resource(view.AssessTaskItemPdfPrintResource, '/assess_task/print/<int:task_id>')

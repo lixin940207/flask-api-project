@@ -32,10 +32,10 @@ class MarkJobModel(BaseModel, ABC):
             if key in accept_keys:
                 q = q.filter(getattr(MarkJob, key) == val)
         # Order by key
-        q = q.order_by(order_by)
-        # Descending order
         if order_by_desc:
-            q = q.desc()
+            q = q.order_by(getattr(MarkJob, order_by).desc())
+        else:
+            q = q.order_by(getattr(MarkJob, order_by))
         q = q.offset(offset).limit(limit)
         return q.all()
 
@@ -78,10 +78,14 @@ class MarkJobModel(BaseModel, ABC):
 
     def delete(self, _id):
         session.query(MarkJob).filter(MarkJob.mark_job_id == _id).update({MarkJob.is_deleted: True})
+        session.query(MarkTask).filter(MarkTask.mark_job_id == _id).update({MarkTask.is_deleted: True})
         session.flush()
 
     def bulk_delete(self, _id_list):
-        session.query(MarkJob).filter(MarkJob.mark_job_id.in_(_id_list)).update({MarkJob.is_deleted: True})
+        session.query(MarkJob).filter(
+            MarkJob.mark_job_id.in_(_id_list)).update({MarkJob.is_deleted: True}, synchronize_session='fetch')
+        session.query(MarkTask).filter(
+            MarkTask.mark_job_id.in_(_id_list)).update({MarkTask.is_deleted: True}, synchronize_session='fetch')
         session.flush()
 
     def bulk_delete_by_filter(self, **kwargs):

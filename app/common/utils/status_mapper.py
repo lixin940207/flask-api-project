@@ -12,7 +12,11 @@ def status_str2int_mapper():
         "fail": int(StatusEnum.fail),
         "training": int(StatusEnum.training),
         "evaluating": int(StatusEnum.evaluating),
-        "online": int(StatusEnum.online)
+        "online": int(StatusEnum.online),
+        "processing": int(StatusEnum.processing),
+        "unaudit": int(StatusEnum.reviewing),
+        "audited": int(StatusEnum.approved),
+        "unlabel": int(StatusEnum.unlabel),
     }
 
 

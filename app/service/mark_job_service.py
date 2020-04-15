@@ -9,6 +9,7 @@ from datetime import datetime
 from typing import List
 
 import pandas as pd
+from flask import g
 from flask_restful import abort
 from pandas.errors import EmptyDataError
 from werkzeug.datastructures import FileStorage
@@ -24,7 +25,11 @@ from app.config.config import get_config_from_app as _get
 from app.entity import MarkJob, MarkTask
 from app.entity.base import FileTypeEnum
 from app.model import MarkJobModel, MarkTaskModel, UserTaskModel, DocModel, DocTypeModel, DocTermModel
-from app.schema import MarkJobSchema
+
+from app.schema.doc_schema import DocSchema
+from app.schema.doc_type_schema import DocTypeSchema
+from app.schema.mark_job_schema import MarkJobSchema
+from app.schema.mark_task_schema import MarkTaskSchema
 
 
 class MarkJobService:
@@ -132,18 +137,12 @@ class MarkJobService:
 
     @staticmethod
     def delete_mark_job(mark_job_id: int):
-        session.query(MarkJob).filter(MarkJob.mark_job_id == mark_job_id).update({MarkJob.is_deleted: True})
-        session.query(MarkTask).filter(MarkTask.mark_job_id == mark_job_id).update({MarkTask.is_deleted: True})
+        MarkJobModel().delete(mark_job_id)
         session.commit()
 
     @staticmethod
     def delete_mark_jobs(mark_job_ids: List[int]):
-        session.query(MarkJob).filter(
-            MarkJob.mark_job_id.in_(mark_job_ids)
-        ).update({MarkJob.is_deleted: True}, synchronize_session='fetch')
-        session.query(MarkTask).filter(
-            MarkTask.mark_job_id.in_(mark_job_ids)
-        ).update({MarkTask.is_deleted: True}, synchronize_session='fetch')
+        MarkJobModel().bulk_delete(mark_job_ids)
         session.commit()
 
     def upload_batch_files(self, f: FileStorage, mark_job: MarkJob, nlp_task) -> List[MarkTask]:
@@ -159,16 +158,17 @@ class MarkJobService:
         doc_list = [dict(doc_raw_name=csv_doc.doc_raw_name, doc_unique_name=d) for d in doc_name_list]
         doc_list = DocModel().bulk_create(doc_list)
 
-        # bulk create predict tasks
+        # bulk create mark tasks
         task_list = []
         for i in range(len(doc_list)):
             task_list.append(dict(doc_id=doc_list[i].doc_id, mark_job_id=mark_job.mark_job_id))
         task_list = MarkTaskModel().bulk_create(task_list)
 
         # push redis
+        business = self.get_business_by_nlp_task(nlp_task)
         for i in range(len(doc_list)):
             self.push_mark_task_message(
-                mark_job=mark_job, mark_task=task_list[i], doc=doc_list[i], business=f"{nlp_task.name}_label")
+                mark_job=mark_job, mark_task=task_list[i], doc=doc_list[i], business=business)
 
         return task_list
 
@@ -176,8 +176,9 @@ class MarkJobService:
         doc_unique_name, doc_relative_path = upload_fileset.save_file(f.filename, f.stream.read())
         doc = DocModel().create(doc_raw_name=f.filename, doc_unique_name=doc_unique_name)
         mark_task = MarkTaskModel().create(doc_id=doc.doc_id, mark_job_id=mark_job.mark_job_id)
+        business = self.get_business_by_nlp_task(nlp_task)
         self.push_mark_task_message(
-            mark_job=mark_job, mark_task=mark_task, doc=doc, business=f"{nlp_task.name}_label")
+            mark_job=mark_job, mark_task=mark_task, doc=doc, business=business)
 
         return [mark_task]
 
@@ -253,6 +254,7 @@ class MarkJobService:
             'doc_type': mark_job.doc_type_id,
             'business': business,
             'task_id': mark_task.mark_task_id,
+            'app_id': g.app_id
         }))
 
     @staticmethod
@@ -315,10 +317,9 @@ class MarkJobService:
         mark_job_list = MarkJobModel().get_by_mark_job_id_list(mark_job_id_list=mark_job_id_list)
 
         # 导出文件夹命名
-        export_dir_path = os.path.join('upload/export',
-                                       'classify_mark_job_{}_{}'.format(','.join([str(id) for id in mark_job_id_list]),
-                                                                        datetime.now().strftime(
-                                                                            "%Y%m%d%H%M%S")))
+        export_dir_path = os.path.join(
+            'upload/export', 'classify_mark_job_{}_{}'.format(','.join([str(job_id) for job_id in mark_job_id_list]),
+                                                              datetime.now().strftime("%Y%m%d%H%M%S")))
         os.mkdir(export_dir_path)
 
         # get all (count, status, mark_job_id) tuple
@@ -329,7 +330,8 @@ class MarkJobService:
             if mark_job.mark_job_status != StatusEnum.success:  # 不成功的job
                 continue
             # 不是所有的任务都未审核完成
-            if len(all_status_dict[mark_job.mark_job_id]) == 1 and int(StatusEnum.approved) in all_status_dict[mark_job.mark_job_id]:
+            if len(all_status_dict[mark_job.mark_job_id]) == 1 and (
+                    int(StatusEnum.approved) in all_status_dict[mark_job.mark_job_id]):
                 continue
 
             export_file_path = os.path.join('upload/export',
@@ -337,7 +339,8 @@ class MarkJobService:
             # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
             last_exported_file = export_sync.get_last_export_file(job=mark_job, export_file_path=export_file_path)
             if last_exported_file:
-                shutil.copy(last_exported_file, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
+                shutil.copy(
+                    last_exported_file, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
                 continue
 
             # 重新制作
@@ -351,3 +354,65 @@ class MarkJobService:
             abort(400, message="所有的任务都无法导出，请重新选择")
         shutil.make_archive(export_dir_path, 'zip', export_dir_path)  # 打包
         return export_dir_path + ".zip"
+
+    def get_mark_job_data_by_ids(self, mark_job_ids, args, doc_type_key="doc_type"):
+        items = []
+        for mark_job_id in mark_job_ids:
+            doc_type = DocTypeModel().get_by_mark_job_id(mark_job_id)
+            result = {
+                "prefix": "",  # TODO: 与MQ确认传参是否适配
+                doc_type_key: DocTypeSchema().dump(doc_type),
+                "docs": [],
+                "tasks": [],
+                "mark_job_id": mark_job_id,
+            }
+            data = MarkTaskModel().get_mark_task_and_doc_by_mark_job_ids([mark_job_id])
+
+            for task, doc in data:
+                # 抽取逻辑
+                if args.get('doc_term_ids'):
+                    if isinstance(task.task_result, list) \
+                            and Common.check_doc_term_include(task.task_result, 'doc_term_id', args['doc_term_ids']):
+                        result['docs'].append(DocSchema().dump(doc))
+                        result['tasks'].append(MarkTaskSchema().dump(task))
+                # 实体关系逻辑
+                if args.get('doc_relation_ids'):
+                    if isinstance(task.task_result, list) and Common.check_doc_relation_include(
+                            task.task_result, 'relation_id', args['doc_relation_ids']):
+                        result['docs'].append(DocSchema().dump(doc))
+                        result['tasks'].append(MarkTaskSchema().dump(task))
+                else:
+                    result['docs'].append(DocSchema().dump(doc))
+                    result['tasks'].append(MarkTaskSchema().dump(task))
+            items.append(result)
+
+    @staticmethod
+    def update_mark_task_and_user_task_by_mark_task_id(mark_task_id, args):
+        # update mark task
+        mark_task = MarkTaskModel().update(mark_task_id, **args)
+        # update user task list
+        user_task_list = UserTaskModel().get_by_filter(limit=99999, mark_task_id=mark_task_id)
+        user_update_params = {"user_task_status": mark_task.mark_task_status, "user_task_result": mark_task.mark_task_result}
+        user_task_list = UserTaskModel().bulk_update([user_task.user_task_id for user_task in user_task_list], **user_update_params)
+
+        session.commit()
+        return mark_task, user_task_list
+
+    @staticmethod
+    def update_mark_job_status_by_mark_task(mark_task: MarkTask):
+        # 更新这个task对应的job的状态，如果其下所有的task都成功，则修改job状态成功；如果其下有一个任务失败，则修改job状态失败
+        mark_task_list = MarkTaskModel().get_by_filter(limit=99999, mark_job_id=mark_task.mark_job_id)
+        states = [mark_task.mark_task_status for mark_task in mark_task_list]
+        if int(StatusEnum.fail) in states:  # 有一个失败，则整个job失败
+            new_job_status = int(StatusEnum.fail)
+        elif int(StatusEnum.processing) in states:  # 没有失败但是有处理中，则整个job处理中
+            new_job_status = int(StatusEnum.processing)
+        else:
+            new_job_status = int(StatusEnum.success)
+        MarkJobModel().update(mark_task.mark_job_id, mark_job_status=new_job_status,
+                                                              updated_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        session.commit()
+
+    @staticmethod
+    def get_business_by_nlp_task(nlp_task) -> str:
+        return f"{nlp_task.name}_label" if nlp_task != nlp_task.extract else "label"

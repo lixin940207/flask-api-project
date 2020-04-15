@@ -159,3 +159,34 @@ class Common:
             else:
                 dict[a] = {b: c}
         return dict
+
+    @staticmethod
+    def order_by_model_fields(q, model, fields):
+        for field in fields:
+            if field[0] in ('+', '-'):
+                flag = field[0]
+                attr_name = field[1:]
+            else:
+                flag = '+'
+                attr_name = field
+            order = {'+': 'asc', '-': 'desc'}[flag]
+            attr = getattr(model, attr_name)
+            condition = getattr(attr, order)()
+            q = q.order_by(condition)
+        return q
+
+    @staticmethod
+    def check_doc_term_include(s_list, key, d_list):
+        for s in s_list:
+            for d in d_list:
+                if isinstance(s, dict) and s.get(key) == d:
+                    return True
+        return False
+
+    @staticmethod
+    def check_doc_relation_include(s_list, key, d_list):
+        for s in s_list:
+            for d in d_list:
+                if isinstance(s, dict) and s.get(key) == d:
+                    return True
+        return False

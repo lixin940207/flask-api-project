@@ -6,4 +6,4 @@ from .. import blueprint
 
 api = Api(blueprint, prefix='/mark', decorators=[])
 
-from app.resource.v2.mark import classify_mark_job
+from app.resource.v2.mark import classify_mark_job, extract_mark_job, wordseg_mark_job, relation_mark_job
