@@ -80,9 +80,10 @@ class ModelService:
         )
         # bulk create train term
         doc_term_list = DocTermModel().get_by_filter(limit=99999, doc_type_id=doc_type_id)
-        doc_term_list = TrainTermTaskModel().bulk_create([dict(train_task_id=train_task.train_task_id,
+        TrainTermTaskModel().bulk_create([dict(train_task_id=train_task.train_task_id,
                                                doc_term_id=doc_term.doc_term_id,
                                                train_term_status=int(StatusEnum.training)) for doc_term in doc_term_list])
+        # assign doc term list to doc type
         doc_type.doc_term_list = doc_term_list
 
         if custom_id:
