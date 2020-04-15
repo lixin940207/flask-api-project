@@ -118,7 +118,7 @@ class ModelService:
             train_job_name=train_job_name,
             train_job_desc=train_job_desc,
             doc_type_id=doc_type_id,
-            train_job_status=int(StatusEnum.processing),
+            train_job_status=int(StatusEnum.training),
             preprocess=preprocess_type
         )
         # bulk create TrainM2mMark table
@@ -130,7 +130,7 @@ class ModelService:
             train_model_name=train_job_name,
             train_model_desc=train_job_desc,
             train_config=train_config,
-            train_status=int(StatusEnum.processing),
+            train_status=int(StatusEnum.training),
             model_version=model_version
         )
         if nlp_task in [NlpTaskEnum.extract, NlpTaskEnum.relation]:
@@ -140,7 +140,7 @@ class ModelService:
                 train_term_task_list.append({
                     "train_task_id": train_task.train_task_id,
                     "doc_term_id": field_config["field_id"],
-                    "train_term_status": int(StatusEnum.processing)
+                    "train_term_status": int(StatusEnum.training)
                 })
             TrainTermTaskModel().bulk_create(train_term_task_list)
 
