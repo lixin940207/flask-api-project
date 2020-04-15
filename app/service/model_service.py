@@ -61,7 +61,8 @@ class ModelService:
             train_job_name=train_job_name,
             train_job_desc=train_job_desc,
             doc_type_id=doc_type_id,
-            train_job_status=int(StatusEnum.training)
+            train_job_status=int(StatusEnum.training),
+            preprocess={}
         )
         # create TrainM2mMark table
         train_m2m_mark_list = [{"train_job_id": train_job.train_job_id, "mark_job_id": _id} for _id in mark_job_ids]
@@ -106,6 +107,8 @@ class ModelService:
         # generate model version by nlp task
         model_version = generate_model_version_by_nlp_task(doc_type_id, mark_job_ids, nlp_task)
 
+        preprocess_type = {"split_by_sentence": train_config[0].get("train_type", "") in ["ner", "wordseg"]}
+
         # 为model_train_config补充model_version字段，供后台服务处理
         for config in train_config:
             config['version'] = model_version
@@ -115,7 +118,8 @@ class ModelService:
             train_job_name=train_job_name,
             train_job_desc=train_job_desc,
             doc_type_id=doc_type_id,
-            train_job_status=int(StatusEnum.processing)
+            train_job_status=int(StatusEnum.processing),
+            preprocess=preprocess_type
         )
         # bulk create TrainM2mMark table
         train_m2m_mark_list = [{"train_job_id": train_job.train_job_id, "mark_job_id": _id} for _id in mark_job_ids]
