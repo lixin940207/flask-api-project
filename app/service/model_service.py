@@ -61,7 +61,7 @@ class ModelService:
             train_job_name=train_job_name,
             train_job_desc=train_job_desc,
             doc_type_id=doc_type_id,
-            train_job_status=int(StatusEnum.processing)
+            train_job_status=int(StatusEnum.training)
         )
         # create TrainM2mMark table
         train_m2m_mark_list = [{"train_job_id": train_job.train_job_id, "mark_job_id": _id} for _id in mark_job_ids]
@@ -73,7 +73,7 @@ class ModelService:
             train_model_name=train_job_name,
             train_model_desc=train_job_desc,
             train_config=train_config,
-            train_status=int(StatusEnum.processing),
+            train_status=int(StatusEnum.training),
             model_version=model_version
         )
 
