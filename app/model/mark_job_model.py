@@ -13,7 +13,7 @@ class MarkJobModel(BaseModel, ABC):
     def get_all(self):
         return session.query(MarkJob).filter(~MarkJob.is_deleted).all()
 
-    def get_by_id(self, _id):
+    def get_by_id(self, _id) -> MarkJob:
         return session.query(MarkJob).filter(MarkJob.mark_job_id == _id, ~MarkJob.is_deleted).one()
 
     def get_by_ids(self, ids):
