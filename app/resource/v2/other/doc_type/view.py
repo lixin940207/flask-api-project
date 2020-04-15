@@ -48,10 +48,8 @@ class DocTypeListResource(Resource, CurrentUserMixin):
         """
         创建一个文档类型包括它的条款
         """
-        nlp_task_id = Common().get_nlp_task_id_by_route()
-        args.update({
-            'nlp_task_id': nlp_task_id
-        })
+        args.update({'nlp_task_id': Common().get_nlp_task_id_by_route()})
+        args.update({"group_id": self.get_current_user().group_id})
         result = DocTypeService().create_doc_type(self.get_current_user(), args)
         return {
                    "message": "创建成功",
@@ -92,6 +90,7 @@ class RelationDocTypeListResource(Resource, CurrentUserMixin):
         创建一个文档类型包括它的条款
         """
         args.update({"nlp_task_id": NlpTaskEnum.relation.value})
+        args.update({"group_id": self.get_current_user().user_groups[0]})
         result = DocTypeService.create_relation_doc_type(args)
         return {
                    "message": "创建成功",
