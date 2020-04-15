@@ -71,6 +71,7 @@ class ManualTaskService:
                 args['user_task_status'] = int(getattr(StatusEnum, args['task_state']))
                 del args['task_state']
             item = UserTaskModel().update(task_id, **args)
+            MarkTaskModel().check_user_task_and_update_mark_task(task_id)
             schema = UserTaskSchema
         else:
             if args.get('task_result'):
@@ -81,6 +82,36 @@ class ManualTaskService:
                 del args['task_state']
             item = MarkTaskModel().update(task_id, **args)
             schema = MarkTaskSchema
+
+        session.commit()
+        result = schema().dump(item)
+        return result
+
+    @staticmethod
+    def update_user_task_status(current_user: CurrentUser, task_id, args):
+        if args.get('task_result'):
+            args['user_task_result'] = args.get('task_result')
+            del args['task_result']
+        if args.get('task_state'):
+            args['user_task_status'] = int(getattr(StatusEnum, args['task_state']))
+            del args['task_state']
+        item = UserTaskModel().update(task_id, **args)
+        MarkTaskModel().check_user_task_and_update_mark_task(task_id)
+        schema = UserTaskSchema
+        session.commit()
+        result = schema().dump(item)
+        return result
+
+    @staticmethod
+    def update_mark_task_status(current_user: CurrentUser, task_id, args):
+        if args.get('task_result'):
+            args['mark_task_result'] = args.get('task_result')
+            del args['task_result']
+        if args.get('task_state'):
+            args['mark_task_status'] = int(getattr(StatusEnum, args['task_state']))
+            del args['task_state']
+        item = MarkTaskModel().update(task_id, **args)
+        schema = MarkTaskSchema
         session.commit()
         result = schema().dump(item)
         return result
