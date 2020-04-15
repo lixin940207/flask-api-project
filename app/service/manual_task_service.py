@@ -94,7 +94,7 @@ class ManualTaskService:
             args['user_task_result'] = args.get('task_result')
             del args['task_result']
         if args.get('task_state'):
-            args['user_task_status'] = int(getattr(StatusEnum, args['task_state']))
+            args['user_task_status'] = status_str2int_mapper()[args['task_state']]
             del args['task_state']
         item = UserTaskModel().update(task_id, **args)
         MarkTaskModel().check_user_task_and_update_mark_task(task_id)
