@@ -44,7 +44,7 @@ class ClassifyRuleModel(BaseModel, ABC):
 
     def update(self, doc_rule_id, **kwargs):
         accept_keys = ["rule_content", "state"]
-        classify_rule = session.query(ClassifyDocRule).filter(ClassifyDocRule.doc_rule_id == doc_rule_id).one()
+        classify_rule = session.query(ClassifyDocRule).filter(ClassifyDocRule.classify_rule_id == doc_rule_id).one()
         for key, val in kwargs.items():
             if key == "state":
                 classify_rule.is_deleted = val
