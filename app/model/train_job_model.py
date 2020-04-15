@@ -81,7 +81,8 @@ class TrainJobModel(BaseModel, ABC):
                 job_id_list.append(train_task.train_job_id)
                 train_job.doc_type = doc_type
                 _, model_evaluate_list = EvaluateTaskModel().get_by_train_job_id(train_job_id=train_job.train_job_id, evaluate_task_status=int(StatusEnum.success))
-                train_job.model_evaluate = model_evaluate_list[0]
+                if model_evaluate_list:
+                    train_job.model_evaluate = model_evaluate_list[0]
                 train_job.train_list = [train_task]
                 train_job_list.append(train_job)
             else:
