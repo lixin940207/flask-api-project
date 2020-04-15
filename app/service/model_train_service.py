@@ -133,11 +133,11 @@ class ModelTrainService():
                 # 没有处于训练中
                 if not failed_terms:
                     # 没有处于失败的
-                    args["train_status"] = StatusEnum.success
+                    args["train_status"] = int(StatusEnum.success)
                 else:
-                    args["train_status"] = StatusEnum.fail
+                    args["train_status"] = int(StatusEnum.fail)
             else:
-                args["train_status"] = StatusEnum.training
+                args["train_status"] = int(StatusEnum.training)
         train_task = TrainTaskModel().update(train_task.train_task_id, **args)
         session.commit()
         return train_task
