@@ -2,6 +2,8 @@ from abc import ABC
 
 from sqlalchemy import not_
 
+from app.common.common import StatusEnum
+from app.entity import DocType
 from app.model.base import BaseModel
 from app.entity.export_job import ExportJob
 from app.common.extension import session
@@ -58,3 +60,25 @@ class ExportJobModel(BaseModel, ABC):
 
     def bulk_update(self, entity_list):
         raise NotImplemented("no bulk_update")
+
+    @staticmethod
+    def get_export_history(current_user, offset, limit):
+        q = session.query(ExportJob.export_job_id, ExportJob.created_time, ExportJob.export_file_path,
+                          DocType.nlp_task_id, ExportJob.doc_type_id, ExportJob.export_job_status, DocType.doc_type_name) \
+            .outerjoin(DocType, ExportJob.doc_type_id == DocType.doc_type_id) \
+            .filter(
+            ExportJob.export_by == current_user.user_id,
+            ~ExportJob.is_deleted,
+            ~DocType.is_deleted
+        )
+
+        count = q.count()
+        q = q.order_by(ExportJob.created_time.desc())
+        q = q.offset(offset).limit(limit)
+        return q.all(), count
+
+    @staticmethod
+    def update_status(export_id, status):
+        session.query(ExportJob).filter(ExportJob.export_id == export_id) \
+            .update({ExportJob.export_job_status: StatusEnum(status).value})
+        session.commit()

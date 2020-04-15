@@ -8,6 +8,8 @@
 """
 from abc import ABC
 
+from sqlalchemy import func
+from app.entity import DocTerm, DocRelation
 from app.model.base import BaseModel
 from app.entity.relation_m2m_term import RelationM2mTerm
 from app.common.extension import session
@@ -62,3 +64,14 @@ class RelationM2mTermModel(BaseModel, ABC):
     def bulk_update(self, entity_list):
         session.bulk_update_mappings(RelationM2mTerm, entity_list)
         session.flush()
+
+    @staticmethod
+    def get_relation_term_mapping(doc_type_id):
+        q = session.query(RelationM2mTerm.doc_relation_id,
+                      func.group_concat(RelationM2mTerm.doc_term_id.distinct()))\
+            .join(DocTerm, DocTerm.doc_term_id, RelationM2mTerm.doc_relation_id)\
+            .join(DocRelation, DocRelation.doc_relation_id, RelationM2mTerm.doc_relation_id)\
+            .filter(~DocTerm.is_deleted, ~DocRelation.is_deleted, ~RelationM2mTerm.is_deleted,
+                    DocTerm.doc_type_id == doc_type_id)\
+            .group_by(RelationM2mTerm.doc_relation_id)
+        return q.all()

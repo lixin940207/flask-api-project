@@ -14,7 +14,7 @@ class MarkJobModel(BaseModel, ABC):
     def get_all(self):
         return session.query(MarkJob).filter(~MarkJob.is_deleted).all()
 
-    def get_by_id(self, _id):
+    def get_by_id(self, _id) -> MarkJob:
         return session.query(MarkJob).filter(MarkJob.mark_job_id == _id, ~MarkJob.is_deleted).one()
 
     def get_by_ids(self, ids):
@@ -148,10 +148,8 @@ class MarkJobModel(BaseModel, ABC):
         q = session.query(func.count(MarkJob.mark_job_status), DocType.nlp_task_id, DocType.doc_type_id,
                           MarkJob.mark_job_status)
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
-            q = q.filter(DocType.group_id.in_(current_user.user_groups)).filter(~DocType.is_deleted,
-                                                                                ~UserTask.is_deleted,
-                                                                                ~MarkTask.is_deleted,
-                                                                                ~MarkJob.is_deleted)
+            q = q.join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
+                .filter(DocType.group_id.in_(current_user.user_groups)).filter(~DocType.is_deleted)
         elif current_user.user_role in [RoleEnum.reviewer.value, RoleEnum.annotator.value]:
             q = q.join(MarkTask, MarkTask.mark_job_id == MarkJob.mark_job_id) \
                 .join(UserTask, UserTask.mark_task_id == MarkTask.mark_task_id) \
