@@ -372,8 +372,8 @@ class MarkJobService(CurrentUserMixin):
             for task, doc in data:
                 # 抽取逻辑
                 if args.get('doc_term_ids'):
-                    if isinstance(task.task_result, list) \
-                            and Common.check_doc_term_include(task.task_result, 'doc_term_id', args['doc_term_ids']):
+                    if isinstance(task.mark_task_result, list) \
+                            and Common.check_doc_term_include(task.mark_task_result, 'doc_term_id', args['doc_term_ids']):
                         result['docs'].append(DocSchema().dump(doc))
                         result['tasks'].append(MarkTaskSchema().dump(task))
                 # 实体关系逻辑
