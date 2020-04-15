@@ -34,3 +34,7 @@ api.add_resource(view.CancelTopDocTypeResource,
 api.add_resource(view.WordsegDocLexiconListResource, '/wordseg_doc_type/<int:doc_type_id>/wordseg_doc_lexicon')
 api.add_resource(view.WordsegDocLexiconItemResource,
                  '/wordseg_doc_type/<int:doc_type_id>/wordseg_doc_lexicon/<int:doc_lexicon_id>')
+
+api.add_resource(view.ClassifyDocRuleListResource, '/classify_doc_type/<int:doc_type_id>/classify_doc_rule')
+api.add_resource(view.ClassifyDocRuleItemResource,
+                 '/classify_doc_type/<int:doc_type_id>/classify_doc_rule/<int:doc_rule_id>')
