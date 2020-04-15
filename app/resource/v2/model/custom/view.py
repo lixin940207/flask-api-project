@@ -26,7 +26,12 @@ class CustomListResource(Resource):
         # get filtered list
         filtered_list = {}
         if args.get("custom_types"):
-            filtered_list.update(nlp_task_id_list=[int(NlpTaskEnum[nlp_task]) for nlp_task in args.get("custom_types").split(',')])
+            nlp_task_id_list = []
+            for nlp_task in args.get("custom_types").split(','):
+                if nlp_task == 'ner':
+                    nlp_task = 'extract'
+                nlp_task_id_list.append(int(NlpTaskEnum[nlp_task]))
+            filtered_list.update(nlp_task_id_list=nlp_task_id_list)
         if args.get("custom_states"):
             filtered_list.update(custom_algorithm_status_list=[int(StatusEnum[status]) for status in args['custom_states'].split(',')])
         count, custom_algorithm_list = ModelCustomService().get_custom_algorithm_list_by_filter_in(offset=args["offset"], limit=args["limit"], args=filtered_list)
