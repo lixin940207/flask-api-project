@@ -4,6 +4,7 @@
 import json
 import os
 
+from flask import g
 from flask_restful import abort
 
 from app.common import export_sync
@@ -59,7 +60,7 @@ class PredictService:
         session.commit()
 
     @staticmethod
-    def create_predict_job_by_doc_type_id(doc_type_id, predict_job_name, predict_job_desc, predict_job_type, files):
+    def create_predict_job_by_doc_type_id(doc_type_id, predict_job_name, predict_job_desc, predict_job_type, files, use_rule):
         # verify doc_type
         doc_type = DocTypeModel().get_by_id(doc_type_id)
         # create predict job
@@ -97,7 +98,7 @@ class PredictService:
                 task_list = PredictTaskModel().bulk_create(task_list)
                 # push redis
                 for i in range(len(doc_list)):
-                    push_predict_task_to_redis(pipe=pipe, predict_job=predict_job, predict_task=task_list[i], doc=doc_list[i])
+                    push_predict_task_to_redis(pipe=pipe, nlp_task=StatusEnum(doc_type.nlp_task_id).name, predict_job=predict_job, predict_task=task_list[i], doc=doc_list[i], use_rule=use_rule)
 
             elif get_ext(f.filename) in ['txt', 'docx', 'doc', 'pdf']: # 单文件处理
                 doc_unique_name, doc_relative_path = upload_fileset.save_file(f.filename, f.stream.read())
@@ -106,7 +107,7 @@ class PredictService:
                 predict_task = PredictTaskModel().create(doc_id=doc.doc_id,
                                                          predict_job_id=predict_job.predict_job_id,
                                                          predict_task_status=int(StatusEnum.processing))
-                push_predict_task_to_redis(pipe=pipe, predict_job=predict_job, predict_task=predict_task, doc=doc)
+                push_predict_task_to_redis(pipe=pipe, nlp_task=StatusEnum(doc_type.nlp_task_id).name, predict_job=predict_job, predict_task=predict_task, doc=doc, use_rule=use_rule)
             else:
                 abort(400, message="文件类型出错")
 
@@ -142,7 +143,9 @@ class PredictService:
 
 
 
-def push_predict_task_to_redis(pipe, predict_job, predict_task, doc):
+def push_predict_task_to_redis(pipe, nlp_task,  predict_job, predict_task, doc, use_rule):
+    business = nlp_task if nlp_task == "extract" else "{}_extract".format(nlp_task)
+    prefix_map = {"extract": "NER", "relation": "RE", "wordseg": "WS", "classify": ""}
     pipe.lpush(_get('EXTRACT_TASK_QUEUE_KEY'), json.dumps({
         'files': [
             {
@@ -154,7 +157,9 @@ def push_predict_task_to_redis(pipe, predict_job, predict_task, doc):
         ],
         'is_multi': False,
         'doc_id': doc.doc_id,
-        'doc_type': f'NER{str(predict_job.doc_type_id)}',
-        'business': "extract",
+        'doc_type': prefix_map[nlp_task] + str(predict_job.doc_type_id),
+        'business': business,
         'task_id': predict_task.predict_task_id,
+        "app_id": g.app_id,
+        "use_rule": use_rule
     }))
