@@ -17,6 +17,7 @@ def get_last_export_file(job, export_file_path):
 
 def generate_extract_file(task_and_doc_list, export_fileset, doc_terms, offset=50):
     results = []
+    doc_terms = dict([[doc_term.doc_term_id, doc_term.doc_term_name] for doc_term in doc_terms])
     for task, doc in task_and_doc_list:
         results.append([doc.doc_raw_name, '', '', '', ''])
         with open(os.path.join('upload', doc.doc_unique_name), 'r') as f:
