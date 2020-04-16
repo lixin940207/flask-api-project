@@ -128,7 +128,11 @@ class DocTypeModel(BaseModel, ABC):
 
     @staticmethod
     def get_by_mark_job_ids(mark_job_ids, nlp_task_id, current_user: CurrentUser, limit=10, offset=0) -> (int, List):
-        q = session.query(DocType).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
+        q = session.query(DocType)\
+                .outerjoin(MarkJob, MarkJob.doc_type_id == DocType.doc_type_id)\
+                .filter(DocType.nlp_task_id == nlp_task_id,
+                        ~DocType.is_deleted,
+                        ~MarkJob.is_deleted)
         # 权限filter
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
@@ -136,23 +140,24 @@ class DocTypeModel(BaseModel, ABC):
             q = q.filter(or_(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)),
                              func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id))))
         if mark_job_ids:
-            q = q.outerjoin(MarkJob, MarkJob.doc_type_id == DocType.doc_type_id) \
-                .filter(MarkJob.mark_job_id.in_(mark_job_ids))
+            q = q.filter(MarkJob.mark_job_id.in_(mark_job_ids))
         count = q.count()
         items = q.offset(offset).limit(limit).all()
         return count, items
 
     @staticmethod
     def get_by_nlp_task_id_by_user(nlp_task_id, current_user: CurrentUser) -> [DocType]:
-        q = session.query(DocType, func.group_concat(DocTerm.doc_term_id.distinct())).\
-            outerjoin(DocTerm, DocTerm.doc_type_id == DocType.doc_type_id).\
-            filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
+        q = session.query(DocType, func.group_concat(DocTerm.doc_term_id.distinct()))\
+            .outerjoin(DocTerm, DocTerm.doc_type_id == DocType.doc_type_id)\
+            .filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
         # 权限filter
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
         elif current_user.user_role in [RoleEnum.reviewer.value, RoleEnum.annotator.value]:
-            q = q.filter(or_(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)),
-                             func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id))))
+            q = q.outerjoin(MarkJob, MarkJob.doc_type_id == DocType.doc_type_id)\
+                    .filter(~MarkJob,
+                            or_(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)),
+                                func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id))))
         q = q.group_by(DocTerm.doc_type_id, DocType)
         count = q.count()
         q = q.order_by(DocType.is_favorite.desc(), DocType.created_time.desc())
