@@ -26,7 +26,7 @@ class ManualTaskItemResource(Resource):
 
 class RejectManualTaskResource(Resource):
     def put(self, task_id):
-        ManualTaskService().reject_manual_task(task_id)
+        ManualTaskService().reject_mark_task(task_id)
         return {
                    "message": "更新成功",
                }, 201

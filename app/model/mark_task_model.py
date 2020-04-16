@@ -151,12 +151,6 @@ class MarkTaskModel(BaseModel, ABC):
         q = session.query(MarkTask).filter(MarkTask.mark_task_id == _id).one()
         return q.mark_job_id
 
-    @staticmethod
-    def update_status_to_unlabel_by_mark_task_id(_id):
-        q = session.query(MarkTask).filter(MarkTask.mark_task_id == _id).one()
-        q.mark_task_result = []
-        q.mark_task_status = int(StatusEnum.unlabel)
-
     def get_mark_task_with_doc_and_doc_type(self, nlp_task_id, current_user: CurrentUser, args):
         q = session.query(MarkTask, DocType, Doc) \
             .join(MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id) \
@@ -196,7 +190,7 @@ class MarkTaskModel(BaseModel, ABC):
         user_task_map = self._get_user_task_map(mark_task_ids,
                                                 select_keys=(UserTask))  # .annotator_id, UserTask.mark_task_id))
         for mark_task, doc_type, doc in q.offset(args['offset']).limit(args['limit']).all():
-            user_task_list = user_task_map[str(mark_task.mark_task_id)]
+            user_task_list = user_task_map.get(str(mark_task.mark_task_id), [])
             mark_task.user_task_list = user_task_list
             mark_task.doc = doc
             mark_task.doc_type = doc_type
@@ -295,7 +289,7 @@ class MarkTaskModel(BaseModel, ABC):
         return doc.doc_unique_name, doc.doc_raw_name, labels
 
     @staticmethod
-    def update_status_to_unlabel_by_manual_task_id(mark_task_id):
+    def update_status_to_unlabel_by_mark_task_id(mark_task_id):
         session.query(MarkTask).filter(
             MarkTask.mark_task_id == mark_task_id,
             ~MarkTask.is_deleted
