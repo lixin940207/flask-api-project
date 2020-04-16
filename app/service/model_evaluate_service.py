@@ -8,6 +8,7 @@ from app.config.config import get_config_from_app as _get
 from app.common.common import NlpTaskEnum, StatusEnum
 from app.entity import EvaluateTask, TrainTask, DocType
 from app.model import TrainTaskModel, TrainJobModel, DocTypeModel, DocTermModel
+from app.model.evaluate_m2m_mark_model import EvaluateM2mMarkbModel
 from app.model.evaluate_task_model import EvaluateTaskModel
 from app.schema import DocTypeSchema
 from app.service.model_service import generate_classify_data
@@ -17,6 +18,7 @@ class ModelEvaluateService:
     @staticmethod
     def get_evaluate_task_by_id(evaluate_task_id):
         evaluate_task = EvaluateTaskModel().get_by_id(evaluate_task_id)
+        evaluate_task.train_job_id = TrainTaskModel().get_by_id(evaluate_task.train_task_id).train_job_id
         return evaluate_task
 
     @staticmethod
@@ -25,6 +27,7 @@ class ModelEvaluateService:
         # assign train_job_id to evaluate_task for dumping
         for evaluate_task in evaluate_task_list:
             evaluate_task.train_job_id = train_job_id
+            evaluate_task.mark_job_ids = [m2m.mark_job_id for m2m in EvaluateM2mMarkbModel().get_by_filter(evaluate_task_id=evaluate_task.evaluate_task_id)]
         return count, evaluate_task_list
 
     @staticmethod
