@@ -19,7 +19,11 @@ def generate_extract_file(task_and_doc_list, export_fileset, doc_terms, offset=5
     results = []
     for task, doc in task_and_doc_list:
         results.append([doc.doc_raw_name, '', '', '', ''])
-        with open(os.path.join('upload', doc.doc_unique_name), 'r') as f:
+        # got dp file
+        dp_file = os.path.join('upload', doc.doc_unique_name.rsplit('.',1)[0] + '.txt')
+        if os.path.exists("{}_dp.txt".format(dp_file.rsplit('.', 1)[0])):
+            dp_file = "_dp.txt".format(dp_file.rsplit('.', 1)[0])
+        with open(dp_file, 'r') as f:
             content = f.read()
         task_results = getattr(task, "predict_task_result", None) or getattr(task, "mark_task_result", None)
         for idx, entity in enumerate(task_results):
