@@ -190,7 +190,7 @@ class MarkTaskModel(BaseModel, ABC):
         user_task_map = self._get_user_task_map(mark_task_ids,
                                                 select_keys=(UserTask))  # .annotator_id, UserTask.mark_task_id))
         for mark_task, doc_type, doc in q.offset(args['offset']).limit(args['limit']).all():
-            user_task_list = user_task_map.get(str(mark_task.mark_task_id), [])
+            user_task_list = user_task_map.get(str(mark_task.mark_task_id), [{"labeler_id": 0}])
             mark_task.user_task_list = user_task_list
             mark_task.doc = doc
             mark_task.doc_type = doc_type
