@@ -1,5 +1,6 @@
 from abc import ABC
 
+from flask_restful import abort
 from sqlalchemy import not_, func
 
 from app.common.common import StatusEnum, RoleEnum, Common
@@ -75,10 +76,14 @@ class UserTaskModel(BaseModel, ABC):
 
     @staticmethod
     def update_status_to_unlabel_by_mark_task_id(mark_task_id):
-        session.query(UserTask).filter(
+        q = session.query(UserTask).filter(
             UserTask.mark_task_id == mark_task_id,
             ~UserTask.is_deleted
-        ).update({UserTask.user_task_status: int(StatusEnum.unlabel)}, synchronize_session='fetch')
+        )
+        if q.all():
+            q.update({UserTask.user_task_status: int(StatusEnum.unlabel)}, synchronize_session='fetch')
+        else:
+            abort(400, message="无法驳回无标注员任务")
         session.flush()
 
     @staticmethod
