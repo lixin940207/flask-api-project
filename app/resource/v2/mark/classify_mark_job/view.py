@@ -99,7 +99,7 @@ class ClassifyMarkJobImportResource(Resource):
             if get_ext(f.filename) not in ["csv"]:
                 abort(400, message="已标注分类数据仅支持csv格式。")
         try:
-            result = MarkJobService().import_mark_job(files, args)
+            result = MarkJobService().import_mark_job(files, args, nlp_task=NlpTaskEnum.classify)
             return {
                        "message": "创建成功",
                        "result": result

@@ -96,7 +96,7 @@ class ExtractMarkJobImportResource(Resource):
         for f in files:
             if get_ext(f.filename) not in ["txt"]:
                 abort(400, message="导入已标注序列标注数据仅支持txt格式。")
-        result = MarkJobService().import_mark_job(files, args)
+        result = MarkJobService().import_mark_job(files, args, nlp_task=NlpTaskEnum.extract)
         return {
                    "message": "创建成功",
                    "result": result
