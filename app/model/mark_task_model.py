@@ -158,6 +158,7 @@ class MarkTaskModel(BaseModel, ABC):
             .join(Doc, Doc.doc_id == MarkTask.doc_id) \
             .filter(
             DocType.nlp_task_id == nlp_task_id,
+            ~DocType.is_deleted,
             ~MarkTask.is_deleted,
             ~Doc.is_deleted
         )
@@ -189,8 +190,9 @@ class MarkTaskModel(BaseModel, ABC):
         mark_task_ids = [mark_task.mark_task_id for mark_task, _, _ in results]
         user_task_map = self._get_user_task_map(mark_task_ids,
                                                 select_keys=(UserTask))  # .annotator_id, UserTask.mark_task_id))
-        for mark_task, doc_type, doc in q.offset(args['offset']).limit(args['limit']).all():
-            user_task_list = user_task_map.get(str(mark_task.mark_task_id), [{"labeler_id": 0}])
+        UserTaskPlaceholder = UserTask(annotator_id=0, is_deleted=False, user_task_status=StatusEnum.labeled.value)
+        for mark_task, doc_type, doc in results:
+            user_task_list = user_task_map.get(str(mark_task.mark_task_id), [UserTaskPlaceholder])
             mark_task.user_task_list = user_task_list
             mark_task.doc = doc
             mark_task.doc_type = doc_type
@@ -210,10 +212,11 @@ class MarkTaskModel(BaseModel, ABC):
         ).one()
         mark_task.doc = doc
         mark_task.doc_type = doc_type
+        UserTaskPlaceholder = UserTask(annotator_id=0, is_deleted=False, user_task_status=StatusEnum.labeled.value)
         mark_task.user_task_list = session.query(UserTask).filter(
             UserTask.mark_task_id == task_id,
             ~UserTask.is_deleted
-        ).all()
+        ).all() or [UserTaskPlaceholder]
         return mark_task
 
     @staticmethod
