@@ -155,7 +155,7 @@ class DocTypeModel(BaseModel, ABC):
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
         elif current_user.user_role in [RoleEnum.reviewer.value, RoleEnum.annotator.value]:
             q = q.outerjoin(MarkJob, MarkJob.doc_type_id == DocType.doc_type_id)\
-                    .filter(~MarkJob,
+                    .filter(~MarkJob.is_deleted,
                             or_(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)),
                                 func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id))))
         q = q.group_by(DocTerm.doc_type_id, DocType)
