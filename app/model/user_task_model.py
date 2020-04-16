@@ -74,7 +74,7 @@ class UserTaskModel(BaseModel, ABC):
         return entity_list.all()
 
     @staticmethod
-    def update_status_to_unlabel_by_manual_task_id(mark_task_id):
+    def update_status_to_unlabel_by_mark_task_id(mark_task_id):
         session.query(UserTask).filter(
             UserTask.mark_task_id == mark_task_id,
             ~UserTask.is_deleted

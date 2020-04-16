@@ -138,7 +138,7 @@ class MarkJobModel(BaseModel, ABC):
     def count_mark_job_by_nlp_task(current_user: CurrentUser):
         q = session.query(func.count(MarkJob.mark_job_status), DocType.nlp_task_id, DocType.doc_type_id,
                           MarkJob.mark_job_status)
-        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
+        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups)).filter(~DocType.is_deleted,
                                                                                 ~UserTask.is_deleted,
                                                                                 ~MarkTask.is_deleted,

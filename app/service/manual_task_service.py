@@ -37,9 +37,9 @@ class ManualTaskService:
         return mark_job
 
     @staticmethod
-    def reject_manual_task(mark_task_id):
-        UserTaskModel().update_status_to_unlabel_by_manual_task_id(mark_task_id)
-        MarkTaskModel().update_status_to_unlabel_by_manual_task_id(mark_task_id)
+    def reject_mark_task(mark_task_id):
+        UserTaskModel().update_status_to_unlabel_by_mark_task_id(mark_task_id)
+        MarkTaskModel().update_status_to_unlabel_by_mark_task_id(mark_task_id)
         session.commit()
 
     @staticmethod

@@ -377,8 +377,8 @@ class MarkJobService:
                         result['tasks'].append(MarkTaskSchema().dump(task))
                 # 实体关系逻辑
                 if args.get('doc_relation_ids'):
-                    if isinstance(task.task_result, list) and Common.check_doc_relation_include(
-                            task.task_result, 'relation_id', args['doc_relation_ids']):
+                    if isinstance(task.mark_task_result, list) and Common.check_doc_relation_include(
+                            task.mark_task_result, 'relation_id', args['doc_relation_ids']):
                         result['docs'].append(DocSchema().dump(doc))
                         result['tasks'].append(MarkTaskSchema().dump(task))
                 else:
