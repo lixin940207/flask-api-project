@@ -1,7 +1,7 @@
 import json
 from abc import ABC
 
-from sqlalchemy import not_, func
+from sqlalchemy import not_, func, or_
 from typing import List, Tuple
 from flask_restful import abort
 
@@ -232,14 +232,16 @@ class MarkTaskModel(BaseModel, ABC):
     @staticmethod
     def get_preview_and_next_mark_task_id(current_user, nlp_task_id, task_id, args):
         q = session.query(MarkTask.mark_task_id) \
-            .join(UserTask, UserTask.mark_task_id == MarkTask.mark_task_id) \
+            .outerjoin(UserTask, UserTask.mark_task_id == MarkTask.mark_task_id) \
             .join(MarkJob, MarkJob.mark_job_id == MarkTask.mark_job_id) \
             .join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
             .filter(
             DocType.nlp_task_id == nlp_task_id,
             MarkTask.mark_task_status != int(StatusEnum.processing),
             ~MarkTask.is_deleted,
-            ~UserTask.is_deleted,
+            or_(~UserTask.is_deleted, UserTask.is_deleted.is_(None)),
+            ~MarkJob.is_deleted,
+            ~DocType.is_deleted
         )
 
         if args.get('job_id'):
