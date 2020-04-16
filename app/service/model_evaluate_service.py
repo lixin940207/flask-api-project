@@ -21,8 +21,11 @@ class ModelEvaluateService:
 
     @staticmethod
     def get_evaluate_task_list_by_train_job_id(train_job_id, order_by, order_by_desc, offset, limit):
-        count, result = EvaluateTaskModel().get_by_train_job_id(train_job_id=train_job_id, order_by=order_by, order_by_desc=order_by_desc, offset=offset, limit=limit)
-        return count, result
+        count, evaluate_task_list = EvaluateTaskModel().get_by_train_job_id(train_job_id=train_job_id, order_by=order_by, order_by_desc=order_by_desc, offset=offset, limit=limit)
+        # assign train_job_id to evaluate_task for dumping
+        for evaluate_task in evaluate_task_list:
+            evaluate_task.train_job_id = train_job_id
+        return count, evaluate_task_list
 
     @staticmethod
     def create_evaluate_task_by_train_job_id(train_job_id, evaluate_task_name, evaluate_task_desc, mark_job_ids, doc_term_ids, doc_relation_ids, use_rule=0):
