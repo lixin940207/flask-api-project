@@ -210,10 +210,11 @@ class MarkTaskModel(BaseModel, ABC):
         ).one()
         mark_task.doc = doc
         mark_task.doc_type = doc_type
-        mark_task.user_task_list = session.query(UserTask).filter(
+        q = session.query(UserTask).filter(
             UserTask.mark_task_id == task_id,
             ~UserTask.is_deleted
         ).all()
+        mark_task.user_task_list = q if q else [{"labeler_id": 0}]
         return mark_task
 
     @staticmethod
