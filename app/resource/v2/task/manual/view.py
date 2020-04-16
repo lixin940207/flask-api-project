@@ -131,7 +131,6 @@ class TaskItemNextResource(Resource, CurrentUserMixin):
         "query": fields.String(missing=""),
     })
     def get(self: Resource, args: typing.Dict, task_id: int) -> typing.Tuple[typing.Dict, int]:
-        pass
         preview_task_id, next_task_id = ManualTaskService().get_preview_and_next_task_id(self.get_current_user(),
                                                                                          task_id, args)
 
