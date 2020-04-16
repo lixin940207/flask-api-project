@@ -152,3 +152,11 @@ class DocTermModel(BaseModel, ABC):
         session.add(entity)
         session.flush()
         return entity
+
+    @staticmethod
+    def get_doc_term_alias_mapping(doc_type_id) -> typing.Dict:
+        q = session.query(DocTerm) \
+            .filter(DocTerm.doc_type_id == doc_type_id) \
+            .with_entities(DocTerm.doc_term_id, DocTerm.doc_term_alias)
+        alias_id_mapping = {alias: term_id for term_id, alias in q.all() if len(alias) > 0}
+        return alias_id_mapping

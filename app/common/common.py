@@ -190,3 +190,10 @@ class Common:
                 if isinstance(s, dict) and s.get(key) == d:
                     return True
         return False
+
+    @staticmethod
+    def restore_sentence(sentence):
+        result_sentence = ""
+        for p in sentence.split("  "):
+            result_sentence += p.rsplit("/", maxsplit=1)[0]
+        return result_sentence
