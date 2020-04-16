@@ -7,7 +7,7 @@ from app.model.base import BaseModel
 from app.common.extension import session
 
 
-class EvaluateM2mMarkbModel(BaseModel, ABC):
+class EvaluateM2mMarkModel(BaseModel, ABC):
     def get_all(self):
         return session.query(EvaluateM2mMark).filter(~EvaluateM2mMark.is_deleted).all()
 
