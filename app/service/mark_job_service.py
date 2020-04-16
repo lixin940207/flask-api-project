@@ -6,7 +6,7 @@ import math
 import os
 import shutil
 from datetime import datetime
-from typing import List
+from typing import List, Dict
 
 import pandas as pd
 from flask import g
@@ -18,6 +18,8 @@ from app.common.common import Common
 from app.common import export_sync
 from app.common.extension import session
 from app.common.fileset import upload_fileset, FileSet
+from app.common.filters import CurrentUserMixin
+from app.common.log import logger
 from app.common.redis import r
 from app.common.seeds import NlpTaskEnum, StatusEnum
 from app.common.utils.name import get_ext
@@ -32,12 +34,12 @@ from app.schema.mark_job_schema import MarkJobSchema
 from app.schema.mark_task_schema import MarkTaskSchema
 
 
-class MarkJobService:
-    @staticmethod
-    def get_mark_job_list_by_nlp_task(args, nlp_task: NlpTaskEnum):
+class MarkJobService(CurrentUserMixin):
+    def get_mark_job_list_by_nlp_task(self, args, nlp_task: NlpTaskEnum):
+        user_role = self.get_current_role()
         nlp_task_id = int(nlp_task)
         count, result = MarkJobModel().get_by_nlp_task_id(
-            nlp_task_id=nlp_task_id, doc_type_id=args['doc_type_id'],
+            nlp_task_id=nlp_task_id, doc_type_id=args['doc_type_id'], user_role=user_role,
             search=args['query'], limit=args['limit'], offset=args['offset'])
 
         mark_job_ids = [mark_job.mark_job_id for mark_job, _ in result]
@@ -95,7 +97,7 @@ class MarkJobService:
         result = MarkJobSchema().dump(mark_job)
         return result
 
-    def import_mark_job(self, files, args):
+    def import_mark_job(self, files, args, nlp_task):
         DocTypeModel().get_by_id(args['doc_type_id'])
 
         job = MarkJobModel().create(
@@ -108,7 +110,14 @@ class MarkJobService:
         )
         tasks = []
         for f in files:
-            single_file_tasks = self.import_labeled_files(f, args['doc_type_id'], job.mark_job_id)
+            if nlp_task == NlpTaskEnum.classify:
+                single_file_tasks = self.import_labeled_classify_files(f, job)
+            elif nlp_task == NlpTaskEnum.extract:
+                single_file_tasks = self.import_labeled_extract_files(f, job)
+            elif nlp_task == NlpTaskEnum.wordseg:
+                single_file_tasks = self.import_labeled_wordseg_files(f, job)
+            else:
+                raise TypeError('nlp_task illegal')
             tasks.extend(single_file_tasks)
         session.commit()
         result = MarkJobSchema().dump(job)
@@ -182,8 +191,83 @@ class MarkJobService:
 
         return [mark_task]
 
+    def import_labeled_extract_files(self, f, mark_job: MarkJob):
+        doc_type_id = mark_job.doc_type_id
+        mark_job_id = mark_job.mark_job_id
+        alias_id_mapping = DocTermModel().get_doc_term_alias_mapping(doc_type_id)
+        # txt file contains multiple lines
+        doc_unique_name, doc_relative_path = upload_fileset.save_file(f.filename, f.stream.read())
+        DocModel().create(doc_raw_name=f.filename, doc_unique_name=doc_unique_name)
+        sample_docs = []
+        task_results = []
+        with open(doc_relative_path, encoding="utf-8-sig") as fr:
+            samples = fr.readlines()
+            for sample in samples:
+                sample = sample.replace("\n", "").strip()
+                if len(sample) < 2:
+                    continue
+                # parse tagged content into database format
+                raw_content, task_result_list = self.parse_sample(sample, alias_id_mapping)
+                doc_unique_name, _ = upload_fileset.save_file(f.filename, raw_content)
+                sample_docs.append(doc_unique_name)
+                task_results.append(task_result_list)
+        # bulk insert docs
+        doc_list = [dict(doc_raw_name=f.filename, doc_unique_name=d) for d in sample_docs]
+        doc_entity_list = DocModel().bulk_create(doc_list)
+        task_list = []
+        for i in range(len(doc_entity_list)):
+            task_list.append(dict(
+                doc_id=doc_entity_list[i].doc_id,
+                mark_job_id=mark_job_id,
+                mark_task_result=task_results[i] if task_results else {},
+                mark_task_status=int(StatusEnum.approved) if task_results else int(StatusEnum.processing)
+            ))
+        task_entity_list = MarkTaskModel().bulk_create(task_list)
+        # push redis
+        for i in range(len(doc_list)):
+            self.push_mark_task_message(mark_job, task_entity_list[i], doc_entity_list[i], business="dp")
+        return task_entity_list
+
+    def import_labeled_wordseg_files(self, f, mark_job: MarkJob):
+        # Step 1. Save temp file
+        # Step 2. Pre-process labeled file, generate raw content and labeled results
+        # Step 3. Save labeled information into database
+        doc_unique_name, doc_relative_path = upload_fileset.save_file(f.filename, f.stream.read())
+        corpus_doc_unique_name_list = []
+        # 标注txt中每行是一个sample，应该存成数据库里一个doc
+        try:
+            labeled_corpus_list = []
+            with open(doc_relative_path, encoding='utf-8-sig') as fr:
+                lines = fr.readlines()
+                for line in lines:
+                    line = line.replace("\n", "").strip()
+                    if len(line) < 2:
+                        continue
+                    ws_raw_content = Common().restore_sentence(line)
+                    doc_unique_name, _ = upload_fileset.save_file(f.filename, ws_raw_content)
+                    corpus_doc_unique_name_list.append(doc_unique_name)
+                    labeled_corpus_list.append(
+                        [lc.rsplit("/", maxsplit=1) for lc in line.replace("  ", " ").split(" ")])
+        except Exception as e:
+            logger.exception(e)
+            raise ValueError("分词标注数据格式有误")
+        # bulk insert docs
+        doc_list = [dict(doc_raw_name=f.filename, doc_unique_name=d) for d in corpus_doc_unique_name_list]
+        doc_entity_list = DocModel().bulk_create(doc_list)
+        task_list = []
+        for i in range(len(doc_entity_list)):
+            task_list.append(dict(
+                doc_id=doc_entity_list[i].doc_id,
+                mark_job_id=mark_job.mark_job_id,
+                mark_task_status=int(StatusEnum.approved)
+            ))
+        task_entity_list = MarkTaskModel().bulk_create(task_list)
+        return task_entity_list
+
     @staticmethod
-    def import_labeled_files(f, doc_type_id, mark_job_id):
+    def import_labeled_classify_files(f, mark_job):
+        doc_type_id = mark_job.doc_type_id
+        mark_job_id = mark_job.mark_job_id
         doc_unique_name, doc_relative_path = upload_fileset.save_file(f.filename, f.stream.read())
         csv_doc = DocModel().create(doc_raw_name=f.filename, doc_unique_name=doc_unique_name)
         try:
@@ -194,7 +278,7 @@ class MarkJobService:
             raise EmptyDataError('上传数据处理异常,请检查上传数据:{}'.format(f.filename))
         if 'text' not in df.columns or 'label' not in df.columns:
             raise KeyError
-        doc_terms = DocTermModel.get_doc_term_by_doctype(doc_type_id, offset=0, limit=9999)
+        doc_terms, _ = DocTermModel.get_doc_term_by_doctype(doc_type_id, offset=0, limit=9999)
         doc_term_name2id_map = {m.doc_term_name: m.doc_term_id for m in doc_terms}
         content_list = []
         task_results = []
@@ -288,7 +372,8 @@ class MarkJobService:
         if not (len(all_status_dict[mark_job_id]) == 1 and int(StatusEnum.approved) in all_status_dict[mark_job_id]):
             abort(400, message="有未标注或未审核任务，不能导出")
 
-        export_file_path = os.path.join('upload/export', '{}_mark_job_{}'.format(NlpTaskEnum(nlp_task_id).name, mark_job_id))
+        export_file_path = os.path.join(
+            'upload/export', '{}_mark_job_{}'.format(NlpTaskEnum(nlp_task_id).name, mark_job_id))
         # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
         last_exported_file = export_sync.get_last_export_file(job=mark_job, export_file_path=export_file_path)
         if last_exported_file:
@@ -301,13 +386,14 @@ class MarkJobService:
         if nlp_task_id == int(NlpTaskEnum.extract):
             doc_terms = DocTermModel().get_by_filter(limit=99999, doc_type_id=mark_job.doc_type_id)
             file_path = export_sync.generate_extract_file(task_and_doc_list=mark_task_and_doc_list,
-                                              export_fileset=export_fileset, doc_terms=doc_terms, offset=offset)
+                                                          export_fileset=export_fileset, doc_terms=doc_terms,
+                                                          offset=offset)
         elif nlp_task_id == int(NlpTaskEnum.classify):
             file_path = export_sync.generate_classify_file(task_and_doc_list=mark_task_and_doc_list,
-                                               export_fileset=export_fileset)
+                                                           export_fileset=export_fileset)
         elif nlp_task_id == int(NlpTaskEnum.wordseg):
             file_path = export_sync.generate_wordseg_file(task_and_doc_list=mark_task_and_doc_list,
-                                              export_fileset=export_fileset)
+                                                          export_fileset=export_fileset)
         else:
             abort(400, message="该任务无法导出")
         return file_path
@@ -334,8 +420,8 @@ class MarkJobService:
                     int(StatusEnum.approved) in all_status_dict[mark_job.mark_job_id]):
                 continue
 
-            export_file_path = os.path.join('upload/export',
-                                            '{}_mark_job_{}'.format(NlpTaskEnum(nlp_task_id).name, mark_job.mark_job_id))
+            export_file_path = os.path.join(
+                'upload/export', '{}_mark_job_{}'.format(NlpTaskEnum(nlp_task_id).name, mark_job.mark_job_id))
             # 检查上一次导出的结果，如果没有最近更新的话，就直接返回上次的结果
             last_exported_file = export_sync.get_last_export_file(job=mark_job, export_file_path=export_file_path)
             if last_exported_file:
@@ -345,9 +431,10 @@ class MarkJobService:
 
             # 重新制作
             export_fileset = FileSet(folder=export_file_path)
-            mark_task_and_doc_list = MarkTaskModel().get_mark_task_and_doc_by_mark_job_ids(mark_job_ids=[mark_job.mark_job_id])
-            file_path = export_sync.generate_classify_file(task_and_doc_list=mark_task_and_doc_list,
-                                               export_fileset=export_fileset)
+            mark_task_and_doc_list = MarkTaskModel().get_mark_task_and_doc_by_mark_job_ids(
+                mark_job_ids=[mark_job.mark_job_id])
+            file_path = export_sync.generate_classify_file(
+                task_and_doc_list=mark_task_and_doc_list, export_fileset=export_fileset)
             shutil.copy(file_path, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
 
         if not os.listdir(export_dir_path):
@@ -372,7 +459,8 @@ class MarkJobService:
                 # 抽取逻辑
                 if args.get('doc_term_ids'):
                     if isinstance(task.mark_task_result, list) \
-                            and Common.check_doc_term_include(task.mark_task_result, 'doc_term_id', args['doc_term_ids']):
+                            and Common.check_doc_term_include(task.mark_task_result, 'doc_term_id',
+                                                              args['doc_term_ids']):
                         result['docs'].append(DocSchema().dump(doc))
                         result['tasks'].append(MarkTaskSchema().dump(task))
                 # 实体关系逻辑
@@ -393,8 +481,12 @@ class MarkJobService:
         mark_task = MarkTaskModel().update(mark_task_id, **args)
         # update user task list
         user_task_list = UserTaskModel().get_by_filter(limit=99999, mark_task_id=mark_task_id)
-        user_update_params = {"user_task_status": mark_task.mark_task_status, "user_task_result": mark_task.mark_task_result}
-        user_task_list = UserTaskModel().bulk_update([user_task.user_task_id for user_task in user_task_list], **user_update_params)
+        user_update_params = {
+            "user_task_status": mark_task.mark_task_status,
+            "user_task_result": mark_task.mark_task_result
+        }
+        user_task_list = UserTaskModel().bulk_update(
+            [user_task.user_task_id for user_task in user_task_list], **user_update_params)
 
         session.commit()
         return mark_task, user_task_list
@@ -410,10 +502,32 @@ class MarkJobService:
             new_job_status = int(StatusEnum.processing)
         else:
             new_job_status = int(StatusEnum.success)
-        MarkJobModel().update(mark_task.mark_job_id, mark_job_status=new_job_status,
-                                                              updated_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+        MarkJobModel().update(
+            mark_task.mark_job_id,
+            mark_job_status=new_job_status,
+            updated_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        )
         session.commit()
 
     @staticmethod
     def get_business_by_nlp_task(nlp_task) -> str:
         return f"{nlp_task.name}_label" if nlp_task != nlp_task.extract else "label"
+
+    @staticmethod
+    def parse_sample(sample, alias_id_mapping: Dict):
+        idx = 0
+        task_result_list = []
+        raw_content = ""
+        for piece in sample.replace("  ", " ").split(" "):
+            if piece.rsplit("/", maxsplit=1)[1].lower() != "o":
+                try:
+                    task_result_list.append({"index": idx, "value": piece.rsplit("/", maxsplit=1)[0], "conflict": False,
+                                             "doc_term_id": alias_id_mapping[piece.rsplit("/", maxsplit=1)[1]]})
+                except KeyError as ke:
+                    raise ValueError(f"字段别名 [{ke.args[0]}] 不存在，请检查项目设置")
+                except Exception as e:
+                    raise ValueError("序列标注数据格式有误，具体格式请参照页面提供的模板数据")
+            idx += len(piece.rsplit("/", maxsplit=1)[0])
+            raw_content += piece.rsplit("/", maxsplit=1)[0]
+        return raw_content, task_result_list
+

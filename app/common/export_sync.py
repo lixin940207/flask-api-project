@@ -39,10 +39,12 @@ def generate_extract_file(task_and_doc_list, export_fileset, doc_terms, offset=5
 def generate_classify_file(task_and_doc_list, export_fileset):
     results = []
     for task, doc in task_and_doc_list:
+        with open(os.path.join('upload', doc.doc_unique_name), 'r') as f:
+            content = f.read()
         task_result = getattr(task, "predict_task_result", None) or getattr(task, "mark_task_result", None)
-        row = [doc.doc_raw_name, task_result[0]['label_name'] if task_result else '']
+        row = [doc.doc_raw_name, content, task_result[0]['label_name'] if task_result else '']
         results.append(row)
-    csv_path = export_fileset.export_to_csv(results=results, header=['content', 'result'])
+    csv_path = export_fileset.export_to_csv(results=results, header=["doc_name", 'content', 'result'])
     return csv_path
 
 

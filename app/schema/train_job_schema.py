@@ -19,3 +19,4 @@ class TrainJobSchema(Schema):  # type: ignore
     model_version = fields.String()
     train_list = fields.List(fields.Nested(TrainTaskSchema))
     model_evaluate = fields.Nested(EvaluateTaskSchema)
+    preprocess = fields.Dict()

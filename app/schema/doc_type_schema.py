@@ -26,3 +26,11 @@ class DocTypeSchema(Schema):
     created_time = fields.DateTime()
     group_id = fields.Integer()
     status = fields.Function(lambda obj: not obj.is_deleted)
+
+
+class ClassifyDocRuleSchema(Schema):  # type: ignore
+    id = fields.Integer(attribute="classify_rule_id")
+    rule_type = fields.String()
+    rule_content = fields.Dict()
+    doc_term_id = fields.Integer()
+    state = fields.Integer(attribute="is_active")

@@ -4,9 +4,10 @@
 from abc import ABC
 from sqlalchemy import distinct
 
-from app.common.common import RoleEnum
+from app.common.common import RoleEnum, StatusEnum
 from app.common.filters import CurrentUser
-from app.entity import TrainTask
+from app.entity import TrainTask, EvaluateTask
+from app.model.evaluate_task_model import EvaluateTaskModel
 from app.model.base import BaseModel
 from app.entity.train_job import TrainJob
 from app.entity.doc_type import DocType
@@ -51,8 +52,8 @@ class TrainJobModel(BaseModel, ABC):
         accept_keys = ["train_job_status", "doc_type_id"]
         # Compose query, select 3 tables related to a train job
         q = session.query(TrainTask, TrainJob, DocType) \
-            .join(TrainTask, TrainTask.train_job_id == TrainJob.train_job_id) \
-            .join(DocType, DocType.doc_type_id == TrainJob.doc_type_id) \
+            .outerjoin(TrainJob, TrainTask.train_job_id == TrainJob.train_job_id) \
+            .outerjoin(DocType, DocType.doc_type_id == TrainJob.doc_type_id) \
             .filter(DocType.nlp_task_id == nlp_task_id,
                     ~DocType.is_deleted,
                     ~TrainJob.is_deleted,
@@ -66,14 +67,28 @@ class TrainJobModel(BaseModel, ABC):
                 q = q.filter(getattr(TrainJob, key) == val)
         if search:
             q = q.filter(TrainJob.train_job_name.like(f'%{search}%'))
-        count = q.with_entities(distinct(TrainJob.train_job_id)).count()
         # Order by key
         if order_by_desc:
             q = q.order_by(getattr(TrainJob, order_by).desc())
         else:
             q = q.order_by(getattr(TrainJob, order_by))
-        q = q.offset(offset).limit(limit)
-        return count, q.all()
+
+        train_job_list = []
+        job_id_list = []
+        for train_task, train_job, doc_type in q.all():
+            # assign train_task, doc_type to train_job
+            if train_task.train_job_id not in job_id_list:
+                job_id_list.append(train_task.train_job_id)
+                train_job.doc_type = doc_type
+                _, model_evaluate_list = EvaluateTaskModel().get_by_train_job_id(train_job_id=train_job.train_job_id, evaluate_task_status=int(StatusEnum.success))
+                if model_evaluate_list:
+                    train_job.model_evaluate = model_evaluate_list[0]
+                train_job.train_list = [train_task]
+                train_job_list.append(train_job)
+            else:
+                train_job_list[job_id_list.index(train_task.train_job_id)].train_list.append(train_task)
+        count = len(train_job_list)
+        return count, train_job_list[offset: offset + limit]
 
     def create(self, **kwargs) -> TrainJob:
         entity = TrainJob(**kwargs)

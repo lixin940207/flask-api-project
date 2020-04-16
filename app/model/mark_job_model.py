@@ -1,5 +1,6 @@
 from abc import ABC
 
+from flask import g
 from sqlalchemy import not_, func, or_, text
 from typing import List
 from app.common.filters import CurrentUser
@@ -13,7 +14,7 @@ class MarkJobModel(BaseModel, ABC):
     def get_all(self):
         return session.query(MarkJob).filter(~MarkJob.is_deleted).all()
 
-    def get_by_id(self, _id):
+    def get_by_id(self, _id) -> MarkJob:
         return session.query(MarkJob).filter(MarkJob.mark_job_id == _id, ~MarkJob.is_deleted).one()
 
     def get_by_ids(self, ids):
@@ -40,13 +41,21 @@ class MarkJobModel(BaseModel, ABC):
         return q.all()
 
     def get_by_nlp_task_id(
-            self, nlp_task_id, search, order_by="created_time", order_by_desc=True, limit=10, offset=0, **kwargs):
+            self, nlp_task_id, search, order_by="created_time",
+            order_by_desc=True, limit=10, offset=0, user_role=None, **kwargs):
         # Define allowed filter keys
         accept_keys = ["assign_mode", "mark_job_status", "mark_job_type", "doc_type_id"]
         # Compose query
         q = session.query(MarkJob, DocType).join(
             DocType, MarkJob.doc_type_id == DocType.doc_type_id
         ).filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted, ~MarkJob.is_deleted)
+        # Role
+        if user_role == "管理员":
+            q = q.filter(DocType.group_id.in_(g.user_groups))
+        elif user_role == "审核员":
+            q = q.filter(func.json_contains(MarkJob.reviewer_ids, str(g.user_id)))
+        elif user_role == "标注员":
+            q = q.filter(func.json_contains(MarkJob.annotator_ids, str(g.user_id)))
         # Filter conditions
         for key, val in kwargs.items():
             if key in accept_keys and val is not None:
@@ -138,19 +147,20 @@ class MarkJobModel(BaseModel, ABC):
     def count_mark_job_by_nlp_task(current_user: CurrentUser):
         q = session.query(func.count(MarkJob.mark_job_status), DocType.nlp_task_id, DocType.doc_type_id,
                           MarkJob.mark_job_status)
-        if current_user.user_role in [RoleEnum.manager.value, RoleEnum.manager.value, RoleEnum.guest.value]:
-            q = q.filter(DocType.group_id.in_(current_user.user_groups)).filter(~DocType.is_deleted,
-                                                                                ~UserTask.is_deleted,
-                                                                                ~MarkTask.is_deleted,
-                                                                                ~MarkJob.is_deleted)
+        if current_user.user_role in [RoleEnum.admin.value]:
+            q = q.join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
+                .filter(~DocType.is_deleted)
+        elif current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
+            q = q.join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
+                .filter(DocType.group_id.in_(current_user.user_groups), ~DocType.is_deleted)
         elif current_user.user_role in [RoleEnum.reviewer.value, RoleEnum.annotator.value]:
             q = q.join(MarkTask, MarkTask.mark_job_id == MarkJob.mark_job_id) \
                 .join(UserTask, UserTask.mark_task_id == MarkTask.mark_task_id) \
                 .join(DocType, DocType.doc_type_id == MarkJob.doc_type_id) \
-                .filter(~DocType.is_deleted, ~UserTask.is_deleted, ~MarkTask.is_deleted, ~MarkJob.is_deleted) \
-                .filter(
-                or_(UserTask.annotator_id == current_user.user_id, UserTask.annotator_id == current_user.user_id))
-        all_count = q.group_by(MarkJob.mark_job_status, MarkJob.doc_type_id, DocType.nlp_task_id, DocType.doc_type_id).all()
+                .filter(~DocType.is_deleted, ~UserTask.is_deleted, ~MarkTask.is_deleted, ~MarkJob.is_deleted,
+                        or_(UserTask.annotator_id == current_user.user_id, UserTask.annotator_id == current_user.user_id))
+        all_count = q.group_by(MarkJob.mark_job_status, MarkJob.doc_type_id, DocType.nlp_task_id, DocType.doc_type_id).\
+            all()
         return all_count
 
     @staticmethod

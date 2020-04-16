@@ -58,6 +58,16 @@ class CustomListResource(Resource):
         exist_custom_algorithm = ModelCustomService().get_custom_algorithm_by_alias(custom_algorithm_alias=args["custom_id_name"])
         if exist_custom_algorithm:
             abort(400, message="该标识名称已被占用")
+        # define preprocess type
+        if args["custom_type"] in "ner":
+            preprocess_type = {"split_by_sentence": True}
+            args.update(custom_type="extract")
+        elif args["custom_type"] == "wordseg":
+            preprocess_type = {"split_by_sentence": True}
+        elif args["custom_type"] == "realation":
+            preprocess_type = {}
+        else: # wordseg
+            preprocess_type = {"split_by_sentence": False}
         # create new
         custom_algorithm = ModelCustomService().create_custom_algorithm(custom_algorithm_alias=args["custom_id_name"],
                                                                         custom_algorithm_name=args["custom_name"],
@@ -66,6 +76,7 @@ class CustomListResource(Resource):
                                                                         custom_algorithm_predict_port=args["custom_port"],
                                                                         custom_algorithm_evaluate_port=args["custom_evaluate_port"],
                                                                         custom_algorithm_config=args["custom_config"],
+                                                                        preprocess=preprocess_type,
                                                                         nlp_task_id=int(NlpTaskEnum[args["custom_type"]]))
         result = CustomAlgorithmSchema().dump(custom_algorithm)
 
