@@ -1,8 +1,8 @@
 import typing
 from flask import g
-import datetime
 from app.common.extension import db
 from enum import Enum
+from sqlalchemy.sql import func
 
 
 def get_attr_from_g(name: str, default=None, raise_exception=True) -> typing.Any:
@@ -21,11 +21,11 @@ class BaseEntity(db.Model):
 
     app_id = db.Column(db.Integer(), default=get_attr_from_g('app_id'))
     created_by = db.Column(db.Integer(), default=get_attr_from_g('user_id'))
-    created_time = db.Column(db.DateTime(), default=datetime.datetime.now())
+    created_time = db.Column(db.DateTime(), default=func.now())
     updated_by = db.Column(db.Integer(), onupdate=get_attr_from_g('user_id'))
-    updated_time = db.Column(db.DateTime(), onupdate=datetime.datetime.now())
+    updated_time = db.Column(db.DateTime(), onupdate=func.now())
     deleted_by = db.Column(db.Integer())
-    deleted_time = db.Column(db.DateTime(), onupdate=datetime.datetime.now())
+    deleted_time = db.Column(db.DateTime(), onupdate=func.now())
     is_deleted = db.Column(db.Boolean(), default=False)
 
 
