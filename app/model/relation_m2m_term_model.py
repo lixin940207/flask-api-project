@@ -26,10 +26,12 @@ class RelationM2mTermModel(BaseModel, ABC):
         # Define allowed filter keys
         accept_keys = ["doc_relation_id", "doc_term_id"]
         # Compose query
-        q = session.query(RelationM2mTerm).filter(RelationM2mTerm.is_deleted == False)
+        q = session.query(RelationM2mTerm).filter(~RelationM2mTerm.is_deleted)
         # Filter conditions
         for key, val in kwargs.items():
-            if key in accept_keys:
+            if key == "doc_relation_ids":
+                q = q.filter(RelationM2mTerm.doc_relation_id.in_(val))
+            elif key in accept_keys:
                 q = q.filter(getattr(RelationM2mTerm, key) == val)
         # Order by key
         q = q.order_by(order_by)
