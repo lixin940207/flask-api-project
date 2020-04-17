@@ -105,7 +105,7 @@ class MarkJobService(CurrentUserMixin):
             mark_job_type=args['mark_job_type'],
             mark_job_desc=args.get('mark_job_desc'),
             doc_type_id=args['doc_type_id'],
-            mark_job_status=int(StatusEnum.success),
+            mark_job_status=int(StatusEnum.approved),
             assign_mode='average',
         )
         tasks = []
@@ -362,7 +362,7 @@ class MarkJobService(CurrentUserMixin):
     def export_mark_file(nlp_task_id, mark_job_id, offset=50):
         mark_job = MarkJobModel().get_by_id(mark_job_id)
 
-        if mark_job.mark_job_status != StatusEnum.success:
+        if mark_job.mark_job_status not in (StatusEnum.approved, StatusEnum.success):
             abort(400, message="有失败或未完成任务，不能导出")
 
         all_count = MarkTaskModel().count_mark_task_status(mark_job_ids=[mark_job_id])
@@ -413,7 +413,7 @@ class MarkJobService(CurrentUserMixin):
         # convert to a nested dict
         all_status_dict = Common().tuple_list2dict(all_count)
         for mark_job in mark_job_list:  # 遍历所有的job
-            if mark_job.mark_job_status != StatusEnum.success:  # 不成功的job
+            if mark_job.mark_job_status not in (StatusEnum.success, StatusEnum.approved):  # 不成功的job
                 continue
             # 不是所有的任务都未审核完成
             if len(all_status_dict[mark_job.mark_job_id]) == 1 and (
@@ -501,7 +501,7 @@ class MarkJobService(CurrentUserMixin):
         elif int(StatusEnum.processing) in states:  # 没有失败但是有处理中，则整个job处理中
             new_job_status = int(StatusEnum.processing)
         else:
-            new_job_status = int(StatusEnum.success)
+            new_job_status = int(StatusEnum.approved)
         MarkJobModel().update(
             mark_task.mark_job_id,
             mark_job_status=new_job_status,
