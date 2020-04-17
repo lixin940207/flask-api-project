@@ -130,12 +130,15 @@ class ClassifyMarkJobMultiExportResource(Resource):
             self: Resource,
             args: typing.Dict
     ) -> typing.Tuple[typing.Dict, int]:
-        file_path = MarkJobService().export_multi_mark_file(
-            nlp_task_id=int(NlpTaskEnum.classify), mark_job_id_list=args["job_ids"])
-        return {
-                   "message": "请求成功",
-                   "file_path": file_path
-               }, 200
+        try:
+            file_path = MarkJobService().export_multi_mark_file(
+                nlp_task_id=int(NlpTaskEnum.classify), mark_job_id_list=args["job_ids"])
+            return {
+                       "message": "请求成功",
+                       "file_path": file_path
+                   }, 200
+        except ValueError as e:
+            abort(400, message=e.args[0])
 
     
 class ClassifyMarkJobRePreLabelResource(Resource):

@@ -409,7 +409,7 @@ class MarkJobService(CurrentUserMixin):
         os.mkdir(export_dir_path)
 
         # get all (count, status, mark_job_id) tuple
-        all_count = MarkTaskModel().count_mark_task_status(mark_job_ids=[mark_job_id_list])
+        all_count = MarkTaskModel().count_mark_task_status(mark_job_ids=mark_job_id_list)
         # convert to a nested dict
         all_status_dict = Common().tuple_list2dict(all_count)
         for mark_job in mark_job_list:  # 遍历所有的job
@@ -438,7 +438,7 @@ class MarkJobService(CurrentUserMixin):
             shutil.copy(file_path, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
 
         if not os.listdir(export_dir_path):
-            abort(400, message="所有的任务都无法导出，请重新选择")
+            raise ValueError("所选标注任务中没有完成审核的任务，请重新选择")
         shutil.make_archive(export_dir_path, 'zip', export_dir_path)  # 打包
         return export_dir_path + ".zip"
 
