@@ -442,12 +442,12 @@ class MarkJobService(CurrentUserMixin):
         shutil.make_archive(export_dir_path, 'zip', export_dir_path)  # 打包
         return export_dir_path + ".zip"
 
-    def get_mark_job_data_by_ids(self, mark_job_ids, args, doc_type_key="doc_type"):
+    def get_mark_job_data_by_ids(self, mark_job_ids, args, doc_type_key="doc_type", prefix='NER'):
         items = []
         for mark_job_id in mark_job_ids:
             doc_type = DocTypeModel().get_by_mark_job_id(mark_job_id)
             result = {
-                "prefix": "",  # TODO: 与MQ确认传参是否适配
+                "prefix": prefix,  # TODO: 与MQ确认传参是否适配
                 doc_type_key: DocTypeSchema().dump(doc_type),
                 "docs": [],
                 "tasks": [],
