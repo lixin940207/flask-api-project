@@ -31,7 +31,7 @@ class PdfActionConfigMixin:
 
 class SqlalchemyConfigMixin:
     # SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:root@localhost:53306/szse"
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://{}:{}@{}:{}/{}?charset={}'.format(
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://{}:{}@{}:{}/{}'.format(
         os.getenv('MYSQL_USER', 'root'),
         os.getenv('MYSQL_PASSWORD', 'root'),
         os.getenv('MYSQL_HOST', '127.0.0.1'),
