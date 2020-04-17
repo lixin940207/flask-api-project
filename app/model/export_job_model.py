@@ -67,14 +67,10 @@ class ExportJobModel(BaseModel, ABC):
         q = session.query(ExportJob.export_job_id, ExportJob.created_time, ExportJob.export_file_path,
                           DocType.nlp_task_id, ExportJob.doc_type_id, ExportJob.export_job_status, DocType.doc_type_name) \
             .outerjoin(DocType, ExportJob.doc_type_id == DocType.doc_type_id) \
-            .filter(
-            ExportJob.created_by == current_user.user_id,
-            ~ExportJob.is_deleted,
-            ~DocType.is_deleted
-        )
+            .filter(ExportJob.created_by == current_user.user_id, ~ExportJob.is_deleted, ~DocType.is_deleted)
 
         count = q.count()
-        q = q.order_by(ExportJob.created_time.desc())
+        q = q.order_by(ExportJob.export_job_id.desc())
         q = q.offset(offset).limit(limit)
         return q.all(), count
 
