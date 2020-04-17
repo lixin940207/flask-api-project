@@ -315,7 +315,7 @@ class MarkJobService(CurrentUserMixin):
                 doc_id=doc_entity_list[i].doc_id,
                 mark_job_id=mark_job_id,
                 mark_task_result=task_results[i] if task_results else {},
-                mark_task_status=StatusEnum.approved
+                mark_task_status=int(StatusEnum.approved)
             ))
         task_entity_list = MarkTaskModel().bulk_create(task_list)
 
