@@ -65,7 +65,8 @@ class ExportJobModel(BaseModel, ABC):
     @staticmethod
     def get_export_history(current_user, offset, limit):
         q = session.query(ExportJob.export_job_id, ExportJob.created_time, ExportJob.export_file_path,
-                          DocType.nlp_task_id, ExportJob.doc_type_id, ExportJob.export_job_status, DocType.doc_type_name) \
+                          DocType.nlp_task_id, ExportJob.doc_type_id, ExportJob.export_job_status,
+                          DocType.doc_type_name, ExportJob.export_mark_job_ids) \
             .outerjoin(DocType, ExportJob.doc_type_id == DocType.doc_type_id) \
             .filter(ExportJob.created_by == current_user.user_id, ~ExportJob.is_deleted, ~DocType.is_deleted)
 
