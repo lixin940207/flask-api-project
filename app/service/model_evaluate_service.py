@@ -6,10 +6,11 @@ from app.common.redis import r
 from app.common.extension import session
 from app.config.config import get_config_from_app as _get
 from app.common.common import NlpTaskEnum, StatusEnum
-from app.entity import EvaluateTask, TrainTask, DocType
+from app.entity import EvaluateTask, TrainTask, DocType, RelationM2mTerm
 from app.model import TrainTaskModel, TrainJobModel, DocTypeModel, DocTermModel
 from app.model.evaluate_m2m_mark_model import EvaluateM2mMarkModel
 from app.model.evaluate_task_model import EvaluateTaskModel
+from app.model.relation_m2m_term_model import RelationM2mTermModel
 from app.schema import DocTypeSchema
 from app.service.model_service import generate_classify_data
 
@@ -56,6 +57,7 @@ class ModelEvaluateService:
         EvaluateM2mMarkModel().bulk_create(evaluate_m2m_mark_list)
 
         # push to evaluate redis queue
+        doc_term_ids = [str(t.doc_term_id) for t in RelationM2mTermModel().get_by_filter([int(rl) for rl in doc_relation_ids])]
         push_evaluate_task_to_redis(nlp_task, evaluate_task, train_task, doc_type, mark_job_ids, doc_term_ids, doc_relation_ids, use_rule)
         session.commit()
         return evaluate_task
