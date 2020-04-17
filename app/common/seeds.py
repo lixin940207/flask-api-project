@@ -4,19 +4,20 @@ from app.common.common import NlpTaskEnum, StatusEnum
 
 
 class Seeds:
-    def create_seeds(self):
+    def create_seeds(self, debug=False):
         # Create seeds data from base tables
         self.create_nlp_task()
         self.create_status()
-        self.create_doc_type()
-        self.create_doc_term()
-        self.create_mark_job()
-        self.create_train_job()
-        self.create_doc()
-        self.create_mark_task()
-        self.creat_user_task()
-        self.create_train_task()
-        self.create_evaluate_task()
+        if debug:
+            self.create_doc_type()
+            self.create_doc_term()
+            self.create_mark_job()
+            self.create_train_job()
+            self.create_doc()
+            self.create_mark_task()
+            self.creat_user_task()
+            self.create_train_task()
+            self.create_evaluate_task()
         session.commit()
 
     @staticmethod
