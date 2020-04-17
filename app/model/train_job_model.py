@@ -14,6 +14,8 @@ from app.entity.doc_type import DocType
 from app.common.extension import session
 from sqlalchemy import func
 
+from app.model.train_m2m_mark_model import TrainM2mMarkbModel
+
 
 class TrainJobModel(BaseModel, ABC):
     def get_all(self):
@@ -76,6 +78,7 @@ class TrainJobModel(BaseModel, ABC):
         train_job_list = []
         job_id_list = []
         for train_task, train_job, doc_type in q.all():
+            train_task.mark_job_ids = [m2m.mark_job_id for m2m in TrainM2mMarkbModel().get_by_filter(limit=99999, train_job_id=train_task.train_job_id)]
             # assign train_task, doc_type to train_job
             if train_task.train_job_id not in job_id_list:
                 job_id_list.append(train_task.train_job_id)
