@@ -76,6 +76,6 @@ class ExportJobModel(BaseModel, ABC):
 
     @staticmethod
     def update_status(export_id, status):
-        session.query(ExportJob).filter(ExportJob.export_id == export_id) \
+        session.query(ExportJob).filter(ExportJob.export_job_id == export_id) \
             .update({ExportJob.export_job_status: StatusEnum(status).value})
-        session.commit()
+        session.flush()
