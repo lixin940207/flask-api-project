@@ -68,6 +68,14 @@ class UserTaskModel(BaseModel, ABC):
         session.flush()
         return entity.one()
 
+    def update_by_annotator_id(self, current_user, _id, **kwargs) -> UserTask:
+        entity = session.query(UserTask).filter(UserTask.user_task_id == _id)
+        if current_user.user_role in [RoleEnum.annotator.value]:
+            entity = entity.filter(UserTask.annotator_ids == current_user.user_id)
+        entity.update(kwargs)
+        session.flush()
+        return entity.one()
+
     def bulk_update(self, _id_list, **kwargs):
         entity_list = session.query(UserTask).filter(UserTask.user_task_id.in_(_id_list))
         entity_list.update(kwargs, synchronize_session="fetch")

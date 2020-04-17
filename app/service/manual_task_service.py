@@ -71,7 +71,7 @@ class ManualTaskService:
             if args.get('task_state'):
                 args['user_task_status'] = int(getattr(StatusEnum, args['task_state']))
                 del args['task_state']
-            item = UserTaskModel().update(task_id, **args)
+            item = UserTaskModel().update_by_annotator_id(current_user, task_id, **args)
             MarkTaskModel().check_user_task_and_update_mark_task(task_id)
             schema = UserTaskSchema
         else:
@@ -96,7 +96,7 @@ class ManualTaskService:
         if args.get('task_state'):
             args['user_task_status'] = status_str2int_mapper()[args['task_state']]
             del args['task_state']
-        item = UserTaskModel().update(task_id, **args)
+        item = UserTaskModel().update_by_annotator_id(current_user, task_id, **args)
         MarkTaskModel().check_user_task_and_update_mark_task(task_id)
         schema = UserTaskSchema
         session.commit()
