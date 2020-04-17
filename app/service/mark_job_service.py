@@ -494,20 +494,19 @@ class MarkJobService(CurrentUserMixin):
     @staticmethod
     def update_mark_job_status_by_mark_task(mark_task: MarkTask):
         # 更新这个task对应的job的状态，如果其下所有的task都成功，则修改job状态成功；如果其下有一个任务失败，则修改job状态失败
-        mark_task_list = MarkTaskModel().get_by_filter(limit=99999, mark_job_id=mark_task.mark_job_id)
-        states = [mark_task.mark_task_status for mark_task in mark_task_list]
-        if int(StatusEnum.fail) in states:  # 有一个失败，则整个job失败
+        status_list = MarkTaskModel().get_distinct_status_by_mark_job(mark_task.mark_job_id)
+        if int(StatusEnum.fail) in status_list:  # 有一个失败，则整个job失败
             new_job_status = int(StatusEnum.fail)
-        elif int(StatusEnum.processing) in states:  # 没有失败但是有处理中，则整个job处理中
-            new_job_status = int(StatusEnum.processing)
         else:
-            new_job_status = int(StatusEnum.approved)
-        MarkJobModel().update(
-            mark_task.mark_job_id,
-            mark_job_status=new_job_status,
-            updated_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        )
-        session.commit()
+            new_job_status = min(status_list)
+        mark_job = MarkJobModel().get_by_id(mark_task.mark_job_id)
+        if mark_job.mark_job_status != new_job_status:
+            MarkJobModel().update(
+                mark_task.mark_job_id,
+                mark_job_status=new_job_status,
+                updated_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            )
+            session.commit()
 
     @staticmethod
     def get_business_by_nlp_task(nlp_task) -> str:

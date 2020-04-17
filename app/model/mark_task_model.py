@@ -336,3 +336,9 @@ class MarkTaskModel(BaseModel, ABC):
                 mark_task_result = [mark for mark in user_tasks[0].user_task_result if mark['marked']]
                 self.update(mark_task.mark_task_id, **{'mark_task_status': int(StatusEnum.approved),
                                                        'mark_task_result': mark_task_result})
+
+    @staticmethod
+    def get_distinct_status_by_mark_job(mark_job_id):
+        status_list = session.query(MarkTask.mark_task_status.distinct())\
+            .filter(~MarkTask.is_deleted, MarkTask.mark_job_id == mark_job_id).all()
+        return status_list
