@@ -67,7 +67,7 @@ class ExportJobModel(BaseModel, ABC):
                           DocType.nlp_task_id, ExportJob.doc_type_id, ExportJob.export_job_status, DocType.doc_type_name) \
             .outerjoin(DocType, ExportJob.doc_type_id == DocType.doc_type_id) \
             .filter(
-            ExportJob.export_by == current_user.user_id,
+            ExportJob.created_by == current_user.user_id,
             ~ExportJob.is_deleted,
             ~DocType.is_deleted
         )
