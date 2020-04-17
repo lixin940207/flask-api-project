@@ -57,7 +57,7 @@ class ModelEvaluateService:
         EvaluateM2mMarkModel().bulk_create(evaluate_m2m_mark_list)
 
         # push to evaluate redis queue
-        doc_term_ids = [str(t.doc_term_id) for t in RelationM2mTermModel().get_by_filter([int(rl) for rl in doc_relation_ids])]
+        doc_term_ids = [str(t.doc_term_id) for t in RelationM2mTermModel().get_by_filter(limit=99999, doc_relation_ids=[int(rl) for rl in doc_relation_ids])]
         push_evaluate_task_to_redis(nlp_task, evaluate_task, train_task, doc_type, mark_job_ids, doc_term_ids, doc_relation_ids, use_rule)
         session.commit()
         return evaluate_task
