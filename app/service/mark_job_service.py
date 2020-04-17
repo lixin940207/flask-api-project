@@ -259,7 +259,7 @@ class MarkJobService(CurrentUserMixin):
             task_list.append(dict(
                 doc_id=doc_entity_list[i].doc_id,
                 mark_job_id=mark_job.mark_job_id,
-                mark_task_result=labeled_corpus_list,
+                mark_task_result=labeled_corpus_list[i],
                 mark_task_status=int(StatusEnum.approved)
             ))
         task_entity_list = MarkTaskModel().bulk_create(task_list)
