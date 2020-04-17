@@ -14,4 +14,4 @@ class ExportJobSchema(Schema):
     export_state = fields.Function(lambda obj: StatusEnum(obj.export_job_status).name)
     project_name = fields.String(attribute="doc_type_name")
     created_time = fields.String()
-    mark_job_ids = fields.List(fields.Integer())
+    mark_job_ids = fields.List(fields.Integer(), attribute="export_mark_job_ids")
