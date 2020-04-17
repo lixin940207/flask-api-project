@@ -304,7 +304,6 @@ class MarkJobService(CurrentUserMixin):
             dict(
                 doc_raw_name=csv_doc.doc_raw_name,
                 doc_unique_name=unique_name,
-                origin_file_name=csv_doc.doc_unique_name
             ) for unique_name in unique_name_list
         ]
         doc_entity_list = DocModel().bulk_create(doc_list)

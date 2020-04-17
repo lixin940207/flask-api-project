@@ -28,8 +28,8 @@ def create_app(env: str = 'development', override_config: typing.Dict = None) ->
 
     with app.app_context():
         try:
-            # Seeds().create_seeds()
-            pass
+            Seeds().create_seeds(debug=False)
+            # pass
         except Exception as e:
             app.logger.warning(" [-] Create seeds failed, may caused by first time start up. ")
             app.logger.warning(e)
