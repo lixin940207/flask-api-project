@@ -192,6 +192,7 @@ class MarkTaskModel(BaseModel, ABC):
                                                 select_keys=(UserTask))  # .annotator_id, UserTask.mark_task_id))
         UserTaskPlaceholder = UserTask(annotator_id=0, is_deleted=False, user_task_status=StatusEnum.labeled.value)
         for mark_task, doc_type, doc in results:
+            UserTaskPlaceholder.user_task_result = mark_task.mark_task_result
             user_task_list = user_task_map.get(str(mark_task.mark_task_id), [UserTaskPlaceholder])
             mark_task.user_task_list = user_task_list
             mark_task.doc = doc
@@ -212,7 +213,8 @@ class MarkTaskModel(BaseModel, ABC):
         ).one()
         mark_task.doc = doc
         mark_task.doc_type = doc_type
-        UserTaskPlaceholder = UserTask(annotator_id=0, is_deleted=False, user_task_status=StatusEnum.labeled.value)
+        UserTaskPlaceholder = UserTask(annotator_id=0, is_deleted=False, user_task_status=StatusEnum.labeled.value, \
+                                       user_task_result=mark_task.mark_task_result)
         mark_task.user_task_list = session.query(UserTask).filter(
             UserTask.mark_task_id == task_id,
             ~UserTask.is_deleted
