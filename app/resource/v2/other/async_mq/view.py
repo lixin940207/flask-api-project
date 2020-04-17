@@ -83,8 +83,9 @@ class UpdateDocConvertStateResource(Resource):
         """
         更新文档的处理状态
         """
+        update_params = {"doc_status": status_str2int_mapper()[args["convert_state"]]}
         DocService().update_doc_by_id(doc_id=args["doc_id"],
-                                      **{"doc_status": status_str2int_mapper()[args["convert_state"]]})
+                                      args=update_params)
         return {
             "message": "更新成功",
         }, 201
