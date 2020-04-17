@@ -33,11 +33,7 @@ class RelationM2mTermModel(BaseModel, ABC):
                 q = q.filter(RelationM2mTerm.doc_relation_id.in_(val))
             elif key in accept_keys:
                 q = q.filter(getattr(RelationM2mTerm, key) == val)
-        # Order by key
-        q = q.order_by(order_by)
         # Descending order
-        if order_by_desc:
-            q = q.desc()
         q = q.offset(offset).limit(limit)
         return q.all()
 
