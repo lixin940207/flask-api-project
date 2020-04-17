@@ -180,7 +180,7 @@ class UserTaskModel(BaseModel, ABC):
             q = q.filter(func.json_contains(MarkJob.reviewer_ids, str(current_user.user_id)))
         elif current_user.user_role in [RoleEnum.annotator.value]:
             # q = q.filter(func.json_contains(MarkJob.annotator_ids, str(current_user.user_id)))
-            q = q.filter(UserTask.annotator_ids == current_user.user_id)
+            q = q.filter(UserTask.annotator_id == current_user.user_id)
 
         q1 = Common().order_by_model_fields(q.filter(UserTask.user_task_id < task_id), UserTask, ['-user_task_id'])
         q2 = Common().order_by_model_fields(q.filter(UserTask.user_task_id > task_id), UserTask, ['+user_task_id'])
