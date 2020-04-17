@@ -9,6 +9,7 @@ from app.config.config import get_config_from_app as _get
 from app.common.common import StatusEnum
 from app.entity import TrainTask, TrainTermTask
 from app.model import TrainTaskModel, TrainJobModel
+from app.model.train_m2m_mark_model import TrainM2mMarkbModel
 from app.model.train_term_task_model import TrainTermTaskModel
 
 
@@ -20,8 +21,9 @@ class ModelTrainService():
 
     @staticmethod
     def get_train_task_by_id(train_task_id) -> TrainTask:
-        result = TrainTaskModel().get_by_id(train_task_id)
-        return result
+        train_task = TrainTaskModel().get_by_id(train_task_id)
+        train_task.mark_job_ids = [m2m.mark_job_id for m2m in TrainM2mMarkbModel().get_by_filter(limit=99999, train_job_id=train_task.train_job_id)]
+        return train_task
 
     @staticmethod
     def get_train_term_list_by_train_task_id(train_task_id, **kwargs) -> (int, [TrainTermTask]):

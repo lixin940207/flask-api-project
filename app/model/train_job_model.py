@@ -83,6 +83,7 @@ class TrainJobModel(BaseModel, ABC):
                 _, model_evaluate_list = EvaluateTaskModel().get_by_train_job_id(train_job_id=train_job.train_job_id, evaluate_task_status=int(StatusEnum.success))
                 if model_evaluate_list:
                     train_job.model_evaluate = model_evaluate_list[0]
+                train_job.model_version = train_task.model_version
                 train_job.train_list = [train_task]
                 train_job_list.append(train_job)
             else:
