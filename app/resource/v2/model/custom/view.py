@@ -6,6 +6,7 @@ from typing import Dict, Any, Tuple
 
 from app.common.common import StatusEnum, NlpTaskEnum
 from app.common.patch import parse, fields
+from app.common.utils.status_mapper import status_str2int_mapper
 from app.schema import CustomAlgorithmSchema
 from app.service.model_custom_service import ModelCustomService
 
@@ -33,7 +34,7 @@ class CustomListResource(Resource):
                 nlp_task_id_list.append(int(NlpTaskEnum[nlp_task]))
             filtered_list.update(nlp_task_id_list=nlp_task_id_list)
         if args.get("custom_states"):
-            filtered_list.update(custom_algorithm_status_list=[int(StatusEnum[status]) for status in args['custom_states'].split(',')])
+            filtered_list.update(custom_algorithm_status_list=[status_str2int_mapper().get(status, int(StatusEnum[status])) for status in args['custom_states'].split(',')])
         count, custom_algorithm_list = ModelCustomService().get_custom_algorithm_list_by_filter_in(offset=args["offset"], limit=args["limit"], args=filtered_list)
         result = CustomAlgorithmSchema(many=True).dump(custom_algorithm_list)
         return {
