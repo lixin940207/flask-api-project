@@ -132,7 +132,7 @@ class DocTypeModel(BaseModel, ABC):
                 .outerjoin(MarkJob, MarkJob.doc_type_id == DocType.doc_type_id)\
                 .filter(DocType.nlp_task_id == nlp_task_id,
                         ~DocType.is_deleted,
-                        ~MarkJob.is_deleted)
+                        or_(~MarkJob.is_deleted, MarkJob.is_deleted.is_(None)))
         # 权限filter
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))
@@ -149,7 +149,9 @@ class DocTypeModel(BaseModel, ABC):
     def get_by_nlp_task_id_by_user(nlp_task_id, current_user: CurrentUser) -> [DocType]:
         q = session.query(DocType, func.group_concat(DocTerm.doc_term_id.distinct()))\
             .outerjoin(DocTerm, DocTerm.doc_type_id == DocType.doc_type_id)\
-            .filter(DocType.nlp_task_id == nlp_task_id, ~DocType.is_deleted)
+            .filter(DocType.nlp_task_id == nlp_task_id,
+                    ~DocType.is_deleted,
+                    or_(~DocTerm.is_deleted, DocTerm.is_deleted.is_(None)))
         # 权限filter
         if current_user.user_role in [RoleEnum.manager.value, RoleEnum.guest.value]:
             q = q.filter(DocType.group_id.in_(current_user.user_groups))

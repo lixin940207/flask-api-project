@@ -12,6 +12,7 @@ from app.common.log import logger
 from app.common.patch import parse, fields
 from app.common.utils.status_mapper import status_str2int_mapper
 from app.schema import PredictTaskSchema, UserTaskSchema
+from app.service.doc_service import DocService
 from app.service.mark_job_service import MarkJobService
 from app.service.predict_service import PredictService
 
@@ -38,13 +39,14 @@ class AsyncMQResource(Resource):
         ]:
             update_params = {}
             if args.get("task_state"):
-                if args['task_state'] == 'success': # 如果mq预标注返回成功，则初试状态是unlabel
+                if args['task_state'] == 'success':     # 如果mq预标注返回成功，则初试状态是unlabel
                     update_params.update(mark_task_status=int(StatusEnum.unlabel))
                 else:   # 如果mq预标注返回失败，则初试状态是fail
                     update_params.update(mark_task_status=int(StatusEnum.fail))
             if args.get("task_result"):
                 update_params.update(mark_task_result=args["task_result"])
-            mark_task, user_task_list = MarkJobService().update_mark_task_and_user_task_by_mark_task_id(mark_task_id=message["task_id"], args=update_params)
+            mark_task, user_task_list = MarkJobService()\
+                .update_mark_task_and_user_task_by_mark_task_id(mark_task_id=message["task_id"], args=update_params)
             MarkJobService().update_mark_job_status_by_mark_task(mark_task=mark_task)
             result = UserTaskSchema(many=True).dump(user_task_list)
             return {
@@ -68,3 +70,22 @@ class AsyncMQResource(Resource):
                        "message": "更新成功",
                        "result": result,
                    }, 201
+
+
+class UpdateDocConvertStateResource(Resource):
+
+    @parse({
+        "convert_state": fields.String(missing='processing'),
+        "doc_id": fields.Integer(required=True),
+    })
+    def post(self: Resource,
+             args: typing.Dict) -> typing.Tuple[typing.Dict, int]:
+        """
+        更新文档的处理状态
+        """
+        update_params = {"doc_status": status_str2int_mapper()[args["convert_state"]]}
+        DocService().update_doc_by_id(doc_id=args["doc_id"],
+                                      args=update_params)
+        return {
+            "message": "更新成功",
+        }, 201

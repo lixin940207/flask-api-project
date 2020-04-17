@@ -34,7 +34,8 @@ class ExportJobModel(BaseModel, ABC):
         q = q.offset(offset).limit(limit)
         return q.all()
 
-    def create(self, entity):
+    def create(self, **kwargs) -> ExportJob:
+        entity = ExportJob(**kwargs)
         session.add(entity)
         session.flush()
         return entity
@@ -64,21 +65,18 @@ class ExportJobModel(BaseModel, ABC):
     @staticmethod
     def get_export_history(current_user, offset, limit):
         q = session.query(ExportJob.export_job_id, ExportJob.created_time, ExportJob.export_file_path,
-                          DocType.nlp_task_id, ExportJob.doc_type_id, ExportJob.export_job_status, DocType.doc_type_name) \
+                          DocType.nlp_task_id, ExportJob.doc_type_id, ExportJob.export_job_status,
+                          DocType.doc_type_name, ExportJob.export_mark_job_ids) \
             .outerjoin(DocType, ExportJob.doc_type_id == DocType.doc_type_id) \
-            .filter(
-            ExportJob.export_by == current_user.user_id,
-            ~ExportJob.is_deleted,
-            ~DocType.is_deleted
-        )
+            .filter(ExportJob.created_by == current_user.user_id, ~ExportJob.is_deleted, ~DocType.is_deleted)
 
         count = q.count()
-        q = q.order_by(ExportJob.created_time.desc())
+        q = q.order_by(ExportJob.export_job_id.desc())
         q = q.offset(offset).limit(limit)
         return q.all(), count
 
     @staticmethod
     def update_status(export_id, status):
-        session.query(ExportJob).filter(ExportJob.export_id == export_id) \
-            .update({ExportJob.export_job_status: StatusEnum(status).value})
-        session.commit()
+        session.query(ExportJob).filter(ExportJob.export_job_id == export_id) \
+            .update({ExportJob.export_job_status: StatusEnum[status].value})
+        session.flush()

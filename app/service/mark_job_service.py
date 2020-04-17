@@ -105,7 +105,7 @@ class MarkJobService(CurrentUserMixin):
             mark_job_type=args['mark_job_type'],
             mark_job_desc=args.get('mark_job_desc'),
             doc_type_id=args['doc_type_id'],
-            mark_job_status=int(StatusEnum.success),
+            mark_job_status=int(StatusEnum.approved),
             assign_mode='average',
         )
         tasks = []
@@ -259,6 +259,7 @@ class MarkJobService(CurrentUserMixin):
             task_list.append(dict(
                 doc_id=doc_entity_list[i].doc_id,
                 mark_job_id=mark_job.mark_job_id,
+                mark_task_result=labeled_corpus_list[i],
                 mark_task_status=int(StatusEnum.approved)
             ))
         task_entity_list = MarkTaskModel().bulk_create(task_list)
@@ -303,7 +304,6 @@ class MarkJobService(CurrentUserMixin):
             dict(
                 doc_raw_name=csv_doc.doc_raw_name,
                 doc_unique_name=unique_name,
-                origin_file_name=csv_doc.doc_unique_name
             ) for unique_name in unique_name_list
         ]
         doc_entity_list = DocModel().bulk_create(doc_list)
@@ -315,7 +315,7 @@ class MarkJobService(CurrentUserMixin):
                 doc_id=doc_entity_list[i].doc_id,
                 mark_job_id=mark_job_id,
                 mark_task_result=task_results[i] if task_results else {},
-                mark_task_status=StatusEnum.approved
+                mark_task_status=int(StatusEnum.approved)
             ))
         task_entity_list = MarkTaskModel().bulk_create(task_list)
 
@@ -362,7 +362,7 @@ class MarkJobService(CurrentUserMixin):
     def export_mark_file(nlp_task_id, mark_job_id, offset=50):
         mark_job = MarkJobModel().get_by_id(mark_job_id)
 
-        if mark_job.mark_job_status != StatusEnum.success:
+        if mark_job.mark_job_status not in (StatusEnum.approved, StatusEnum.success):
             abort(400, message="有失败或未完成任务，不能导出")
 
         all_count = MarkTaskModel().count_mark_task_status(mark_job_ids=[mark_job_id])
@@ -409,11 +409,11 @@ class MarkJobService(CurrentUserMixin):
         os.mkdir(export_dir_path)
 
         # get all (count, status, mark_job_id) tuple
-        all_count = MarkTaskModel().count_mark_task_status(mark_job_ids=[mark_job_id_list])
+        all_count = MarkTaskModel().count_mark_task_status(mark_job_ids=mark_job_id_list)
         # convert to a nested dict
         all_status_dict = Common().tuple_list2dict(all_count)
         for mark_job in mark_job_list:  # 遍历所有的job
-            if mark_job.mark_job_status != StatusEnum.success:  # 不成功的job
+            if mark_job.mark_job_status not in (StatusEnum.success, StatusEnum.approved):  # 不成功的job
                 continue
             # 不是所有的任务都未审核完成
             if len(all_status_dict[mark_job.mark_job_id]) == 1 and (
@@ -438,7 +438,7 @@ class MarkJobService(CurrentUserMixin):
             shutil.copy(file_path, os.path.join(export_dir_path, '标注任务{}.csv'.format(mark_job.mark_job_id)))
 
         if not os.listdir(export_dir_path):
-            abort(400, message="所有的任务都无法导出，请重新选择")
+            raise ValueError("所选标注任务中没有完成审核的任务，请重新选择")
         shutil.make_archive(export_dir_path, 'zip', export_dir_path)  # 打包
         return export_dir_path + ".zip"
 
@@ -494,20 +494,19 @@ class MarkJobService(CurrentUserMixin):
     @staticmethod
     def update_mark_job_status_by_mark_task(mark_task: MarkTask):
         # 更新这个task对应的job的状态，如果其下所有的task都成功，则修改job状态成功；如果其下有一个任务失败，则修改job状态失败
-        mark_task_list = MarkTaskModel().get_by_filter(limit=99999, mark_job_id=mark_task.mark_job_id)
-        states = [mark_task.mark_task_status for mark_task in mark_task_list]
-        if int(StatusEnum.fail) in states:  # 有一个失败，则整个job失败
+        status_list = MarkTaskModel().get_distinct_status_by_mark_job(mark_task.mark_job_id)
+        if int(StatusEnum.fail) in status_list:  # 有一个失败，则整个job失败
             new_job_status = int(StatusEnum.fail)
-        elif int(StatusEnum.processing) in states:  # 没有失败但是有处理中，则整个job处理中
-            new_job_status = int(StatusEnum.processing)
         else:
-            new_job_status = int(StatusEnum.success)
-        MarkJobModel().update(
-            mark_task.mark_job_id,
-            mark_job_status=new_job_status,
-            updated_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        )
-        session.commit()
+            new_job_status = min(status_list)
+        mark_job = MarkJobModel().get_by_id(mark_task.mark_job_id)
+        if mark_job.mark_job_status != new_job_status:
+            MarkJobModel().update(
+                mark_task.mark_job_id,
+                mark_job_status=new_job_status,
+                updated_time=datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            )
+            session.commit()
 
     @staticmethod
     def get_business_by_nlp_task(nlp_task) -> str:

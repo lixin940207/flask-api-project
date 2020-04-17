@@ -58,8 +58,11 @@ class DocModel(BaseModel, ABC):
     def bulk_delete_by_filter(self, **kwargs):
         raise NotImplemented("no bulk_delete_by_filter")
 
-    def update(self, entity):
-        pass
+    def update(self, _id, **kwargs):
+        entity = session.query(Doc).filter(Doc.doc_id == _id)
+        entity.update(kwargs)
+        session.flush()
+        return entity.one()
 
     def bulk_update(self, entity_list):
         raise NotImplemented("no bulk_update")

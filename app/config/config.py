@@ -37,6 +37,7 @@ class SqlalchemyConfigMixin:
         os.getenv('MYSQL_HOST', '127.0.0.1'),
         os.getenv('MYSQL_PORT', 43306),
         os.getenv('MYSQL_DATABASE', 'nlp_platform'),
+        os.getenv('MYSQL_CHARSET', 'utf8mb4')
     )
     # 调试SQL语句时使用，慎开
     # SQLALCHEMY_ECHO = True

@@ -94,4 +94,4 @@ def push_evaluate_task_to_redis(nlp_task, evaluate_task: EvaluateTask, train_tas
         }
         if nlp_task == NlpTaskEnum.relation:
             push_dict.update({"relation_fields": doc_relation_ids})
-        r.lpush(_get("{}_EVALUATE_QUEUE_KEY".format(nlp_task.name.upper())), json.dumps(push_dict))
+        r.lpush(_get("EXTRACT_EVALUATE_QUEUE_KEY"), json.dumps(push_dict))

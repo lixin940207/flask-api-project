@@ -6,6 +6,7 @@ import typing
 import uuid
 from datetime import datetime
 
+from app.common.common import StatusEnum
 from app.common.extension import session
 from app.config.config import get_config_from_app as _get
 from app.common.filters import CurrentUser
@@ -39,15 +40,14 @@ class ExportService:
                                       mark_job_ids)
         file_path = 'upload/export/{}.zip'.format(version)
 
-        new_export_job = ExportJobModel().create({
-            "file_path": file_path,
-            "mark_type": mark_type,
+        new_export_job = ExportJobModel().create(**{
+            "export_file_path": file_path,
             "doc_type_id": doc_type_id,
-            "export_by": current_user.user_id,
-            "export_state": "processing",
+            "created_by": current_user.user_id,
+            "export_job_status": StatusEnum.processing.value,
             "export_mark_job_ids": [int(i) for i in mark_job_ids.split(',')]
         })
-        export_id = new_export_job.export_id
+        export_id = new_export_job.export_job_id
 
         session.commit()
         # 发送给offline nlp
