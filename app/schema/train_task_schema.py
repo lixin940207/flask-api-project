@@ -17,3 +17,4 @@ class TrainTaskSchema(Schema):  # type: ignore
     train_terms = fields.List(fields.Nested(TrainTermTaskSchema))
     created_time = fields.DateTime()
     last_updated_time = fields.DateTime(attribute="updated_time")
+    model_version = fields.String()

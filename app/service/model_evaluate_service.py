@@ -27,7 +27,7 @@ class ModelEvaluateService:
         # assign train_job_id to evaluate_task for dumping
         for evaluate_task in evaluate_task_list:
             evaluate_task.train_job_id = train_job_id
-            evaluate_task.mark_job_ids = [m2m.mark_job_id for m2m in EvaluateM2mMarkModel().get_by_filter(evaluate_task_id=evaluate_task.evaluate_task_id)]
+            evaluate_task.mark_job_ids = [m2m.mark_job_id for m2m in EvaluateM2mMarkModel().get_by_filter(limit=99999, evaluate_task_id=evaluate_task.evaluate_task_id)]
         return count, evaluate_task_list
 
     @staticmethod
