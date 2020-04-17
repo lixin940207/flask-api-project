@@ -17,7 +17,8 @@ def status_str2int_mapper():
         "unaudit": int(StatusEnum.reviewing),
         "audited": int(StatusEnum.approved),
         "unlabel": int(StatusEnum.unlabel),
-        "labeled": int(StatusEnum.labeled)
+        "labeled": int(StatusEnum.labeled),
+        "ready": int(StatusEnum.available)
     }
 
 
