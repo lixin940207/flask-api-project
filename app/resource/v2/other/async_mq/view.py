@@ -12,6 +12,7 @@ from app.common.log import logger
 from app.common.patch import parse, fields
 from app.common.utils.status_mapper import status_str2int_mapper
 from app.schema import PredictTaskSchema, UserTaskSchema
+from app.service.doc_service import DocService
 from app.service.mark_job_service import MarkJobService
 from app.service.predict_service import PredictService
 
@@ -68,3 +69,21 @@ class AsyncMQResource(Resource):
                        "message": "更新成功",
                        "result": result,
                    }, 201
+
+
+class UpdateDocConvertStateResource(Resource):
+
+    @parse({
+        "convert_state": fields.String(missing='processing'),
+        "doc_id": fields.Integer(required=True),
+    })
+    def post(self: Resource,
+             args: typing.Dict) -> typing.Tuple[typing.Dict, int]:
+        """
+        更新文档的处理状态
+        """
+        DocService().update_doc_by_id(doc_id=args["doc_id"],
+                                      **{"doc_status": status_str2int_mapper()[args["convert_state"]]})
+        return {
+            "message": "更新成功",
+        }, 201

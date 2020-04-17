@@ -5,3 +5,4 @@ from .. import api
 from . import view
 
 api.add_resource(view.AsyncMQResource, '/async')
+api.add_resource(view.UpdateDocConvertStateResource, "/tool/doc_state")
