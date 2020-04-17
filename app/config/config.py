@@ -31,12 +31,13 @@ class PdfActionConfigMixin:
 
 class SqlalchemyConfigMixin:
     # SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:root@localhost:53306/szse"
-    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://{}:{}@{}:{}/{}'.format(
+    SQLALCHEMY_DATABASE_URI = 'mysql+pymysql://{}:{}@{}:{}/{}?charset={}'.format(
         os.getenv('MYSQL_USER', 'root'),
         os.getenv('MYSQL_PASSWORD', 'root'),
         os.getenv('MYSQL_HOST', '127.0.0.1'),
         os.getenv('MYSQL_PORT', 43306),
         os.getenv('MYSQL_DATABASE', 'nlp_platform'),
+        os.getenv('MYSQL_CHARSET', 'utf8mb4')
     )
     # 调试SQL语句时使用，慎开
     # SQLALCHEMY_ECHO = True
