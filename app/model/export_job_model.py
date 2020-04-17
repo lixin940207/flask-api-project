@@ -34,7 +34,8 @@ class ExportJobModel(BaseModel, ABC):
         q = q.offset(offset).limit(limit)
         return q.all()
 
-    def create(self, entity):
+    def create(self, **kwargs) -> ExportJob:
+        entity = ExportJob(**kwargs)
         session.add(entity)
         session.flush()
         return entity
